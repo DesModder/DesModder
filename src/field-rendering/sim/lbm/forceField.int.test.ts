@@ -31,13 +31,15 @@ testWithPage(
     const cpu = new CpuD2Q9({ ...options, arithmetic: "float32" });
     cpu.setBoundaries(boundaries);
     cpu.forceField = field;
+    // Not a power of two, so a scale applied in a different order would show.
+    cpu.forceScale = 0.37;
     cpu.initialize(() => ({ ux: 0, uy: 0 }));
     const [one, hundred] = await runOnGpu(
       driver,
       options,
       Float32Array.from(cpu.populations),
       [1, 100],
-      { boundaries, forceField: Array.from(field) }
+      { boundaries, forceField: Array.from(field), forceScale: 0.37 }
     );
     const worst = (a: ArrayLike<number>, b: ArrayLike<number>) => {
       let w = 0;

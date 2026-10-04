@@ -111,7 +111,11 @@ export class StepScheduler {
    * the lattice speed, which halves the simulated time one step covers.
    */
   setStepSeconds(stepSeconds: number) {
-    this.stepSeconds = positive(stepSeconds, "stepSeconds");
+    positive(stepSeconds, "stepSeconds");
+    // Unchanged is no change: ending the segment would drop the part of a
+    // step already owed, and the tab sets this on every settings change.
+    if (stepSeconds === this.stepSeconds) return;
+    this.stepSeconds = stepSeconds;
     this.endSegment();
   }
 

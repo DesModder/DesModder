@@ -41,10 +41,14 @@ The liquid comes next (brief §8.0).
 - **Moving solids:** a solid whose inequality reads a slider or `t` moves
   through the fluid as partially saturated cells (GPT's third round), pushing
   it aside and carrying what is inside. Solids that cannot move keep the
-  sharper interpolated walls.
+  sharper interpolated walls. A solid's translation is averaged over the
+  last 100 ms of updates, because Desmos reports a dragged slider every frame
+  or two and unevenly; one update alone scattered the wall speed by ±40%.
 - **Rafael's guards (brief §8.1):**
   - Lattice speed: Auto, Accurate or Lively. Auto halves the lattice speed and
-    restarts if the flow anywhere passes Mach 0.3.
+    restarts if the flow anywhere passes Mach 0.3. Lively keeps its speed and
+    says "speed limit exceeded" while the flow is past Mach 0.3, and nothing
+    measured meanwhile counts as settled.
   - Resizing a solid (its area changing by more than 2%): Auto updates it in
     place and marks the flow as settling; Strict restarts.
   - Moving solids above Re 200, where the moving-solid method runs with the
@@ -59,6 +63,15 @@ The liquid comes next (brief §8.0).
 - **The clock** steps a fixed dt; frames only decide how many steps to run. A
   slow machine runs slower than real time and says so, and never changes the
   physics.
+- **Cells are square.** The lattice spans the tank's width and a whole number
+  of square cells in height, centred on the tank, so a rounded cell count
+  never stretches the solids (`fluidLatticeTank`).
+- **The page never waits for the GPU.** Forces and the flow are read back
+  through pixel-pack buffers and fences, and collected a frame later, labelled
+  with the step they were taken at. Measured live (300 × 120, two solids),
+  synchronous reads were 78% of each frame's main-thread time: 12.6 ms a frame
+  then, 3.2 ms now. A sliding solid adds about 4.7 ms a frame while it moves,
+  the cost of evaluating its inequality once per cell.
 
 ## How it works
 
@@ -85,7 +98,7 @@ CPU oracle.
 
 | Check                                                      | Result                                                                   |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Desmos edge cases (143) and rational exponents (60)        | CPU evaluator matches live Desmos on every one; GLSL within float32      |
+| Desmos edge cases (152) and rational exponents (60)        | CPU evaluator matches live Desmos on every one; GLSL within float32      |
 | 30, 60, 120 and 144 Hz frames, and jittered frames         | bit-identical states step for step                                       |
 | GPU against CPU, bulk, one step / 100 steps                | 4·10⁻⁹ / 2.5·10⁻⁸ per population                                         |
 | GPU against CPU, every boundary, BFL, closure, force field | within 5·10⁻⁸ / 2·10⁻⁷                                                   |
@@ -131,7 +144,11 @@ Evidence pictures: `assets/fluid-gate1-taylor-green.png`,
 - **The stirred box's strength is regulated, not taken literally.** The field
   gives the push its shape. The strength eases toward the typical speed,
   because a push shaped like a rotation spins a closed box up without
-  inertial limit.
+  inertial limit. It is regulated every half second of flow, not of wall
+  clock, so a slower computer stirs the same flow, and it changes smoothly
+  through a uniform: changed in jumps, each correction set the closed box
+  ringing, and the ringing was most of what a gradient field appeared to
+  move.
 - **Desmos snaps tan(π/2) to infinity, and factorial is refused** in solids
   until the GPU has a tested Gamma.
 

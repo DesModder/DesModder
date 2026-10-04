@@ -1339,8 +1339,9 @@ function fluidTab(vectorTools: VectorTools, config: ConfigGetter) {
           "dsm-vector-tools-fluid-resize"
         )}
         <div class="dsm-vector-tools-hint">
-          Auto lets you resize while it runs and marks the flow nearby as visual
-          only until it settles. Strict locks the size while running.
+          Auto lets you resize while it runs and marks the measurements as
+          provisional until the flow settles. Strict restarts the flow whenever
+          a solid changes size.
         </div>
         {chipGroup(
           "Dragging above Re 200",
@@ -1350,8 +1351,8 @@ function fluidTab(vectorTools: VectorTools, config: ConfigGetter) {
           "dsm-vector-tools-fluid-drag"
         )}
         <div class="dsm-vector-tools-hint">
-          Auto allows it, labelled provisional, without force numbers. Strict
-          holds Re at 200 while a solid is dragged.
+          Auto allows it, without force numbers for the moving solid. Strict
+          runs the flow at Re 200 while any solid reads a slider or t.
         </div>
         {checkboxControl(
           "Write measurements into the graph",
@@ -1517,7 +1518,7 @@ function fluidUnitsText(
     fluid.speedMode === "auto"
       ? " Auto starts here and halves the lattice speed if the flow anywhere passes Mach 0.3."
       : fluid.speedMode === "lively"
-        ? " Lively keeps this speed and marks any moment the flow passes Mach 0.3 as not accurate."
+        ? " Lively keeps this speed, and says so while the flow anywhere passes Mach 0.3 and is not accurate."
         : "";
   const resolution =
     units.cellsPerLength < MEASUREMENT_CELLS

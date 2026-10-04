@@ -66,6 +66,10 @@ export interface PartialSolids {
   fastest: number;
   /** Whether some solid jumped too far to have swept the cells between. */
   teleported: boolean;
+  /** The bodies that moved or jumped since the last update. */
+  moved: Set<number>;
+  /** Whether any wall was given a velocity, which a later update must clear. */
+  moving: boolean;
 }
 
 /** Cells per step a moving wall may go. */
@@ -83,7 +87,21 @@ export function partialSolids(
   rows: readonly MovingSolidRow[],
   grid: MovingSolidsGrid,
   scope: { time: number; params: ReadonlyMap<string, number> },
-  previous?: { signed: Float32Array[]; elapsedSteps: number }
+  /** A row with no previous signed function starts at rest. */
+  previous?: {
+    signed: readonly (Float32Array | undefined)[];
+    elapsedSteps: number;
+  },
+  /**
+   * Turns a body's translation over this update (cells per step, over
+   * `steps` steps) into the one its cells move with: a caller that sees
+   * updates at uneven moments can average them here.
+   */
+  smooth?: (
+    body: number,
+    raw: readonly [number, number],
+    steps: number
+  ) => readonly [number, number]
 ): PartialSolids {
   const { nx, ny, tank } = grid;
   const cells = nx * ny;
@@ -111,19 +129,50 @@ export function partialSolids(
       return row.obstacle.signed(point);
     };
     const before = previous?.signed[r];
+    const values = signed[r];
+    // The signed function at every centre first: one evaluation a cell.
+    for (let j = 0; j < ny; j++) {
+      point.y = tank.yMin + (j + 0.5) * dy;
+      for (let i = 0; i < nx; i++) {
+        point.x = tank.xMin + (i + 0.5) * dx;
+        values[j * nx + i] = row.obstacle.signed(point);
+      }
+    }
+    // A wall within half a cell of a centre puts the neighbour across it on
+    // the other side (a planar wall's nearest axis neighbour is at least
+    // 1/√2 of a cell further along its normal), so only cells beside a change
+    // of sign, or of definedness, need the gradient. The rest are wholly in
+    // or out. Cells on the tank's edge are always checked, since their
+    // neighbour across the wall may lie outside the grid.
+    const inside = (k: number) => values[k] <= 0;
+    const nearWall = (i: number, j: number, k: number) => {
+      if (i === 0 || j === 0 || i === nx - 1 || j === ny - 1) return true;
+      const here = inside(k);
+      for (const n of [k - 1, k + 1, k - nx, k + nx]) {
+        if (!Number.isFinite(values[n]) || inside(n) !== here) return true;
+      }
+      return false;
+    };
     for (let j = 0; j < ny; j++) {
       const y = tank.yMin + (j + 0.5) * dy;
       for (let i = 0; i < nx; i++) {
         const x = tank.xMin + (i + 0.5) * dx;
         const k = j * nx + i;
-        const f = F(x, y);
-        signed[r][k] = f;
+        const f = values[k];
         if (!Number.isFinite(f)) continue;
-        const gx = (F(x + h, y) - F(x - h, y)) / (2 * h);
-        const gy = (F(x, y + h) - F(x, y - h)) / (2 * h);
-        const g2 = gx * gx + gy * gy;
+        const near = nearWall(i, j, k);
+        if (f > 0 && !near) continue;
+        let gx = 0;
+        let gy = 0;
+        let g2 = 0;
+        if (near) {
+          gx = (F(x + h, y) - F(x - h, y)) / (2 * h);
+          gy = (F(x, y + h) - F(x, y - h)) / (2 * h);
+          g2 = gx * gx + gy * gy;
+        }
         const gradient = g2 > 0 && Number.isFinite(g2);
-        // A cell whose gradient vanishes is classified by its sign alone.
+        // A cell whose gradient vanishes, or that no wall comes near, is
+        // classified by its sign alone.
         const eps = gradient
           ? Math.max(0, Math.min(1, 0.5 - f / Math.sqrt(g2) / dx))
           : f <= 0
@@ -177,44 +226,52 @@ export function partialSolids(
     fits.set(body[k], fit);
   }
   const translation = new Map<number, [number, number]>();
-  let teleported = false;
+  // Bodies that jumped further than they could have swept.
+  const jumped = new Set<number>();
   for (const [b, [a, c, d, p, q]] of fits) {
     const det = a * d - c * c;
     // A wall with too few directions (a sliver) pins down no translation.
     if (!(det > 1e-9 * (a + d) ** 2)) continue;
     const ux = (d * p - c * q) / det;
     const uy = (a * q - c * p) / det;
-    if (Math.hypot(ux, uy) * steps > TELEPORT_CELLS) {
-      teleported = true;
-      continue;
-    }
-    translation.set(b, [ux, uy]);
+    if (Math.hypot(ux, uy) * steps > TELEPORT_CELLS) jumped.add(b);
+    else translation.set(b, [ux, uy]);
   }
+  for (let k = 0; k < cells; k++) {
+    if (Math.abs(normalSpeed[k]) * steps > TELEPORT_CELLS) jumped.add(body[k]);
+  }
+  // The translation each body moves with, which the caller may smooth over
+  // several updates (`smooth`); the raw one stays the reference for the
+  // walls' own normal speed.
+  const applied = new Map<number, readonly [number, number]>();
+  for (const [b, raw] of translation)
+    applied.set(b, smooth ? smooth(b, raw, steps) : raw);
 
   let fastest = 0;
+  const moved = new Set<number>(jumped);
   for (let k = 0; k < cells; k++) {
     const b = body[k];
-    if (b === 0) continue;
-    const [ux, uy] = translation.get(b) ?? [0, 0];
+    // A jump moves every cell of the body at once: none of it swept, so none
+    // of it moves.
+    if (b === 0 || jumped.has(b)) continue;
+    const [ux, uy] = applied.get(b) ?? [0, 0];
     let vx = ux;
     let vy = uy;
     const vn = normalSpeed[k];
     if (Number.isFinite(vn)) {
-      // A wall cell: the translation's normal part replaced by the level
-      // set's, which also sees a solid grow or shrink.
+      // A wall cell: what the level set says beyond this update's own
+      // translation (a solid growing or shrinking) is added along the
+      // normal. For a slide that is nothing, and the wall moves with the
+      // applied translation.
+      const [rx, ry] = translation.get(b) ?? [0, 0];
       const ex = normal[2 * k];
       const ey = normal[2 * k + 1];
-      if (Math.abs(vn) * steps > TELEPORT_CELLS) {
-        teleported = true;
-        velocity[2 * k] = 0;
-        velocity[2 * k + 1] = 0;
-        continue;
-      }
-      const along = vn - (ux * ex + uy * ey);
+      const along = vn - (rx * ex + ry * ey);
       vx += along * ex;
       vy += along * ey;
     }
     const speed = Math.hypot(vx, vy);
+    if (speed > 0) moved.add(b);
     fastest = Math.max(fastest, speed);
     if (speed > WALL_SPEED_LIMIT) {
       vx *= WALL_SPEED_LIMIT / speed;
@@ -223,8 +280,6 @@ export function partialSolids(
     velocity[2 * k] = vx;
     velocity[2 * k + 1] = vy;
   }
-  // A jump moves every cell at once: none of it swept, so none of it moves.
-  if (teleported) velocity.fill(0);
   return {
     coverage,
     velocity,
@@ -233,6 +288,8 @@ export function partialSolids(
     area,
     boxes,
     fastest,
-    teleported,
+    teleported: jumped.size > 0,
+    moved,
+    moving: fastest > 0,
   };
 }

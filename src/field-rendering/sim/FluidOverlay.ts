@@ -243,7 +243,7 @@ export class FluidOverlay {
     gl.viewport(0, 0, lattice.nx, lattice.ny);
     gl.disable(gl.BLEND);
     gl.useProgram(valueProgram);
-    const v = (name: string) => gl.getUniformLocation(valueProgram, name);
+    const v = (name: string) => this.uniform(valueProgram, name);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, lattice.textures[2]);
     gl.uniform1i(v("u_macro"), 0);
@@ -259,7 +259,7 @@ export class FluidOverlay {
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.useProgram(display);
-    const at = (name: string) => gl.getUniformLocation(display, name);
+    const at = (name: string) => this.uniform(display, name);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.valueTexture!);
     gl.uniform1i(at("u_value"), 0);
@@ -276,6 +276,23 @@ export class FluidOverlay {
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.disable(gl.BLEND);
+  }
+
+  /** Uniform locations, looked up once per program rather than every frame. */
+  private readonly uniforms = new Map<
+    WebGLProgram,
+    Map<string, WebGLUniformLocation | null>
+  >();
+
+  private uniform(program: WebGLProgram, name: string) {
+    let locations = this.uniforms.get(program);
+    if (locations === undefined) {
+      locations = new Map();
+      this.uniforms.set(program, locations);
+    }
+    if (!locations.has(name))
+      locations.set(name, this.gl!.getUniformLocation(program, name));
+    return locations.get(name)!;
   }
 
   /** The half-float texture the value pass writes, sized to the lattice. */
@@ -318,6 +335,7 @@ export class FluidOverlay {
     if (this.gl && this.valueTexture) this.gl.deleteTexture(this.valueTexture);
     if (this.gl && this.valueFramebuffer)
       this.gl.deleteFramebuffer(this.valueFramebuffer);
+    this.uniforms.clear();
     this.valueProgram = undefined;
     this.valueTexture = undefined;
     this.valueFramebuffer = undefined;

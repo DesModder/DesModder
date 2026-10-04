@@ -57,6 +57,28 @@ describe("moving solids as partially saturated cells", () => {
     expect(second.velocity[2 * centre + 1]).toBeCloseTo(0, 4);
   });
 
+  test("a smoothed translation moves the whole solid, walls included", () => {
+    const first = partialSolids(disc(), grid, at(0));
+    // The raw slide is 0.02 cells a step; the caller's average says 0.015.
+    const seen: number[] = [];
+    const second = partialSolids(
+      disc(),
+      grid,
+      at(0.02),
+      { signed: first.signed, elapsedSteps: 10 },
+      (_body, raw) => {
+        seen.push(raw[0]);
+        return [0.015, 0];
+      }
+    );
+    expect(seen[0]).toBeCloseTo(0.02, 3);
+    const centre = 20 * grid.nx + 40;
+    const leading = 20 * grid.nx + 50;
+    expect(second.velocity[2 * centre]).toBeCloseTo(0.015, 6);
+    // The wall's level-set speed matched the raw slide, so it adds nothing.
+    expect(second.velocity[2 * leading]).toBeCloseTo(0.015, 3);
+  });
+
   test("a growing region pushes its walls outward without moving its inside", () => {
     const radius = (r: number) => {
       const result = compileObstacle(String.raw`x^{2}+y^{2}\le${r}^{2}`, env, {

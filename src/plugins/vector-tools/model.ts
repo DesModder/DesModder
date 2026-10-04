@@ -1395,6 +1395,28 @@ export function fluidLatticeSize(fluid: FluidConfig): {
   };
 }
 
+/**
+ * The region the lattice actually covers: the tank's width, and a height of
+ * exactly `ny` square cells, centred on the tank. A lattice cell is square
+ * whatever the tank, so mapping `ny` cells onto the tank's own height would
+ * stretch every solid vertically by the rounding in `ny`, up to half a cell
+ * over the height (1.5% on a 32-cell-high tank). Moving the top and bottom
+ * walls by at most a quarter of a cell each keeps the solids' shape exact.
+ * (A tank under eight cells high gets eight, and so a taller lattice.)
+ */
+export function fluidLatticeTank(fluid: FluidConfig): FluidTank {
+  const { tank } = fluid;
+  const { nx, ny } = fluidLatticeSize(fluid);
+  const dx = (tank.xMax - tank.xMin) / nx;
+  const middle = (tank.yMin + tank.yMax) / 2;
+  return {
+    xMin: tank.xMin,
+    xMax: tank.xMax,
+    yMin: middle - (ny * dx) / 2,
+    yMax: middle + (ny * dx) / 2,
+  };
+}
+
 function normalizePanel(value: unknown, fallback: PanelConfig): PanelConfig {
   const panel = asRecord(value);
   return {

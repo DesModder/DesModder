@@ -50,7 +50,11 @@ import {
 import type { FieldEnvironment } from "../../../field-rendering/latexToGLSL";
 import {
   createStandaloneLattice,
+  macroFromTexels,
+  sumForceTexels,
+  type GpuD2Q9,
   type GpuLatticeOptions,
+  type PendingRead,
 } from "../../../field-rendering/sim/lbm/GpuD2Q9";
 import {
   FluidOverlay,
@@ -65,7 +69,7 @@ import {
   sheddingPeriod,
   type Sample,
 } from "../../../field-rendering/sim/measure";
-import { fluidLatticeSize, type FluidConfig } from "../model";
+import { fluidLatticeSize, fluidLatticeTank, type FluidConfig } from "../model";
 import { FluidGraphWriter } from "./FluidGraphWriter";
 import {
   WALL_SPEED_LIMIT,
@@ -157,13 +161,25 @@ const SAMPLE_INTERVAL_MS = 100;
 
 /** How often the panel's readouts redraw, in milliseconds. */
 const READOUT_INTERVAL_MS = 250;
-/** How often the flow is checked for its Mach number and validity. */
-const CHECK_INTERVAL_MS = 500;
+/**
+ * How often the stirred box's strength is regulated, in seconds of flow, and
+ * how quickly the applied strength follows (easeForce).
+ */
+const REGULATE_SECONDS = 0.5;
+const FORCE_EASING_SECONDS = 0.25;
 /**
  * How often the solids are checked for a change while the flow runs: a slider
  * drag, an edit, or an obstacle that moves with t.
  */
 const GEOMETRY_INTERVAL_MS = 100;
+/**
+ * How long a moving solid may go without its sliders or clock changing before
+ * it counts as stopped: longer than Desmos takes between reports of a slider
+ * being dragged.
+ */
+const STOPPED_AFTER_MS = 150;
+/** How long a moving solid's translation is averaged over (`smoothedTranslation`). */
+const VELOCITY_WINDOW_MS = 100;
 /** Samples kept per body: enough for several shedding cycles. */
 const SAMPLE_LIMIT = 6000;
 
@@ -174,6 +190,9 @@ const DEFINED_NAME =
   /^([A-Za-z](?:_(?:\{[A-Za-z0-9]*\}|[A-Za-z0-9]))?)(?:\\left\(|\(|=)/;
 const DEFINITION =
   /^[A-Za-z](?:_(?:\{[A-Za-z0-9]*\}|[A-Za-z0-9]))?(?:\\left\([^)]*\\right\)|\([^)]*\))?=/;
+
+/** δρ, ux and uy per cell, as the lattice reads them back. */
+type MacroFields = ReturnType<GpuD2Q9["readMacro"]>;
 
 interface BodyRecord {
   rowId: string;
@@ -195,7 +214,6 @@ export class FluidSession {
   private lastPlan: FramePlan | undefined;
   private frameHandle: number | undefined;
   private lastReadout = 0;
-  private lastCheck = 0;
   private lastGeometry = 0;
   private gusting = false;
 
@@ -223,6 +241,20 @@ export class FluidSession {
     this.writer = new FluidGraphWriter(host.calc);
     this.overlay = new FluidOverlay(host.calc, (message) => {
       this.notice = message;
+      if (!this.overlay.isRunning && this.latticeKey !== "") {
+        // The lattice is gone, to a lost context or a start that failed.
+        // Forget it, so the particles and arrows go back to the field's
+        // formula and a restart builds a new one.
+        withdrawVelocitySample(FLUID_SAMPLE_SOURCE);
+        this.releaseReads();
+        this.latticeKey = "";
+        this.solidsKey = "";
+        this.spec = undefined;
+        this.moving = undefined;
+        this.movingKey = "";
+        this.bodies.clear();
+        this.host.simulatingChanged();
+      }
       this.host.changed();
     });
   }
@@ -235,7 +267,18 @@ export class FluidSession {
     return this.rows;
   }
 
+  /**
+   * Whether the rows were checked in the frame now running. A frame asks for
+   * them a dozen times and each check reads every item in the graph, so the
+   * frame loop checks once; nothing it does edits a row it reads. Outside a
+   * frame, every question checks afresh.
+   */
+  private inFrame = false;
+  private rowsChecked = false;
+
   private refreshRows() {
+    if (this.inFrame && this.rowsChecked) return;
+    this.rowsChecked = true;
     const prefix = this.host.ownedPrefix();
     const degreeMode = this.host.degreeMode();
     const candidates = this.host
@@ -349,6 +392,11 @@ export class FluidSession {
     return helper.numericValue;
   }
 
+  /** The region the lattice covers, in square cells (`fluidLatticeTank`). */
+  get latticeTank() {
+    return fluidLatticeTank(this.host.config());
+  }
+
   private get simulatedTime() {
     return this.lastPlan?.simulatedSeconds ?? 0;
   }
@@ -375,7 +423,7 @@ export class FluidSession {
     if (this.maskCache?.key === key) return this.maskCache;
     const mask = rasterizeObstacles(
       obstacles,
-      { ...config.tank, nx, ny },
+      { ...this.latticeTank, nx, ny },
       { time, params }
     );
     this.maskCache = { key, mask, nx, ny };
@@ -568,6 +616,9 @@ export class FluidSession {
       // A quarter of the ceiling to begin with: a box's momentum outlasts any
       // correction, so a gentle start overshoots less than a strong one.
       this.forceAmplitude = 0.25 * this.forceCeiling;
+      // Eased in from nothing, like the wind tunnel's inflow.
+      this.appliedAmplitude = 0;
+      this.lastRegulated = 0;
       this.moving = undefined;
       this.movingKey = "";
       this.movingArea.clear();
@@ -618,6 +669,7 @@ export class FluidSession {
 
   private stopLattice() {
     const wasRunning = this.overlay.isRunning;
+    this.releaseReads();
     this.overlay.stop();
     withdrawVelocitySample(FLUID_SAMPLE_SOURCE);
     if (wasRunning) this.host.simulatingChanged();
@@ -633,8 +685,7 @@ export class FluidSession {
 
   /** Body numbers per cell, link fractions, and each body's bounding box. */
   private buildSolids(nx: number, ny: number) {
-    const config = this.host.config();
-    const { tank } = config;
+    const tank = this.latticeTank;
     const dx = (tank.xMax - tank.xMin) / nx;
     const dy = (tank.yMax - tank.yMin) / ny;
     const rows = this.solidRows;
@@ -689,18 +740,11 @@ export class FluidSession {
    * clock if any of them reads it, and the tank.
    */
   private solidsKeyFor(nx: number, ny: number) {
-    // Fixed solids only: a moving one changes every frame by design, and is
+    // Fixed solids read no slider and no clock (`isMoving`), so their mask
+    // changes only with the rows themselves and the grid. A moving one is
     // followed by `syncMoving` without rebuilding the mask.
-    const rows = this.solidRows.filter((row) => !this.isMoving(row));
-    const params = new Map<string, number>();
-    for (const row of rows)
-      for (const name of row.obstacle!.params)
-        params.set(name, this.helperValue(name));
-    const time = rows.some((r) => r.obstacle!.usesTime)
-      ? this.simulatedTime
-      : 0;
     const { tank } = this.host.config();
-    return JSON.stringify([this.rowsKey, [...params], time, nx, ny, tank]);
+    return JSON.stringify([this.rowsKey, nx, ny, tank]);
   }
 
   private buildSpec(
@@ -816,7 +860,7 @@ export class FluidSession {
         params.set(name, this.helperValue(name));
     }
     const time = usesTime ? this.simulatedTime : 0;
-    const { tank } = config;
+    const tank = this.latticeTank;
     const { dt } = this.units;
     const key = JSON.stringify([
       description,
@@ -882,18 +926,37 @@ export class FluidSession {
 
   /** The stirring force's shape, strongest push 1, `2k` and `2k + 1`. */
   private forceShape: Float32Array | undefined;
-  /** Its strength, in lattice units of force density. */
+  /** The strength the regulator wants, in lattice units of force density. */
   private forceAmplitude = 0;
+  /** The strength applied now, easing toward `forceAmplitude`. */
+  private appliedAmplitude = 0;
+  /** The step the strength was last regulated at. */
+  private lastRegulated = 0;
 
-  /** The shape at the current strength, onto the running lattice. */
+  /**
+   * The shape onto the running lattice, once per shape; its strength is the
+   * lattice's `forceScale`, eased every frame (`easeForce`).
+   */
   private uploadForce() {
     const shape = this.forceShape;
     if (!shape || !this.spec) return;
-    const field = new Float32Array(shape.length);
-    for (let k = 0; k < shape.length; k++)
-      field[k] = shape[k] * this.forceAmplitude;
-    this.spec = { ...this.spec, forceField: field };
-    this.overlay.updateForceField(field);
+    this.spec = { ...this.spec, forceField: shape };
+    this.overlay.updateForceField(shape);
+  }
+
+  /**
+   * Moves the applied strength toward the regulator's over `steps` steps,
+   * with a time constant of `FORCE_EASING_SECONDS` of flow. Changed in one
+   * jump, each correction struck the closed box like a piston and set it
+   * ringing; the ringing is most of what a gradient field, which pressure
+   * should answer completely, appears to move.
+   */
+  private easeForce(steps: number) {
+    const lattice = this.overlay.current;
+    if (!lattice || !this.forceShape) return;
+    const k = 1 - Math.exp(-(steps * this.units.dt) / FORCE_EASING_SECONDS);
+    this.appliedAmplitude += (this.forceAmplitude - this.appliedAmplitude) * k;
+    lattice.forceScale = this.appliedAmplitude;
   }
 
   /**
@@ -914,12 +977,20 @@ export class FluidSession {
    * starts at the inertial estimate, never exceeds it, and eases down when
    * the flow's fastest point passes the typical speed and back up when it
    * falls well below. It begins at a quarter of that, since a box's momentum
-   * outlasts every correction and a gentle start overshoots less. The push keeps the field's shape throughout, and a
-   * gradient field, which pressure answers whatever its strength, still
-   * barely moves the fluid at the ceiling.
+   * outlasts every correction and a gentle start overshoots less. The push
+   * keeps the field's shape throughout, and a gradient field, which pressure
+   * answers whatever its strength, still barely moves the fluid at the
+   * ceiling.
+   *
+   * It acts every `REGULATE_SECONDS` of flow, not of wall clock, so that a
+   * slower computer, which runs fewer steps a second, regulates the same
+   * flow the same way.
    */
   private regulateForce(peakSpeed: number) {
     if (this.host.config().mode !== "stirredBox" || !this.forceShape) return;
+    const step = this.overlay.steps;
+    if (step - this.lastRegulated < REGULATE_SECONDS / this.units.dt) return;
+    this.lastRegulated = step;
     // Aimed at 70% of the typical speed, because the box's momentum carries
     // the flow past whatever the push settles at: aimed at the full speed it
     // overshot to Mach 0.32 and made Auto restart.
@@ -928,19 +999,26 @@ export class FluidSession {
     let next = this.forceAmplitude;
     if (peakSpeed > target) next *= Math.max(0.5, target / peakSpeed);
     else if (peakSpeed < 0.7 * target) next = Math.min(ceiling, next * 1.25);
-    if (next === this.forceAmplitude) return;
     this.forceAmplitude = next;
-    this.uploadForce();
   }
 
   // ---- moving solids --------------------------------------------------------
 
-  private moving: { solids: PartialSolids; step: number } | undefined;
+  /**
+   * The last coverage computed, the step it was for, and which row each of
+   * its signed functions belongs to. Everything about a moving solid is kept
+   * by row id, not body number: a body's number is its place in the list, and
+   * deleting a row above it renumbers it, which would compare one solid's
+   * wall with another's.
+   */
+  private moving:
+    | { solids: PartialSolids; step: number; rowIds: string[] }
+    | undefined;
   private movingKey = "";
-  /** Each moving body's area when last accepted, to tell a resize from a move. */
-  private readonly movingArea = new Map<number, number>();
-  /** The step each moving body last moved at. */
-  private readonly lastMoved = new Map<number, number>();
+  /** Each moving row's area when last accepted, to tell a resize from a move. */
+  private readonly movingArea = new Map<string, number>();
+  /** The step each moving row last moved at. */
+  private readonly lastMoved = new Map<string, number>();
 
   /** The moving rows, with the body number each reports under. */
   private get movingRows() {
@@ -969,10 +1047,51 @@ export class FluidSession {
   }
 
   /**
-   * Coverage and wall velocity for the moving solids, if any. The velocity is
-   * how far each wall moved since the last update, over the steps between.
+   * Each moving row's recent translations, `[time, steps, ux·steps,
+   * uy·steps]`, for the average over `VELOCITY_WINDOW_MS`.
    */
-  private computeMoving(nx: number, ny: number, fresh = false) {
+  private readonly translations = new Map<string, number[][]>();
+
+  /**
+   * A row's translation averaged over the last `VELOCITY_WINDOW_MS`, weighted
+   * by steps. Desmos stamps a slider's value when it is set and the tab sees
+   * it a frame or two later, unevenly, so one update's displacement over its
+   * own steps scatters by ±40% while the slider moves steadily; the window
+   * averages that out, and still follows a stop within it.
+   */
+  private smoothedTranslation(
+    rowId: string,
+    raw: readonly [number, number],
+    steps: number,
+    now: number
+  ): readonly [number, number] {
+    const history = this.translations.get(rowId) ?? [];
+    history.push([now, steps, raw[0] * steps, raw[1] * steps]);
+    while (history.length > 1 && history[0][0] < now - VELOCITY_WINDOW_MS)
+      history.shift();
+    this.translations.set(rowId, history);
+    let total = 0;
+    let x = 0;
+    let y = 0;
+    for (const [, s, dx, dy] of history) {
+      total += s;
+      x += dx;
+      y += dy;
+    }
+    return total > 0 ? [x / total, y / total] : [0, 0];
+  }
+
+  /**
+   * Coverage and wall velocity for the moving solids, if any. The velocity is
+   * how far each wall moved since the last update, over the steps between,
+   * with each solid's translation averaged over the last few updates.
+   */
+  private computeMoving(
+    nx: number,
+    ny: number,
+    fresh = false,
+    now = performance.now()
+  ) {
     const rows = this.movingRows;
     if (rows.length === 0) return undefined;
     const config = this.host.config();
@@ -981,18 +1100,26 @@ export class FluidSession {
       ? this.simulatedTime
       : 0;
     const step = this.overlay.steps;
+    const rowIds = rows.map(({ row }) => row.id);
+    // Each row's last signed function, found by its id. A row new since then
+    // has none and starts at rest; so does every row on a fresh start.
+    const last = fresh ? undefined : this.moving;
+    if (fresh) this.translations.clear();
+    const previousSigned = last
+      ? rowIds.map((id) => last.solids.signed[last.rowIds.indexOf(id)])
+      : undefined;
+    const rowOf = new Map(rows.map(({ row, body }) => [body, row.id]));
     const solids = partialSolids(
       rows.map(({ row, body }) => ({ obstacle: row.obstacle!, body })),
-      { nx, ny, tank: config.tank },
+      { nx, ny, tank: this.latticeTank },
       { time, params },
-      fresh || !this.moving
-        ? undefined
-        : {
-            signed: this.moving.solids.signed,
-            elapsedSteps: step - this.moving.step,
-          }
+      last && previousSigned
+        ? { signed: previousSigned, elapsedSteps: step - last.step }
+        : undefined,
+      (body, raw, steps) =>
+        this.smoothedTranslation(rowOf.get(body) ?? "", raw, steps, now)
     );
-    this.moving = { solids, step };
+    this.moving = { solids, step, rowIds };
     this.movingKey = this.movingKeyFor(nx, ny);
     return {
       solids,
@@ -1004,13 +1131,20 @@ export class FluidSession {
     };
   }
 
+  /** When a moving solid's sliders or clock last changed, in milliseconds. */
+  private movingChangedAt = 0;
+
   /**
-   * Follows the moving solids, every frame. A frame in which nothing moved
-   * still updates once more if the walls had a velocity, to set it back to
-   * zero. A change in a solid's area is a resize, not a move: Auto keeps
-   * going and marks the flow as settling, Strict restarts (brief §8.1).
+   * Follows the moving solids, every frame. Each wall's velocity is how far
+   * it moved between two changes of what moves it, over the steps between.
+   * A solid counts as stopped, and its walls are set back to rest, only once
+   * nothing has changed for `STOPPED_AFTER_MS`: Desmos reports a dragged
+   * slider every frame or two, not every frame, and treating each quiet frame
+   * as a stop made the walls alternate between rest and twice their speed. A
+   * change in a solid's area is a resize, not a move: Auto keeps going and
+   * marks the flow as settling, Strict restarts (brief §8.1).
    */
-  private syncMoving() {
+  private syncMoving(now: number) {
     if (!this.spec) return;
     if (this.movingRows.length === 0) {
       // The last moving solid was deleted, or no longer reads a slider.
@@ -1024,19 +1158,34 @@ export class FluidSession {
     }
     const { nx, ny } = this.spec;
     const key = this.movingKeyFor(nx, ny);
-    const hadVelocity =
-      this.moving?.solids.velocity.some((v) => v !== 0) ?? false;
-    if (key === this.movingKey && !hadVelocity) return;
-    const moving = this.computeMoving(nx, ny);
+    if (key === this.movingKey) {
+      const hadVelocity = this.moving?.solids.moving ?? false;
+      if (!hadVelocity) {
+        // At rest and unchanged, the last coverage is still the solid as it
+        // is now, so the first move after a rest is measured over the steps
+        // since this frame, not since the solid last stopped.
+        if (this.moving) this.moving.step = this.overlay.steps;
+        return;
+      }
+      if (now - this.movingChangedAt < STOPPED_AFTER_MS) return;
+    } else {
+      this.movingChangedAt = now;
+    }
+    const moving = this.computeMoving(nx, ny, false, now);
     if (!moving) return;
     const step = this.overlay.steps;
     const config = this.host.config();
     const pass = this.units.cellsPerLength / this.latticeSpeed;
+    const rowOf = new Map(
+      this.movingRows.map(({ row, body }) => [body, row.id] as const)
+    );
     for (const [body, area] of moving.solids.area) {
-      const before = this.movingArea.get(body);
-      if (moving.solids.fastest > 1e-7) this.lastMoved.set(body, step);
+      const rowId = rowOf.get(body);
+      if (rowId === undefined) continue;
+      const before = this.movingArea.get(rowId);
+      if (moving.solids.moved.has(body)) this.lastMoved.set(rowId, step);
       if (before === undefined) {
-        this.movingArea.set(body, area);
+        this.movingArea.set(rowId, area);
         continue;
       }
       if (Math.abs(area - before) <= 0.02 * before) continue;
@@ -1047,7 +1196,7 @@ export class FluidSession {
         this.syncLattice();
         return;
       }
-      this.movingArea.set(body, area);
+      this.movingArea.set(rowId, area);
       this.settleUntil = step + Math.round(10 * pass);
     }
     if (moving.solids.teleported) {
@@ -1099,6 +1248,13 @@ export class FluidSession {
     nx: number,
     ny: number
   ) {
+    // Reads in flight were asked of the old bodies, whose numbers the new
+    // ones may reuse.
+    if (this.reads) {
+      for (const read of this.reads.forces.values())
+        this.reads.lattice.cancelRead(read);
+      this.reads.forces.clear();
+    }
     this.bodies.clear();
     const solid = this.spec?.solid;
     if (!solid) return;
@@ -1144,7 +1300,7 @@ export class FluidSession {
       let dragValue = recent(drag.length ? drag : record.drag.slice(-50));
       let liftValue = recent(lift.length ? lift : record.lift.slice(-50));
       let strouhal: number | undefined;
-      const movedAt = this.lastMoved.get(body);
+      const movedAt = this.lastMoved.get(record.rowId);
       const stillMoving =
         movedAt !== undefined &&
         this.overlay.steps - movedAt <
@@ -1195,18 +1351,24 @@ export class FluidSession {
 
   private readonly frame = (now: number) => {
     this.frameHandle = requestAnimationFrame(this.frame);
+    this.inFrame = true;
+    this.rowsChecked = false;
+    try {
+      this.runFrame(now);
+    } finally {
+      this.inFrame = false;
+    }
+  };
+
+  private runFrame(now: number) {
     this.lastPlan = this.scheduler.frame(now);
     const lattice = this.overlay.current;
     if (lattice) {
       try {
-        this.syncMoving();
+        this.syncMoving(now);
+        this.easeForce(this.lastPlan.steps);
         this.advance(this.lastPlan.steps);
-        this.sample();
-        this.publishVelocity(now);
-        if (now - this.lastCheck >= CHECK_INTERVAL_MS) {
-          this.lastCheck = now;
-          this.check();
-        }
+        this.collectReads(lattice, now, this.lastPlan.steps > 0);
       } catch (error) {
         this.notice =
           error instanceof Error ? error.message : "The fluid stopped.";
@@ -1228,7 +1390,7 @@ export class FluidSession {
         this.maskCache = undefined;
       this.host.changed();
     }
-  };
+  }
 
   /** Runs `count` steps, with the eased start and the gust while they last. */
   private advance(count: number) {
@@ -1261,17 +1423,96 @@ export class FluidSession {
 
   private lastPublished = 0;
 
+  /** Readbacks in flight, and the lattice they were asked of. */
+  private reads:
+    | {
+        lattice: GpuD2Q9;
+        forces: Map<number, PendingRead>;
+        macro: PendingRead | undefined;
+      }
+    | undefined;
+
+  /**
+   * Collects what the GPU has finished reading back and asks for more, so the
+   * main thread never waits for it (`GpuD2Q9.beginRead`). Each body has one
+   * force read in flight, asked for after a frame's steps and collected a
+   * frame or so later, labelled with the step it was taken at. The flow is
+   * read ten times a second, for the particles and arrows and the Mach check.
+   */
+  private collectReads(lattice: GpuD2Q9, now: number, stepped: boolean) {
+    if (this.reads?.lattice !== lattice) {
+      this.releaseReads();
+      this.reads = { lattice, forces: new Map(), macro: undefined };
+    }
+    const { reads } = this;
+    for (const [body, pending] of reads.forces) {
+      const texel = lattice.finishRead(pending);
+      if (texel === undefined) continue;
+      reads.forces.delete(body);
+      const record = this.bodies.get(body);
+      if (record === undefined) continue;
+      this.record(record, pending.step, sumForceTexels(texel).get(body));
+    }
+    // A frame that ran no steps has nothing new to measure, and asking anyway
+    // would count the last step twice in every average.
+    if (stepped) {
+      for (const [body, record] of this.bodies) {
+        if (!reads.forces.has(body))
+          reads.forces.set(body, lattice.beginRead("forces", ...record.region));
+      }
+    }
+    if (reads.macro !== undefined) {
+      const texel = lattice.finishRead(reads.macro);
+      if (texel !== undefined) {
+        reads.macro = undefined;
+        const macro = macroFromTexels(texel);
+        this.publishVelocity(macro);
+        // Mach, validity and the stirring strength, every time the flow is
+        // read. This may restart or stop the lattice.
+        this.check(macro);
+      }
+    }
+    if (
+      this.overlay.current === lattice &&
+      reads.macro === undefined &&
+      now - this.lastPublished >= SAMPLE_INTERVAL_MS
+    ) {
+      this.lastPublished = now;
+      reads.macro = lattice.beginRead("macro", 0, 0, lattice.nx, lattice.ny);
+    }
+  }
+
+  /** Lets go of every read in flight, as a new lattice or new bodies do. */
+  private releaseReads() {
+    if (this.reads === undefined) return;
+    const { lattice, forces, macro } = this.reads;
+    for (const read of forces.values()) lattice.cancelRead(read);
+    if (macro !== undefined) lattice.cancelRead(macro);
+    this.reads = undefined;
+  }
+
+  /** One drag and lift sample, at the step it was taken. */
+  private record(
+    record: BodyRecord,
+    step: number,
+    force: readonly [number, number] = [0, 0]
+  ) {
+    record.drag.push({ step, value: force[0] + record.rest[0] });
+    record.lift.push({ step, value: force[1] + record.rest[1] });
+    if (record.drag.length > SAMPLE_LIMIT) {
+      record.drag.splice(0, record.drag.length - SAMPLE_LIMIT);
+      record.lift.splice(0, record.lift.length - SAMPLE_LIMIT);
+    }
+  }
+
   /**
    * Hands the flow's velocity to the particles and arrows, in graph units per
    * second, ten times a second. They live in other WebGL contexts, which
    * cannot read this one's textures, so the velocity crosses as numbers.
    */
-  private publishVelocity(now: number) {
-    if (now - this.lastPublished < SAMPLE_INTERVAL_MS) return;
-    this.lastPublished = now;
+  private publishVelocity({ ux, uy }: MacroFields) {
     const lattice = this.overlay.current;
     if (!lattice || !this.spec) return;
-    const { ux, uy } = lattice.readMacro();
     const config = this.host.config();
     // A lattice velocity of 1 is a cell per step: dx/dt graph units per
     // second, which is the inflow speed over the lattice speed.
@@ -1286,24 +1527,8 @@ export class FluidSession {
       width: lattice.nx,
       height: lattice.ny,
       data,
-      bounds: config.tank,
+      bounds: this.latticeTank,
     });
-  }
-
-  private sample() {
-    const lattice = this.overlay.current;
-    if (!lattice || this.bodies.size === 0) return;
-    for (const [body, record] of this.bodies) {
-      const sums = lattice.sumForces(...record.region);
-      const force = sums.get(body) ?? [0, 0];
-      const step = lattice.steps;
-      record.drag.push({ step, value: force[0] + record.rest[0] });
-      record.lift.push({ step, value: force[1] + record.rest[1] });
-      if (record.drag.length > SAMPLE_LIMIT) {
-        record.drag.splice(0, record.drag.length - SAMPLE_LIMIT);
-        record.lift.splice(0, record.lift.length - SAMPLE_LIMIT);
-      }
-    }
   }
 
   /**
@@ -1311,10 +1536,9 @@ export class FluidSession {
    * lattice has gone unstable: it is stopped, and Auto restarts it slower.
    * Auto also slows down a flow that is merely too fast to be accurate.
    */
-  private check() {
+  private check({ ux, uy, deltaRho }: MacroFields) {
     const lattice = this.overlay.current;
     if (!lattice || !this.spec) return;
-    const { ux, uy, deltaRho } = lattice.readMacro();
     let peak = 0;
     let valid = true;
     for (let k = 0; k < ux.length; k++) {
@@ -1329,6 +1553,10 @@ export class FluidSession {
     if (valid) this.regulateForce(peak);
     const config = this.host.config();
     const tooFast = !valid || this.peakMach > MACH_LIMIT;
+    const wasOver = this.overMach;
+    this.overMach = valid && this.peakMach > MACH_LIMIT;
+    if (wasOver && !this.overMach && this.notice === this.overMachNotice)
+      this.notice = "";
     if (!tooFast) return;
     if (
       config.speedMode === "auto" &&
@@ -1344,8 +1572,25 @@ export class FluidSession {
       this.notice =
         "The flow became unstable and has stopped. Try Accurate, a lower Reynolds number, or more cells.";
       this.stopLattice();
+    } else {
+      // Lively keeps its speed by choice, and Auto and Accurate have no
+      // slower one left: the flow runs on, said to be inaccurate while it is
+      // (brief §8.1), and nothing measured meanwhile counts as settled.
+      this.overMachNotice = `Speed limit exceeded: the flow reached Mach ${this.peakMach.toFixed(2)}, past the 0.3 where the lattice stays accurate, so what it shows now is not accurate.${
+        config.speedMode === "lively" ? " Accurate or Auto would slow it." : ""
+      }`;
+      this.notice = this.overMachNotice;
+      this.settleUntil = Math.max(
+        this.settleUntil,
+        this.overlay.steps +
+          Math.round(this.units.cellsPerLength / this.latticeSpeed)
+      );
     }
   }
+
+  /** Whether the flow was past Mach 0.3 at the last check, and what was said. */
+  private overMach = false;
+  private overMachNotice = "";
 
   private drawOnce() {
     const config = this.host.config();
@@ -1357,7 +1602,7 @@ export class FluidSession {
         : config.show === "speed"
           ? 1.6 * u
           : 1.5 * u * u;
-    this.overlay.draw(config.tank, config.show, scale);
+    this.overlay.draw(this.latticeTank, config.show, scale);
   }
 }
 

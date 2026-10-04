@@ -75,6 +75,11 @@ export function sheddingPeriod(
 /**
  * Extremes and means of a quantity over the last whole cycle, from the
  * second-to-last to the last crossing.
+ *
+ * The mean is over time, by the trapezoid rule on the samples' steps, not
+ * over samples: a live tab samples once a frame, and frames run uneven
+ * numbers of steps, so a plain average would weight the cycle by frame rate.
+ * Evenly spaced samples give the same mean either way, to within the ends.
  */
 export function lastCycle(
   series: readonly Sample[],
@@ -84,14 +89,22 @@ export function lastCycle(
   const to = crossings[crossings.length - 1];
   let min = Infinity;
   let max = -Infinity;
-  let sum = 0;
-  let count = 0;
-  for (const { step, value } of series) {
+  let area = 0;
+  let span = 0;
+  let previous: Sample | undefined;
+  for (const sample of series) {
+    const { step, value } = sample;
     if (step < from || step > to) continue;
     min = Math.min(min, value);
     max = Math.max(max, value);
-    sum += value;
-    count++;
+    if (previous !== undefined) {
+      const width = step - previous.step;
+      area += ((value + previous.value) / 2) * width;
+      span += width;
+    }
+    previous = sample;
   }
-  return { min, max, mean: sum / count, peakToPeak: max - min };
+  const mean =
+    span > 0 ? area / span : previous !== undefined ? previous.value : NaN;
+  return { min, max, mean, peakToPeak: max - min };
 }

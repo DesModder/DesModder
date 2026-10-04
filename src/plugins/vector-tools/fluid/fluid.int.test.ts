@@ -1,4 +1,4 @@
-import { testWithPage } from "../../../tests/puppeteer-utils";
+import { testWithPage, type Driver } from "../../../tests/puppeteer-utils";
 import type { Calc as CalcType } from "#globals";
 import { PANEL_TABS } from "../model";
 
@@ -8,11 +8,48 @@ declare let DSM: Window["DSM"];
 const BUTTON = ".dsm-action-menu .dsm-icon-compass2";
 
 /**
+ * A Fluid tab test that leaves Vector Tools' stored settings as other tests
+ * expect them, whether it passes or fails. Settings outlive the page: a fluid
+ * test that failed before its own cleanup once left the arrows off and the box
+ * stirring, and so failed two tests in another file that never touch the
+ * fluid.
+ */
+function fluidTest(
+  name: string,
+  body: (driver: Driver) => Promise<void>,
+  timeout: number
+) {
+  testWithPage(
+    name,
+    async (driver) => {
+      try {
+        await body(driver);
+      } finally {
+        await driver.evaluate(() => {
+          const plugin = DSM.enabledPlugins["vector-tools"] as any;
+          if (plugin === undefined) return;
+          plugin.setFluid("mode", "off");
+          if (plugin.flowOverlay.isRunning) plugin.toggleFlow();
+          plugin.resetConfig();
+          plugin.setPanelTab("field");
+        });
+        // Settings are written back to the extension after a delay; a page
+        // that closes first loses the write, and the next test inherits it.
+        await driver.page.waitForFunction(() => !DSM.delaySetPluginSettings);
+        await driver.disablePlugin("vector-tools");
+        await driver.setBlank();
+      }
+    },
+    timeout
+  );
+}
+
+/**
  * Gate 0 end to end, in real Desmos: the Fluid tab reads the graph's
  * inequalities, says which are solids and why the others are not, draws the
  * tank as the fluid will see it, runs its clock, and measures the GPU.
  */
-testWithPage(
+fluidTest(
   "Fluid tab: solids, mask, clock and GPU check in a real graph",
   async (driver) => {
     await driver.enablePlugin("vector-tools");
@@ -121,19 +158,6 @@ testWithPage(
     await driver.page.screenshot({ path: "docs/assets/fluid-gate0-tab.png" });
 
     await driver.click('#dsm-vector-tools-fluid-mode [data-value="off"]');
-    // Leave the stored settings as other tests expect them: the panel opens
-    // on its first tab, and the field holds its defaults.
-    await driver.evaluate(() => {
-      const plugin = DSM.enabledPlugins["vector-tools"] as any;
-      plugin.resetConfig();
-      plugin.setPanelTab("field");
-    });
-    // Settings are written back to the extension after a delay; a page that
-    // closes first loses the write, and the next test inherits this one's.
-    await driver.page.waitForFunction(() => !DSM.delaySetPluginSettings);
-    await driver.disablePlugin("vector-tools");
-    await driver.setBlank();
-    await driver.waitForSync();
   },
   90000
 );
@@ -145,7 +169,7 @@ testWithPage(
  * raises both above the unconfined values (St 0.164, C_D 1.33); the mock-up
  * measured St 0.197 at a sixth.
  */
-testWithPage(
+fluidTest(
   "Fluid tab: a cylinder in the wind tunnel sheds, and is measured",
   async (driver) => {
     await driver.enablePlugin("vector-tools");
@@ -178,6 +202,17 @@ testWithPage(
         return fluid.measurements[0]?.strouhal !== undefined;
       },
       { timeout: 60000, polling: 500 }
+    );
+    // The panel redraws its readouts four times a second, so its text can be
+    // a quarter of a second behind the measurement just read.
+    await driver.waitForFunction(
+      () =>
+        (
+          document.querySelector<HTMLElement>(
+            ".dsm-vector-tools-fluid-row-status"
+          )?.innerText ?? ""
+        ).includes("Shedding at St"),
+      { timeout: 5000, polling: 100 }
     );
     const state = await driver.evaluate(() => {
       const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
@@ -287,23 +322,6 @@ testWithPage(
     await driver.click(BUTTON);
     await new Promise((resolve) => setTimeout(resolve, 500));
     await driver.page.screenshot({ path: "docs/assets/fluid-wind-tunnel.png" });
-    await driver.evaluate(() => {
-      const plugin = DSM.enabledPlugins["vector-tools"] as any;
-      plugin.setFluid("mode", "off");
-      plugin.setArrowMode("live");
-    });
-    // Leave the stored settings as other tests expect them: the panel opens
-    // on its first tab, and the field holds its defaults.
-    await driver.evaluate(() => {
-      const plugin = DSM.enabledPlugins["vector-tools"] as any;
-      plugin.resetConfig();
-      plugin.setPanelTab("field");
-    });
-    // Settings are written back to the extension after a delay; a page that
-    // closes first loses the write, and the next test inherits this one's.
-    await driver.page.waitForFunction(() => !DSM.delaySetPluginSettings);
-    await driver.disablePlugin("vector-tools");
-    await driver.setBlank();
   },
   120000
 );
@@ -314,7 +332,7 @@ testWithPage(
  * moves it, because pressure answers the part of a push that spreads. That
  * is Helmholtz and Hodge's decomposition, measured.
  */
-testWithPage(
+fluidTest(
   "Fluid tab: the stirred box keeps a field's curl and answers its gradient with pressure",
   async (driver) => {
     await driver.enablePlugin("vector-tools");
@@ -339,7 +357,15 @@ testWithPage(
         p,
         q
       );
-      await new Promise((resolve) => setTimeout(resolve, 6000));
+      // Six seconds of flow, not of wall clock: on a loaded machine the
+      // lattice runs slower than real time, and a fixed wait would measure a
+      // younger, less settled flow (6.5% where 2% is typical).
+      await driver.waitForFunction(
+        () =>
+          (DSM.enabledPlugins["vector-tools"] as any).fluid.readout
+            .simulatedSeconds >= 6,
+        { timeout: 60000, polling: 50 }
+      );
       return await meanSpeed();
     };
     await driver.evaluate(() => {
@@ -355,16 +381,6 @@ testWithPage(
     const gradient = await runWith("x", "y");
     expect(curl).toBeGreaterThan(0.005);
     expect(gradient).toBeLessThan(0.05 * curl);
-
-    await driver.evaluate(() => {
-      const plugin = DSM.enabledPlugins["vector-tools"] as any;
-      plugin.setFluid("mode", "off");
-      plugin.resetConfig();
-      plugin.setPanelTab("field");
-    });
-    await driver.page.waitForFunction(() => !DSM.delaySetPluginSettings);
-    await driver.disablePlugin("vector-tools");
-    await driver.setBlank();
   },
   120000
 );
@@ -376,7 +392,7 @@ testWithPage(
  * overlay that read the first of the visibility observer's entries thought
  * itself hidden and stopped drawing for good.
  */
-testWithPage(
+fluidTest(
   "Fluid tab: the particles and arrows follow the flow, and give it back",
   async (driver) => {
     await driver.enablePlugin("vector-tools");
@@ -437,16 +453,6 @@ testWithPage(
       };
     });
     expect(stopped).toEqual({ drawn: "components", arrowsDrawn: "components" });
-
-    await driver.evaluate(() => {
-      const plugin = DSM.enabledPlugins["vector-tools"] as any;
-      if (plugin.flowOverlay.isRunning) plugin.toggleFlow();
-      plugin.resetConfig();
-      plugin.setPanelTab("field");
-    });
-    await driver.page.waitForFunction(() => !DSM.delaySetPluginSettings);
-    await driver.disablePlugin("vector-tools");
-    await driver.setBlank();
   },
   120000
 );
@@ -457,7 +463,7 @@ testWithPage(
  * it at the speed the slider sets, the row says it moves, and its forces are
  * marked provisional while it does.
  */
-testWithPage(
+fluidTest(
   "Fluid tab: a disc a slider moves carries the fluid with it",
   async (driver) => {
     await driver.enablePlugin("vector-tools");
@@ -486,16 +492,31 @@ testWithPage(
     await new Promise((resolve) => setTimeout(resolve, 2000));
     // Slide a from −6 to −2 over two seconds, 2 graph units a second, and
     // sample halfway: the fluid in the disc's fully covered cells against the
-    // wall velocity the tab gave them.
+    // wall velocity the tab gave them. The wall velocity is also read every
+    // frame through the middle second, since Desmos reports a dragged slider
+    // only every frame or two and the walls must not stutter with it.
     const sliding = await driver.evaluate(async () => {
       const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
       const start = performance.now();
       let sample: any;
+      const walls: number[] = [];
+      const wallSpeed = () => {
+        const { solids } = fluid.moving;
+        let sum = 0;
+        let n = 0;
+        for (let k = 0; k < solids.coverage.length; k++) {
+          if (solids.coverage[k] < 1) continue;
+          sum += solids.velocity[2 * k];
+          n++;
+        }
+        return sum / n;
+      };
       await new Promise<void>((resolve) => {
         const frame = () => {
           const elapsed = (performance.now() - start) / 1000;
           const a = -6 + 2 * Math.min(elapsed, 2);
           Calc.setExpression({ id: "slider", latex: `a=${a.toFixed(4)}` });
+          if (elapsed > 0.5 && elapsed < 1.5) walls.push(wallSpeed());
           if (sample === undefined && elapsed > 1) {
             const { solids } = fluid.moving;
             const { ux, uy } = fluid.overlay.current.readMacro();
@@ -527,8 +548,15 @@ testWithPage(
         };
         requestAnimationFrame(frame);
       });
-      return sample;
+      return { ...sample, walls };
     });
+    // Steady through the middle second: no frame at rest, none at double.
+    const meanWall =
+      sliding.walls.reduce((s: number, v: number) => s + v, 0) /
+      sliding.walls.length;
+    expect(sliding.walls.length).toBeGreaterThan(20);
+    expect(Math.min(...sliding.walls)).toBeGreaterThan(0.7 * meanWall);
+    expect(Math.max(...sliding.walls)).toBeLessThan(1.3 * meanWall);
     expect(sliding.cells).toBeGreaterThan(20);
     expect(sliding.teleported).toBe(false);
     // 2 graph units a second, at 8 for the inflow: a quarter of the inflow's
@@ -574,16 +602,6 @@ testWithPage(
     await driver.page.screenshot({
       path: "docs/assets/fluid-moving-solid.png",
     });
-
-    await driver.evaluate(() => {
-      const plugin = DSM.enabledPlugins["vector-tools"] as any;
-      plugin.setFluid("mode", "off");
-      plugin.resetConfig();
-      plugin.setPanelTab("field");
-    });
-    await driver.page.waitForFunction(() => !DSM.delaySetPluginSettings);
-    await driver.disablePlugin("vector-tools");
-    await driver.setBlank();
   },
   120000
 );

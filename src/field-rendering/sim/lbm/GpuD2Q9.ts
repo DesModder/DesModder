@@ -97,6 +97,7 @@ uniform sampler2D u_links0;
 uniform sampler2D u_links1;
 uniform sampler2D u_forceField;
 uniform bool u_hasForceField;
+uniform float u_forceScale;
 uniform sampler2D u_psm;
 uniform bool u_hasPsm;
 uniform bool u_hasSolid;
@@ -287,7 +288,7 @@ void main() {
   }
 
   // The uniform force plus this cell's share of a force field.
-  vec2 force = u_hasForceField ? u_force + texelFetch(u_forceField, c, 0).xy : u_force;
+  vec2 force = u_hasForceField ? u_force + u_forceScale * texelFetch(u_forceField, c, 0).xy : u_force;
 
   if (c.x == 0 && u_kind[0] >= 3) {
     reconstruct(g, 0, texelFetch(u_inlet, ivec2(c.y, 0), 0).xy * u_inletScale, force);
@@ -390,6 +391,50 @@ interface TextureSet {
   framebuffer: WebGLFramebuffer;
 }
 
+/** A readback the GPU has been asked for and may not have done yet. */
+export interface PendingRead {
+  /** The lattice's step count when it was asked for. */
+  readonly step: number;
+  readonly width: number;
+  readonly height: number;
+  readonly buffer: WebGLBuffer;
+  readonly sync: WebGLSync;
+}
+
+/** Each body's exchanged momentum in force-target texels, summed. */
+export function sumForceTexels(
+  texel: Float32Array
+): Map<number, [number, number]> {
+  const sums = new Map<number, [number, number]>();
+  for (let k = 0; k < texel.length / 4; k++) {
+    const body = Math.round(texel[4 * k + 2]);
+    if (body === 0) continue;
+    const sum = sums.get(body) ?? [0, 0];
+    sum[0] += texel[4 * k];
+    sum[1] += texel[4 * k + 1];
+    sums.set(body, sum);
+  }
+  return sums;
+}
+
+/** δρ, ux and uy from macroscopic-target texels (`g8 δρ ux uy`). */
+export function macroFromTexels(texel: Float32Array): {
+  deltaRho: Float32Array;
+  ux: Float32Array;
+  uy: Float32Array;
+} {
+  const cells = texel.length / 4;
+  const deltaRho = new Float32Array(cells);
+  const ux = new Float32Array(cells);
+  const uy = new Float32Array(cells);
+  for (let k = 0; k < cells; k++) {
+    deltaRho[k] = texel[4 * k + 1];
+    ux[k] = texel[4 * k + 2];
+    uy[k] = texel[4 * k + 3];
+  }
+  return { deltaRho, ux, uy };
+}
+
 export interface Sponge {
   width: number;
   max: number;
@@ -405,6 +450,8 @@ export class GpuD2Q9 {
   inletScale = 1;
   /** The Smagorinsky constant, 0 for plain BGK. See `CollisionParameters`. */
   smagorinsky = 0;
+  /** What the force field is multiplied by (`CpuD2Q9.forceScale`). */
+  forceScale = 1;
   steps = 0;
   private boundaries: Boundaries = PERIODIC;
   private sponge: Sponge | undefined;
@@ -699,6 +746,7 @@ export class GpuD2Q9 {
     gl.uniform1i(at("u_hasSolid"), this.hasSolid ? 1 : 0);
     gl.uniform1i(at("u_hasLinks"), this.hasLinks ? 1 : 0);
     gl.uniform1i(at("u_hasForceField"), this.hasForceField ? 1 : 0);
+    gl.uniform1f(at("u_forceScale"), this.forceScale);
     gl.uniform1i(at("u_hasPsm"), this.hasPsm ? 1 : 0);
     gl.uniform1f(at("u_inletScale"), this.inletScale);
     const specs = SIDES.map((side) => this.boundaries[side]);
@@ -782,17 +830,67 @@ export class GpuD2Q9 {
     width: number,
     height: number
   ): Map<number, [number, number]> {
-    const texel = this.readForceTexels(x, y, width, height);
-    const sums = new Map<number, [number, number]>();
-    for (let k = 0; k < width * height; k++) {
-      const body = Math.round(texel[4 * k + 2]);
-      if (body === 0) continue;
-      const sum = sums.get(body) ?? [0, 0];
-      sum[0] += texel[4 * k];
-      sum[1] += texel[4 * k + 1];
-      sums.set(body, sum);
-    }
-    return sums;
+    return sumForceTexels(this.readForceTexels(x, y, width, height));
+  }
+
+  /**
+   * Starts copying a rectangle of the force target ("forces") or the
+   * macroscopic one ("macro") into a buffer, without waiting for the GPU.
+   * `finishRead` collects it once the GPU has done every step queued before
+   * it, typically by the next frame.
+   *
+   * The synchronous reads below stall the page's main thread until the GPU
+   * has run every queued step. Measured on the live tab (300 × 120, two
+   * solids), that stall was 78% of each frame's time; read this way, the
+   * main thread never waits, and a sample arrives a frame late, labelled with
+   * the step it was taken at.
+   */
+  beginRead(
+    target: "forces" | "macro",
+    x: number,
+    y: number,
+    width: number,
+    height: number
+  ): PendingRead {
+    const { gl } = this;
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, buffer);
+    gl.bufferData(gl.PIXEL_PACK_BUFFER, 16 * width * height, gl.STREAM_READ);
+    gl.bindFramebuffer(
+      gl.READ_FRAMEBUFFER,
+      this.sets[this.current].framebuffer
+    );
+    gl.readBuffer(
+      target === "forces" ? gl.COLOR_ATTACHMENT3 : gl.COLOR_ATTACHMENT2
+    );
+    gl.readPixels(x, y, width, height, gl.RGBA, gl.FLOAT, 0);
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+    const sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0)!;
+    gl.flush();
+    return { step: this.steps, width, height, buffer, sync };
+  }
+
+  /**
+   * A read's texels if the GPU has finished it, or undefined if it has not
+   * yet. A finished read is released; call this until it returns texels, or
+   * `cancelRead`.
+   */
+  finishRead(read: PendingRead): Float32Array | undefined {
+    const { gl } = this;
+    if (gl.clientWaitSync(read.sync, 0, 0) === gl.TIMEOUT_EXPIRED)
+      return undefined;
+    const texel = new Float32Array(4 * read.width * read.height);
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, read.buffer);
+    gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, texel);
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+    this.cancelRead(read);
+    return texel;
+  }
+
+  cancelRead(read: PendingRead) {
+    this.gl.deleteSync(read.sync);
+    this.gl.deleteBuffer(read.buffer);
   }
 
   private readForceTexels(x: number, y: number, width: number, height: number) {
@@ -823,15 +921,7 @@ export class GpuD2Q9 {
     gl.readBuffer(gl.COLOR_ATTACHMENT2);
     gl.readPixels(0, 0, nx, ny, gl.RGBA, gl.FLOAT, texel);
     gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
-    const deltaRho = new Float32Array(cells);
-    const ux = new Float32Array(cells);
-    const uy = new Float32Array(cells);
-    for (let k = 0; k < cells; k++) {
-      deltaRho[k] = texel[4 * k + 1];
-      ux[k] = texel[4 * k + 2];
-      uy[k] = texel[4 * k + 3];
-    }
-    return { deltaRho, ux, uy };
+    return macroFromTexels(texel);
   }
 
   /**

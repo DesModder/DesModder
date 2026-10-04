@@ -53,6 +53,28 @@ describe("a force field", () => {
     expect(run(true)).toEqual(run(false));
   });
 
+  test("forceScale multiplies the field, as rewriting it would", () => {
+    const run = (value: number, scale: number) => {
+      const lattice = new CpuD2Q9({
+        nx: 12,
+        ny: 8,
+        tau: 0.7,
+        arithmetic: "float32",
+      });
+      lattice.forceField = new Float64Array(2 * 96);
+      for (let k = 0; k < 96; k++) {
+        lattice.forceField[2 * k] = value * Math.sin(k);
+        lattice.forceField[2 * k + 1] = -value * Math.cos(k);
+      }
+      lattice.forceScale = scale;
+      lattice.initialize(() => ({ ux: 0.01, uy: 0 }));
+      lattice.step(50);
+      return Array.from(lattice.populations);
+    };
+    // Halving is exact in floating point, so the two must agree bit for bit.
+    expect(run(6e-6, 0.5)).toEqual(run(3e-6, 1));
+  });
+
   test("in a closed box, pressure holds a gradient force and a curl stirs the fluid", () => {
     // The same strength each way: ∇(½ s r²) = s (x, y), and s (−y, x).
     const s = 2e-7;

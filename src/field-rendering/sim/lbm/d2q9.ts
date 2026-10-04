@@ -327,6 +327,11 @@ export class CpuD2Q9 {
    * what the stirred box pushes the fluid with.
    */
   forceField: Float64Array | Float32Array | undefined;
+  /**
+   * What the force field is multiplied by. The stirred box eases its strength
+   * through this, a uniform, rather than rewriting the field.
+   */
+  forceScale = 1;
   sponge:
     | { width: number; max: number; reference: [number, number] }
     | undefined;
@@ -349,6 +354,7 @@ export class CpuD2Q9 {
       smagorinsky: r(this.smagorinsky),
       tau: r(this.tau),
     };
+    const forceScale = r(this.forceScale);
     const uniformFx = parameters.fx;
     const uniformFy = parameters.fy;
     const kinds = SIDES.map((side) => boundaries[side]);
@@ -379,10 +385,10 @@ export class CpuD2Q9 {
           // The uniform force plus this cell's share of a force field, the
           // sum the shader forms too.
           parameters.fx = this.forceField
-            ? r(uniformFx + r(this.forceField[2 * k]))
+            ? r(uniformFx + r(forceScale * r(this.forceField[2 * k])))
             : uniformFx;
           parameters.fy = this.forceField
-            ? r(uniformFy + r(this.forceField[2 * k + 1]))
+            ? r(uniformFy + r(forceScale * r(this.forceField[2 * k + 1])))
             : uniformFy;
           let linkFx = 0;
           let linkFy = 0;
