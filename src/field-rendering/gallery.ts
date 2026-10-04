@@ -205,8 +205,10 @@ export const FIELD_GALLERY: readonly GalleryPreset[] = [
     name: "Vortex lattice",
     blurb:
       "Taylor–Green flow: an array of counter-rotating cells, each one shearing against its neighbours.",
-    xLatex: String.raw`\sin x\cos y`,
-    yLatex: String.raw`-\cos x\sin y`,
+    // Bracketed: Desmos refuses `\sin x\cos y` ("Use parentheses around the
+    // argument of 'sin'"), and these are written into the expression list.
+    xLatex: String.raw`\sin\left(x\right)\cos\left(y\right)`,
+    yLatex: String.raw`-\cos\left(x\right)\sin\left(y\right)`,
     palette: "aurora",
     backdrop: "#04080f",
     flow: {

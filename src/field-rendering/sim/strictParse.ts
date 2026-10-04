@@ -19,6 +19,7 @@
 
 import {
   CompileError,
+  bareArgumentEnd,
   tokenize,
   type FieldEnvironment,
   type FunctionDefinition,
@@ -649,12 +650,12 @@ class Parser {
     }
     if (name === "logbase") {
       const base = this.parseBracedGroup();
-      const argument = this.parseCallArguments();
+      const argument = this.parseCallArguments(name);
       if (argument.length !== 1)
         throw new CompileError("A log with a base takes one argument.");
       return { kind: "call", fn: name, args: [base, argument[0]] };
     }
-    const args = this.parseCallArguments();
+    const args = this.parseCallArguments(name);
     if (!BUILTIN_ARITY[name].includes(args.length)) {
       throw new CompileError(
         `"${name}" cannot take ${args.length} argument${args.length === 1 ? "" : "s"}.`
@@ -663,10 +664,24 @@ class Parser {
     return { kind: "call", fn: name, args };
   }
 
-  private parseCallArguments(): Expr[] {
+  private parseCallArguments(name: string): Expr[] {
     if (this.peek()?.kind !== "open") {
-      // `\sin x`: the bare argument binds as tightly as a power, as in Desmos.
-      return [this.parsePower()];
+      // `\sin 2x` is sin(2x): the whole product that follows, as live Desmos
+      // reads it, and refused where Desmos refuses it (`bareArgumentEnd`).
+      const start = this.index;
+      const end = bareArgumentEnd(this.tokens, start, this.barDepth > 0);
+      if (end === undefined) {
+        throw new CompileError(
+          `Use parentheses around the argument of "${name}".`
+        );
+      }
+      const argument = new Parser(
+        this.tokens.slice(start, end),
+        this.context,
+        this.locals
+      ).parseExpression();
+      this.index = end;
+      return [argument];
     }
     this.index++;
     const args = [this.parseExpression()];

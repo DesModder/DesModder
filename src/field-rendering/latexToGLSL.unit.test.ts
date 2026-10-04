@@ -137,6 +137,33 @@ describe("LaTeX to GLSL field compiler", () => {
     expectMatches("\\pi y", (_x, y) => Math.PI * y);
   });
 
+  test("reads a bracketless argument as the whole product after it, as Desmos does", () => {
+    // Measured in live Desmos (see `bareArgumentEnd`).
+    expectMatches("\\sin 2x", (x) => Math.sin(2 * x));
+    expectMatches("\\sin xy", (x, y) => Math.sin(x * y));
+    expectMatches("\\sin 2x/3", (x) => Math.sin((2 * x) / 3));
+    expectMatches("\\sin x\\cdot3", (x) => Math.sin(3 * x));
+    expectMatches("\\sin x^{2}x", (x) => Math.sin(x ** 3));
+    expectMatches("\\sin 2\\left(x+1\\right)", (x) => Math.sin(2 * (x + 1)));
+    expectMatches("\\sin x^{2}\\left(2\\right)", (x) => Math.sin(2 * x * x));
+    expectMatches("\\sin \\frac{x}{2}y", (x, y) => Math.sin((x / 2) * y));
+    expectMatches("\\sin 2x-1", (x) => Math.sin(2 * x) - 1);
+    expectMatches("\\sin\\left(x\\right)y", (x, y) => Math.sin(x) * y);
+    expectMatches("\\left|\\sin 2x\\right|", (x) => Math.abs(Math.sin(2 * x)));
+    expectMatches("\\ln 2y^{2}", (_x, y) => Math.log(2 * y * y));
+    for (const refused of [
+      "\\sin x\\cos x",
+      "\\sin x\\left(2\\right)",
+      "\\sin 2\\sqrt{x}",
+      "\\sin 2\\left|x\\right|",
+      "\\sin -x",
+    ]) {
+      const result = compileFieldComponentToGLSL(refused);
+      expect([refused, result.ok]).toEqual([refused, false]);
+      if (!result.ok) expect(result.error).toContain("Use parentheses");
+    }
+  });
+
   test("guards against division by zero instead of producing infinities", () => {
     const glsl = compiled("\\frac{1}{x}");
     expect(Number.isFinite(evaluate(glsl, 0, 0))).toBe(true);

@@ -32,6 +32,8 @@ export const DESMOS_SNAPS: ReadonlySet<string> = new Set([
   String.raw`\tan(\frac{\pi}{2})`,
   String.raw`\sec(\frac{\pi}{2})`,
   String.raw`\tan(90)`,
+  // sin(3π) is 0 in Desmos and 3.7·10⁻¹⁶ in doubles.
+  String.raw`\sin a_{three}\pi`,
 ]);
 
 /** `[latex, radian mode, degree mode]`. */
@@ -197,6 +199,46 @@ export const DESMOS_PROBES: ReadonlyArray<
   [String.raw`(-8)^{a_{half}}`, "NaN", "NaN"],
   [String.raw`(-8)^{a_{dec}}`, -2, -2],
   [String.raw`\sqrt[a_{three}]{-8}`, -2, -2],
+  // A function's argument without brackets is the whole product after it
+  // (`bareArgumentEnd`), recorded the same way on 2026-10-03.
+  [String.raw`\sin 2a_{half}`, 0.8414709848078965, 0.01745240643728351],
+  [
+    String.raw`\sin 2\cdot a_{three}`,
+    -0.27941549819892586,
+    0.10452846326765347,
+  ],
+  [
+    String.raw`\sin a_{three}^{2}a_{half}`,
+    -0.977530117665097,
+    0.07845909572784494,
+  ],
+  [String.raw`\sin 2a_{half}-1`, -0.1585290151921035, -0.9825475935627165],
+  [String.raw`\ln 2a_{three}`, 1.791759469228055, 1.791759469228055],
+  [
+    String.raw`\sin 2\left(a_{half}+1\right)`,
+    0.1411200080598672,
+    0.052335956242943835,
+  ],
+  [
+    String.raw`\sin \frac{a_{three}}{2}a_{half}`,
+    0.6816387600233341,
+    0.013089595571344441,
+  ],
+  [String.raw`\cos 2a_{three}/3`, -0.4161468365471424, 0.9993908270190958],
+  [String.raw`\sin a_{three}\pi`, 0, 0.16375259699047356],
+];
+
+/**
+ * Bracketless arguments live Desmos refuses with "Use parentheses around the
+ * argument", recorded 2026-10-03. The strict compiler must refuse them too,
+ * rather than make a solid of a row Desmos draws nothing for.
+ */
+export const DESMOS_BARE_ARGUMENT_REFUSALS: readonly string[] = [
+  String.raw`\sin a_{half}\cos a_{half}`,
+  String.raw`\sin a_{half}\left(2\right)`,
+  String.raw`\sin 2\sqrt{a_{half}}`,
+  String.raw`\sin 2\left|a_{half}\right|`,
+  String.raw`\sin -a_{half}`,
 ];
 
 /**

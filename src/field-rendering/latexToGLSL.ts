@@ -331,6 +331,117 @@ const COMMAND_ALIASES: Record<string, string> = {
   div: "/",
 };
 
+/**
+ * Where a function's argument written without brackets ends, as live Desmos
+ * reads it, or undefined where Desmos refuses it ("Use parentheses around the
+ * argument of 'sin'"). `start` is the token after the function's name. Both
+ * this file's compiler and the strict one (`sim/strictParse.ts`) use it.
+ *
+ * Measured in live Desmos on 2026-10-03:
+ * - **The argument is the whole product that follows.** `\sin 2x` is sin(2x),
+ *   `\sin xy` is sin(xy), `\sin 2x/3` is sin(2x/3), `\sin x\cdot3` is sin(3x),
+ *   `\sin x^{2}x` is sin(x³), `\sin 2(x+1)` is sin(2(x+1)), and
+ *   `\sin x^{2}(2)` is sin(2x²).
+ * - **It ends** at `+` or `−`, a comparison, a comma or a closing bracket:
+ *   `\sin 2x-1` is sin(2x) − 1.
+ * - **Desmos refuses** another function, a root, `|x|`, a piecewise, a leading
+ *   minus, and a bracket straight after a letter (`\sin x(2)`, which reads
+ *   like a call) anywhere in such an argument. So does this, rather than
+ *   guess at a reading Desmos never draws.
+ */
+export function bareArgumentEnd(
+  tokens: readonly Token[],
+  start: number,
+  insideBars: boolean
+): number | undefined {
+  /** The index after a balanced group opening at `at`, if it is one. */
+  const skipGroup = (
+    at: number,
+    open: Token["kind"],
+    close: Token["kind"]
+  ): number | undefined => {
+    if (tokens[at]?.kind !== open) return undefined;
+    let depth = 0;
+    for (let i = at; i < tokens.length; i++) {
+      if (tokens[i].kind === open) depth++;
+      else if (tokens[i].kind === close && --depth === 0) return i + 1;
+    }
+    return undefined;
+  };
+  /** An exponent after `^`: a braced group, or a signed number or letter. */
+  const skipExponent = (at: number): number | undefined => {
+    const token = tokens[at];
+    if (token?.kind === "openBrace")
+      return skipGroup(at, "openBrace", "closeBrace");
+    if (token?.kind === "op" && token.value === "-")
+      return skipExponent(at + 1);
+    if (token?.kind === "number" || token?.kind === "variable") return at + 1;
+    return undefined;
+  };
+
+  let i: number | undefined = start;
+  let afterLetter = false;
+  for (;;) {
+    // A factor.
+    const token: Token | undefined = tokens[i];
+    switch (token?.kind) {
+      case "number":
+        i++;
+        afterLetter = false;
+        break;
+      case "variable":
+        i++;
+        afterLetter = true;
+        break;
+      case "frac":
+        i = skipGroup(i + 1, "openBrace", "closeBrace");
+        if (i === undefined) return undefined;
+        i = skipGroup(i, "openBrace", "closeBrace");
+        afterLetter = false;
+        break;
+      case "open":
+        if (afterLetter) return undefined;
+        i = skipGroup(i, "open", "close");
+        afterLetter = false;
+        break;
+      default:
+        return undefined;
+    }
+    if (i === undefined) return undefined;
+    const power = tokens[i];
+    if (power?.kind === "op" && power.value === "^") {
+      i = skipExponent(i + 1);
+      if (i === undefined) return undefined;
+      afterLetter = false;
+    }
+    // What joins it to the next factor, if anything does.
+    const next = tokens[i];
+    switch (next?.kind) {
+      case "op":
+        if (next.value === "*" || next.value === "/") {
+          i++;
+          afterLetter = false;
+          continue;
+        }
+        return i;
+      case "number":
+      case "variable":
+      case "frac":
+      case "open":
+        continue;
+      case "bar":
+        // Inside |…| a bar closes it; anywhere else it would open another.
+        return insideBars ? i : undefined;
+      case "function":
+      case "sqrt":
+      case "pieceOpen":
+        return undefined;
+      default:
+        return i;
+    }
+  }
+}
+
 export function tokenize(latex: string): Token[] {
   const tokens: Token[] = [];
   let i = 0;
@@ -735,8 +846,7 @@ class Parser {
       }
       this.expect("close", "a closing parenthesis");
     } else {
-      // Desmos allows `\sin x`; the bare argument binds as tightly as a power.
-      args = [this.parsePower()];
+      args = [this.parseBareArgument(name)];
     }
     if (!spec.arity.includes(args.length)) {
       throw new CompileError(
@@ -744,6 +854,29 @@ class Parser {
       );
     }
     return spec.emit(args);
+  }
+
+  /**
+   * A function's argument written without brackets, as in `\sin 2x`, read
+   * the way live Desmos reads it (measured 2026-10-03; see
+   * `bareArgumentEnd`): the whole product that follows, so `\sin 2x` is
+   * sin(2x), not sin(2)·x.
+   */
+  private parseBareArgument(name: string): string {
+    const start = this.index;
+    const end = bareArgumentEnd(this.tokens, start, this.barDepth > 0);
+    if (end === undefined) {
+      throw new CompileError(
+        `Use parentheses around the argument of "${name}".`
+      );
+    }
+    const argument = new Parser(
+      this.tokens.slice(start, end),
+      this.context,
+      this.scope
+    ).parseExpression();
+    this.index = end;
+    return argument;
   }
 
   /**

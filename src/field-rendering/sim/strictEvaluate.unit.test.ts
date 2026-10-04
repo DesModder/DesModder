@@ -4,6 +4,7 @@ import { CellKind, compileObstacle, rasterizeObstacles } from "./obstacles";
 import { compileExpression, desmosPow } from "./strictEvaluate";
 import { parseStrictExpression } from "./strictParse";
 import {
+  DESMOS_BARE_ARGUMENT_REFUSALS,
   DESMOS_POWER_PROBES,
   DESMOS_PROBES,
   DESMOS_SNAPS,
@@ -60,11 +61,26 @@ describe("the strict evaluator computes what live Desmos computes", () => {
   test("the cases Desmos snaps to an exact value are the only exceptions", () => {
     // tan(π/2) is infinite in Desmos and merely huge in doubles. Every other
     // probe has to match, so this list cannot quietly grow.
-    expect(DESMOS_SNAPS.size).toBe(3);
+    expect(DESMOS_SNAPS.size).toBe(4);
     expect(evaluateConstant(String.raw`\tan(\frac{\pi}{2})`, false)).toBe(
       Math.tan(Math.PI / 2)
     );
   });
+});
+
+describe("a bracketless argument Desmos refuses", () => {
+  test.each(DESMOS_BARE_ARGUMENT_REFUSALS)(
+    "%s is refused, not guessed",
+    (latex) => {
+      const parsed = parseStrictExpression(latex, sliderEnv);
+      expect(parsed.ok).toBe(false);
+      if (!parsed.ok) expect(parsed.error).toContain("Use parentheses");
+      const solid = compileObstacle(`y<${latex}`, sliderEnv, {
+        degreeMode: false,
+      });
+      expect(solid.ok).toBe(false);
+    }
+  );
 });
 
 describe("a negative base to a fractional power", () => {

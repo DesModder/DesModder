@@ -61,10 +61,28 @@ JavaScript's `Math` already behaves this way almost everywhere, so the CPU
 evaluator is mostly single calls. The exceptions are the rational-exponent rule,
 `mod`, `log` with a base, and a NaN base.
 
-**Desmos snaps three trig values.** `tan(π/2)`, `sec(π/2)` and `tan(90°)` are
-infinite in Desmos and merely huge in doubles. Both sit on the same side of
-every comparison except at that one point, so they are recorded but not
-required to match.
+**Desmos snaps a few trig values.** `tan(π/2)`, `sec(π/2)` and `tan(90°)` are
+infinite in Desmos and merely huge in doubles, and `sin(3π)` is exactly 0 in
+Desmos and 3.7·10⁻¹⁶ in doubles. Each sits on the same side of every
+comparison except at that one point, so they are recorded but not required to
+match.
+
+**A function's argument without brackets is the whole product after it.**
+Measured on 2026-10-03, `\sin 2x` is sin(2x), not sin(2)·x. Likewise:
+
+- `\sin xy` is sin(xy), `\sin 2x/3` is sin(2x/3), and `\sin x^{2}x` is sin(x³);
+- `\sin 2(x+1)` is sin(2(x+1)), and `\ln 2x` is ln(2x).
+
+The argument ends at `+` or `−`, so `\sin 2x-1` is sin(2x) − 1. Desmos
+refuses another function, a root, `|x|`, a leading minus, or a bracket
+straight after a letter inside such an argument ("Use parentheses around the
+argument of 'sin'"). The strict compiler refuses them too, rather than make a
+solid of a row Desmos draws nothing for.
+
+Both compilers had read the argument as a single power, `sin(2)·x`. The flow
+visualizer's compiler (`latexToGLSL.ts`) had the same rule and is fixed with
+it: `bareArgumentEnd` is shared. That also caught a gallery preset, Vortex
+lattice, written as `\sin x\cos y`, which Desmos refuses. It is now bracketed.
 
 **Factorial is refused for now.** Desmos's factorial is Γ(x + 1)
 (`(½)! = 0.886`), and the GPU has no tested Gamma yet.

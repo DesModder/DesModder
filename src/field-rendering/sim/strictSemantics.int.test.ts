@@ -7,6 +7,7 @@ import { compileExpression } from "./strictEvaluate";
 import { emitExpressionGLSL, STRICT_GLSL_PRELUDE } from "./strictGLSL";
 import { parseStrictExpression } from "./strictParse";
 import {
+  DESMOS_BARE_ARGUMENT_REFUSALS,
   DESMOS_POWER_PROBES,
   DESMOS_PROBES,
   DESMOS_SNAPS,
@@ -239,6 +240,48 @@ testWithPageAndOpts(
       });
     }
     expect(mismatches).toEqual([]);
+  }
+);
+
+testWithPageAndOpts(
+  "strict geometry: Desmos still refuses the bracketless arguments the compiler refuses",
+  { timeout: 60000 },
+  async (driver) => {
+    const refused = await driver.page.evaluate(
+      async (latexes: string[], sliders: [string, number][]) => {
+        Calc.setBlank();
+        Calc.setExpressions([
+          ...sliders.map(([name, value], i) => ({
+            id: `slider${i}`,
+            latex: `${name}=${value}`,
+          })),
+          ...latexes.map((latex, i) => ({
+            id: `row${i}`,
+            latex: `y<${latex}`,
+          })),
+        ]);
+        const analysis = () =>
+          (
+            Calc as unknown as {
+              expressionAnalysis: Record<string, { isError?: boolean }>;
+            }
+          ).expressionAnalysis;
+        const deadline = Date.now() + 10000;
+        while (
+          Date.now() < deadline &&
+          !latexes.every((_, i) => analysis()[`row${i}`] !== undefined)
+        )
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        const out = latexes.map((_, i) => analysis()[`row${i}`]?.isError);
+        Calc.setBlank();
+        return out;
+      },
+      [...DESMOS_BARE_ARGUMENT_REFUSALS],
+      PROBE_SLIDERS.map(([n, v]) => [n, v] as [string, number])
+    );
+    expect(
+      DESMOS_BARE_ARGUMENT_REFUSALS.filter((_, i) => refused[i] !== true)
+    ).toEqual([]);
   }
 );
 
