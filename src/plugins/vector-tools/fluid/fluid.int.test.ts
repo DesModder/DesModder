@@ -534,6 +534,19 @@ fluidTest(
       () => (DSM.enabledPlugins["vector-tools"] as any).fluid.isSimulating,
       { timeout: 20000 }
     );
+    // Kept moving, a little, so it stays partially saturated cells rather
+    // than being parked as a fixed solid.
+    await driver.evaluate(() => {
+      // Every frame, as a drag reports.
+      const start = performance.now();
+      const frame = () => {
+        // From rest, so the first frames do not jump.
+        const a = 0.2 * (1 - Math.cos((performance.now() - start) / 400));
+        Calc.setExpression({ id: "slider", latex: `a=${a.toFixed(4)}` });
+        (window as any).cupFrame = requestAnimationFrame(frame);
+      };
+      frame();
+    });
     await driver.waitForFunction(
       () =>
         (DSM.enabledPlugins["vector-tools"] as any).fluid.readout
@@ -541,6 +554,7 @@ fluidTest(
       { timeout: 90000, polling: 250 }
     );
     const result = await driver.evaluate(() => {
+      cancelAnimationFrame((window as any).cupFrame);
       const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
       const { coverage } = fluid.moving.solids;
       const { deltaRho, ux } = fluid.overlay.current.readMacro();
@@ -609,6 +623,16 @@ fluidTest(
       { timeout: 20000 }
     );
     await new Promise((resolve) => setTimeout(resolve, 2000));
+    // At rest it starts parked, a fixed solid, until the slider moves.
+    expect(
+      await driver.evaluate(() => {
+        const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
+        return {
+          moving: fluid.moving !== undefined,
+          solid: fluid.spec.solid.some((v: number) => v === 1),
+        };
+      })
+    ).toEqual({ moving: false, solid: true });
     // Slide a from −6 to −2 over two seconds, 2 graph units a second, and
     // sample halfway: the fluid in the disc's fully covered cells against the
     // wall velocity the tab gave them. The wall velocity is also read every
@@ -687,37 +711,35 @@ fluidTest(
     expect(sliding.note).toContain("moving");
     expect(sliding.mach).toBeLessThan(0.3);
 
-    // Stopped, it holds the fluid inside it still, where the slider left it.
+    // Stopped, it is parked: a fixed solid where the slider left it, with
+    // interpolated walls, no partially saturated cells, and no fluid inside.
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const stopped = await driver.evaluate(() => {
       const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
-      const { solids } = fluid.moving;
-      const { ux } = fluid.overlay.current.readMacro();
-      const { nx } = fluid.spec;
+      const { nx, solid, psm } = fluid.spec;
       const { tank } = (DSM.enabledPlugins["vector-tools"] as any).getConfig()
         .fluid;
-      const box = solids.boxes.get(1);
-      let fluidX = 0;
+      let sum = 0;
       let n = 0;
-      for (let k = 0; k < solids.coverage.length; k++) {
-        if (solids.coverage[k] < 1) continue;
-        fluidX += Math.abs(ux[k]);
+      for (let k = 0; k < solid.length; k++) {
+        if (solid[k] !== 1) continue;
+        sum += k % nx;
         n++;
       }
       const dx = (tank.xMax - tank.xMin) / nx;
       return {
-        centreX: tank.xMin + ((box[0] + box[2] + 1) / 2) * dx,
-        fluidX: fluidX / n,
-        wallSpeed: Math.max(...solids.velocity.map(Math.abs)),
-        status: document.querySelector<HTMLElement>(
-          ".dsm-vector-tools-fluid-row-status"
-        )?.innerText,
+        moving: fluid.moving !== undefined,
+        psm: psm !== undefined,
+        cells: n,
+        cellArea: dx * dx,
+        centreX: tank.xMin + (sum / n + 0.5) * dx,
       };
     });
-    expect(stopped.centreX).toBeCloseTo(-2, 0);
-    // The least-squares fit leaves a rounding residue, not a velocity.
-    expect(stopped.wallSpeed).toBeLessThan(1e-8);
-    expect(stopped.fluidX).toBeLessThan(0.002);
+    expect(stopped.moving).toBe(false);
+    expect(stopped.psm).toBe(false);
+    expect(stopped.centreX).toBeCloseTo(-2, 1);
+    // π · 1², in cells.
+    expect(stopped.cells * stopped.cellArea).toBeCloseTo(Math.PI, 1);
     await driver.page.screenshot({
       path: "docs/assets/fluid-moving-solid.png",
     });

@@ -182,6 +182,12 @@ const GEOMETRY_INTERVAL_MS = 100;
  * being dragged.
  */
 const STOPPED_AFTER_MS = 150;
+/**
+ * How long a solid only sliders move must stand still before it is parked as
+ * a fixed solid (`isMovingNow`): past the stop, so a pause in a drag does not
+ * switch it back and forth.
+ */
+const PARK_AFTER_MS = 500;
 /** How long a moving solid's translation is averaged over (`smoothedTranslation`). */
 const VELOCITY_WINDOW_MS = 100;
 /** Samples kept per body: enough for several shedding cycles. */
@@ -344,6 +350,41 @@ export class FluidSession {
     const { obstacle } = row;
     return obstacle!.params.length > 0 || obstacle!.usesTime;
   }
+
+  /**
+   * Whether a solid is partially saturated cells right now: it can move and
+   * is not parked. A solid only a slider moves is parked while the slider is
+   * still, as a fixed solid with interpolated walls, which are sharp, keep
+   * the fluid out of it, and measure its forces as a fixed solid's are. The
+   * partially saturated cells are softer at the wall and fluid inside, and are
+   * worth that only while the solid moves (GPT's third round, §B).
+   */
+  private isMovingNow(row: ObstacleRow) {
+    return this.isMoving(row) && !this.parked.has(row.id);
+  }
+
+  /** A solid that only sliders move, which can stand still and be parked. */
+  private canPark(row: ObstacleRow) {
+    return this.isMoving(row) && !row.obstacle!.usesTime;
+  }
+
+  /** A row's slider values, which a parked row is drawn at. */
+  private paramsOf(row: ObstacleRow) {
+    return new Map(
+      row.obstacle!.params.map((name) => [name, this.helperValue(name)])
+    );
+  }
+
+  /**
+   * Parked rows by id, with the slider values each was parked at. A row moves
+   * again, as partially saturated cells, as soon as one of those changes.
+   */
+  private readonly parked = new Map<string, Map<string, number>>();
+  /** When each moving row's sliders last changed, to know when to park it. */
+  private readonly sliderChangedAt = new Map<
+    string,
+    { key: string; at: number }
+  >();
 
   /**
    * Strict caps Re at 200 while a solid can move (brief §8.1): the partially
@@ -626,8 +667,15 @@ export class FluidSession {
       units.closure,
       this.latticeSpeed,
     ]);
-    const solidsKey = this.solidsKeyFor(nx, ny);
     const restart = latticeKey !== this.latticeKey || !this.overlay.isRunning;
+    // A fresh lattice starts with every solid at rest, so every one sliders
+    // move is parked; otherwise rows typed or deleted since are reconciled.
+    if (restart) {
+      this.parked.clear();
+      this.moving = undefined;
+    }
+    this.reconcileParking();
+    const solidsKey = this.solidsKeyFor(nx, ny);
     if (!restart) this.syncForceField(nx, ny);
     if (!restart && solidsKey === this.solidsKey) return;
     const solids = this.buildSolids(nx, ny);
@@ -721,8 +769,16 @@ export class FluidSession {
     const scope = { time, params };
     const centre = (i: number, j: number) =>
       [tank.xMin + (i + 0.5) * dx, tank.yMin + (j + 0.5) * dy] as const;
-    // Moving solids are partially saturated cells, not mask cells.
-    const fixed = rows.map((row) => !this.isMoving(row));
+    // Moving solids are partially saturated cells, not mask cells; a parked
+    // one is a mask cell, at the slider values it was parked at.
+    const fixed = rows.map((row) => !this.isMovingNow(row));
+    const scopes = rows.map((row) => {
+      const at = this.parked.get(row.id);
+      if (at === undefined) return scope;
+      const merged = new Map(params);
+      for (const [name, value] of at) merged.set(name, value);
+      return { time, params: merged };
+    });
     const solid = new Uint8Array(nx * ny);
     const boxes = rows.map(() => [Infinity, Infinity, -Infinity, -Infinity]);
     for (let j = 0; j < ny; j++) {
@@ -730,7 +786,7 @@ export class FluidSession {
         const [x, y] = centre(i, j);
         for (let b = 0; b < rows.length; b++) {
           if (!fixed[b]) continue;
-          if (!rows[b].obstacle!.contains({ ...scope, x, y })) continue;
+          if (!rows[b].obstacle!.contains({ ...scopes[b], x, y })) continue;
           solid[j * nx + i] = b + 1;
           const box = boxes[b];
           box[0] = Math.min(box[0], i);
@@ -744,7 +800,8 @@ export class FluidSession {
     const links = computeLinks(
       { nx, ny, centre },
       solid,
-      (body) => (x, y) => rows[body - 1].obstacle!.signed({ ...scope, x, y })
+      (body) => (x, y) =>
+        rows[body - 1].obstacle!.signed({ ...scopes[body - 1], x, y })
     );
     const regions = new Map<number, { rowId: string; box: number[] }>();
     rows.forEach((row, b) => {
@@ -767,9 +824,13 @@ export class FluidSession {
   private solidsKeyFor(nx: number, ny: number) {
     // Fixed solids read no slider and no clock (`isMoving`), so their mask
     // changes only with the rows themselves and the grid. A moving one is
-    // followed by `syncMoving` without rebuilding the mask.
+    // followed by `syncMoving` without rebuilding the mask, and a parked one
+    // is drawn at the values it was parked at, which `syncMoving` changes.
     const { tank } = this.host.config();
-    return JSON.stringify([this.rowsKey, nx, ny, tank]);
+    const parked = [...this.parked]
+      .map(([id, at]) => [id, [...at]] as const)
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+    return JSON.stringify([this.rowsKey, nx, ny, tank, parked]);
   }
 
   private buildSpec(
@@ -1049,7 +1110,7 @@ export class FluidSession {
   private get movingRows() {
     return this.solidRows
       .map((row, b) => ({ row, body: b + 1 }))
-      .filter(({ row }) => this.isMoving(row));
+      .filter(({ row }) => this.isMovingNow(row));
   }
 
   /** What the moving solids depend on: their rows, sliders and the clock. */
@@ -1106,6 +1167,73 @@ export class FluidSession {
     return total > 0 ? [x / total, y / total] : [0, 0];
   }
 
+  /** Rows unparked this frame, with the slider values they were parked at. */
+  private readonly unparkedFrom = new Map<string, Map<string, number>>();
+  /** The lattice's step count at the start of the last frame. */
+  private frameStep = 0;
+
+  /** Parks rows that sliders move and that are new since the last check. */
+  private reconcileParking() {
+    const rows = this.solidRows;
+    for (const id of [...this.parked.keys()]) {
+      const row = rows.find((r) => r.id === id);
+      if (row === undefined || !this.canPark(row)) this.parked.delete(id);
+    }
+    const moving = new Set(this.moving?.rowIds ?? []);
+    for (const row of rows) {
+      if (!this.canPark(row) || this.parked.has(row.id) || moving.has(row.id))
+        continue;
+      this.parked.set(row.id, this.paramsOf(row));
+    }
+  }
+
+  /**
+   * Unparks a row whose sliders moved, and parks one whose sliders have been
+   * still for `PARK_AFTER_MS`. True if either happened, when the mask has to
+   * be rebuilt.
+   */
+  private updateParking(now: number) {
+    let changed = false;
+    for (const row of this.solidRows) {
+      if (!this.canPark(row)) continue;
+      const params = this.paramsOf(row);
+      const key = JSON.stringify([...params]);
+      const at = this.parked.get(row.id);
+      if (at !== undefined) {
+        if (key === JSON.stringify([...at])) continue;
+        this.parked.delete(row.id);
+        this.unparkedFrom.set(row.id, at);
+        this.sliderChangedAt.set(row.id, { key, at: now });
+        changed = true;
+        continue;
+      }
+      const seen = this.sliderChangedAt.get(row.id);
+      if (seen === undefined || seen.key !== key) {
+        this.sliderChangedAt.set(row.id, { key, at: now });
+      } else if (now - seen.at >= PARK_AFTER_MS) {
+        this.parked.set(row.id, params);
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
+  /**
+   * The mask and links again, after a row was parked or unparked. Every
+   * cell keeps its populations: a parked solid's inside is the fluid that
+   * moved with it, held as it was, and is where it resumes.
+   */
+  private applySolids() {
+    if (!this.spec) return;
+    const { nx, ny } = this.spec;
+    const solids = this.buildSolids(nx, ny);
+    this.solidsKey = solids.key;
+    this.spec = { ...this.spec, solid: solids.solid, links: solids.links };
+    this.overlay.updateSolids(solids.solid, solids.links, this.spec);
+    this.maskCache = undefined;
+    this.beginMeasurements(solids.regions, nx, ny);
+  }
+
   /**
    * Coverage and wall velocity for the moving solids, if any. The velocity is
    * how far each wall moved since the last update, over the steps between,
@@ -1129,16 +1257,32 @@ export class FluidSession {
     // has none and starts at rest; so does every row on a fresh start.
     const last = fresh ? undefined : this.moving;
     if (fresh) this.translations.clear();
-    const previousSigned = last
-      ? rowIds.map((id) => last.solids.signed[last.rowIds.indexOf(id)])
-      : undefined;
+    // A row just unparked starts from where it was parked, so the move that
+    // unparked it already gives its walls their speed.
+    const previousSigned = fresh
+      ? undefined
+      : rows.map(({ row, body }) => {
+          const index = last ? last.rowIds.indexOf(row.id) : -1;
+          if (index >= 0) return last!.solids.signed[index];
+          const from = this.unparkedFrom.get(row.id);
+          if (from === undefined) return undefined;
+          const merged = new Map(params);
+          for (const [name, value] of from) merged.set(name, value);
+          return partialSolids(
+            [{ obstacle: row.obstacle!, body }],
+            { nx, ny, tank: this.latticeTank },
+            { time, params: merged }
+          ).signed[0];
+        });
+    this.unparkedFrom.clear();
+    const elapsed = step - (last?.step ?? this.frameStep);
     const rowOf = new Map(rows.map(({ row, body }) => [body, row.id]));
     const solids = partialSolids(
       rows.map(({ row, body }) => ({ obstacle: row.obstacle!, body })),
       { nx, ny, tank: this.latticeTank },
       { time, params },
-      last && previousSigned
-        ? { signed: previousSigned, elapsedSteps: step - last.step }
+      previousSigned?.some((signed) => signed !== undefined)
+        ? { signed: previousSigned, elapsedSteps: elapsed }
         : undefined,
       (body, raw, steps) =>
         this.smoothedTranslation(rowOf.get(body) ?? "", raw, steps, now)
@@ -1157,6 +1301,8 @@ export class FluidSession {
 
   /** When a moving solid's sliders or clock last changed, in milliseconds. */
   private movingChangedAt = 0;
+  /** What was last said about a solid moving too fast, while it was. */
+  private wallNotice = "";
 
   /**
    * Follows the moving solids, every frame. Each wall's velocity is how far
@@ -1170,6 +1316,7 @@ export class FluidSession {
    */
   private syncMoving(now: number) {
     if (!this.spec) return;
+    if (this.updateParking(now)) this.applySolids();
     if (this.movingRows.length === 0) {
       // The last moving solid was deleted, or no longer reads a slider.
       if (this.moving !== undefined) {
@@ -1223,12 +1370,18 @@ export class FluidSession {
       this.movingArea.set(rowId, area);
       this.settleUntil = step + Math.round(10 * pass);
     }
+    // Said while it is so, like the speed limit: a single fast frame, such as
+    // the first after a stall, used to leave this up for the rest of the run.
+    let wallNotice = "";
     if (moving.solids.teleported) {
-      this.notice =
+      wallNotice =
         "A solid jumped too far in one frame to push the fluid aside, so it was placed there without a wall velocity.";
     } else if (moving.solids.fastest > WALL_SPEED_LIMIT) {
-      this.notice = `A solid moved at ${moving.solids.fastest.toFixed(2)} cells a step, faster than the fluid can follow, so its walls were slowed to ${WALL_SPEED_LIMIT}.`;
+      wallNotice = `A solid moved at ${moving.solids.fastest.toFixed(2)} cells a step, faster than the fluid can follow, so its walls were slowed to ${WALL_SPEED_LIMIT}.`;
     }
+    if (wallNotice !== "") this.notice = wallNotice;
+    else if (this.notice === this.wallNotice) this.notice = "";
+    this.wallNotice = wallNotice;
     this.spec = { ...this.spec, psm: moving.psm };
     this.overlay.updatePartialSolids(moving.psm);
     this.trackMovingBodies(moving.solids, nx, ny);
@@ -1388,11 +1541,14 @@ export class FluidSession {
     this.lastPlan = this.scheduler.frame(now);
     const lattice = this.overlay.current;
     if (lattice) {
+      const frameStart = lattice.steps;
       try {
         this.syncMoving(now);
         this.easeForce(this.lastPlan.steps);
         this.advance(this.lastPlan.steps);
         this.collectReads(lattice, now, this.lastPlan.steps > 0);
+        // A row unparked next frame moved during this one's steps.
+        this.frameStep = frameStart;
       } catch (error) {
         this.notice =
           error instanceof Error ? error.message : "The fluid stopped.";
