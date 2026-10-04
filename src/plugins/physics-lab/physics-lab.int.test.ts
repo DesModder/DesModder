@@ -883,7 +883,7 @@ testWithPage(
       (el) => el.getAttribute("data-latex") ?? ""
     );
     expect(factored).toBe(
-      "\\operatorname{sin}\\left(3x\\right)^{e^{x}}\\left(2x+x^{2}e^{x}" +
+      "\\left(\\operatorname{sin}\\left(3x\\right)\\right)^{e^{x}}\\left(2x+x^{2}e^{x}" +
         "\\left(\\operatorname{ln}\\left(\\operatorname{sin}\\left(3x\\right)\\right)+" +
         "3\\operatorname{cot}\\left(3x\\right)\\right)\\right)"
     );
@@ -979,6 +979,139 @@ testWithPage(
     await driver.disablePlugin("physics-lab");
   },
   50000
+);
+
+/**
+ * The four Rafael reported on 2026-10-04, each checked by Desmos itself: a
+ * bracketed derivative that came out blank, an integral that read as wrong,
+ * an exact value that showed nothing, and a separable equation refused.
+ */
+testWithPage(
+  "four reported cases answer, and Desmos agrees with each",
+  async (driver) => {
+    await openPanel(driver);
+    // (x+3)²√x: blank while Desmos's Paren node went unread.
+    const product = String.raw`\left(x+3\right)^{2}\sqrt{x}`;
+    await openDerivativeTab(driver, product);
+    const derivative = await driver.$eval(
+      DERIVATIVE,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
+    await driver.evaluate(
+      (answer: string, question: string) => {
+        Calc.setExpression({ id: "dA", latex: `A_{d}(x)=${answer}` });
+        Calc.setExpression({ id: "dQ", latex: `Q_{d}(x)=${question}` });
+      },
+      derivative,
+      product
+    );
+    await driver.waitForSync();
+    expect(
+      Math.abs(
+        await desmosValue(
+          driver,
+          String.raw`Q_{d}'\left(1.7\right)-A_{d}\left(1.7\right)`
+        )
+      )
+    ).toBeLessThan(1e-6);
+
+    // ∫ln(x)/x dx: right all along, but ln(x)² reads as ln(x²).
+    await openIntegralTab(driver, String.raw`\frac{\ln\left(x\right)}{x}`);
+    await driver.assertSelectorEventually(INTEGRAL);
+    const integral = await driver.$eval(
+      INTEGRAL,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
+    expect(integral).toBe(
+      String.raw`\frac{\left(\operatorname{ln}\left(x\right)\right)^{2}}{2}+C`
+    );
+    await driver.evaluate((latex: string) => {
+      Calc.setExpression({ id: "iC", latex: "C=0" });
+      Calc.setExpression({ id: "iF", latex: `F_{i}\\left(x\\right)=${latex}` });
+    }, integral);
+    await driver.waitForSync();
+    expect(
+      Math.abs(
+        await desmosValue(
+          driver,
+          String.raw`F_{i}'\left(2.6\right)-\frac{\ln\left(2.6\right)}{2.6}`
+        )
+      )
+    ).toBeLessThan(1e-6);
+
+    // ln(2)/π + sin 3: exact as it stands, and the readout used to be blank.
+    const constant = String.raw`\frac{\ln\left(2\right)}{\pi}+\sin\left(3\right)`;
+    await driver.evaluate((latex: string) => {
+      (DSM.physicsLab as any).session.updateConfig(
+        (config: PhysicsLabConfig) => {
+          config.panel.tab = "exact";
+          config.exact.latex = latex;
+        }
+      );
+    }, constant);
+    await driver.waitForSync();
+    await driver.assertSelectorEventually(EXACT_OUTPUT);
+    const exact = await driver.$eval(
+      EXACT_OUTPUT,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
+    expect(
+      await driver.$eval(
+        '[data-physics-lab="exact-irreducible"]',
+        (el) => (el as HTMLElement).innerText
+      )
+    ).toContain("no simpler exact form");
+    await driver.evaluate((latex: string) => {
+      Calc.setExpression({ id: "eA", latex: `e_{x}=${latex}` });
+    }, exact);
+    await driver.waitForSync();
+    expect(
+      Math.abs(
+        (await desmosValue(driver, "e_{x}")) -
+          (Math.log(2) / Math.PI + Math.sin(3))
+      )
+    ).toBeLessThan(1e-12);
+
+    // dy/dx = −y¹⁸, refused by its own check and now solved for y. Desmos
+    // takes the odd root of a negative base, so the curve exists on both
+    // sides of x = −C, and its slope is the equation's there too.
+    await driver.evaluate(() => {
+      (DSM.physicsLab as any).session.updateConfig(
+        (config: PhysicsLabConfig) => {
+          config.panel.tab = "slope";
+          config.slope.fLatex = "-y^{18}";
+        }
+      );
+    });
+    await driver.waitForSync();
+    await driver.assertSelectorEventually(SOLUTION);
+    const solution = await driver.$eval(
+      SOLUTION,
+      (el) => el.getAttribute("data-latex") ?? ""
+    );
+    expect(solution).toBe(
+      String.raw`y=\left(17\left(x+C\right)\right)^{-\frac{1}{17}}`
+    );
+    await driver.evaluate((latex: string) => {
+      Calc.setExpression({ id: "iC", latex: "C=0.6" });
+      Calc.setExpression({
+        id: "sY",
+        latex: latex.replace(/^y=/, "Y_{s}\\left(x\\right)="),
+      });
+    }, solution);
+    await driver.waitForSync();
+    for (const x of [-1.7, 0.4]) {
+      const gap = await desmosValue(
+        driver,
+        String.raw`Y_{s}'\left(${x}\right)+Y_{s}\left(${x}\right)^{18}`
+      );
+      expect(Math.abs(gap)).toBeLessThan(1e-6);
+    }
+
+    await driver.setBlank();
+    await driver.disablePlugin("physics-lab");
+  },
+  60000
 );
 
 testWithPage(

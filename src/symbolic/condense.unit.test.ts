@@ -184,7 +184,7 @@ describe("the derivative this was written for", () => {
     const { node, notes } = condense(original);
     expect(sameFunction(original, node)).toBe(true);
     expect(emit(node)).toBe(
-      "\\operatorname{sin}\\left(3x\\right)^{e^{x}}\\left(2x+x^{2}e^{x}" +
+      "\\left(\\operatorname{sin}\\left(3x\\right)\\right)^{e^{x}}\\left(2x+x^{2}e^{x}" +
         "\\left(\\operatorname{ln}\\left(\\operatorname{sin}\\left(3x\\right)\\right)+" +
         "3\\operatorname{cot}\\left(3x\\right)\\right)\\right)"
     );

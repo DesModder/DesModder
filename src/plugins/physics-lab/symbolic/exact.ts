@@ -132,6 +132,24 @@ export function atomsOf(
   return value.length === 1 ? value[0] : undefined;
 }
 
+/**
+ * The opaque atoms in a value that are kept only because nothing reduces
+ * them, such as `sin 3`, as the trees they were written as. Logarithms of
+ * primes are left out: `ln 2` is the canonical form, not a leftover.
+ */
+export function irreducibleParts(value: ExactValue): Node[] {
+  const parts = new Map<string, Node>();
+  for (const t of value) {
+    for (const atom of t.factors.keys()) {
+      if (!isOpaque(atom) || atom.startsWith("@ln:")) continue;
+      const entry = OPAQUE.get(atom);
+      if (entry === undefined || entry.latex !== undefined) continue;
+      parts.set(atom, entry.node);
+    }
+  }
+  return [...parts.values()];
+}
+
 /** Whether an atom key is π. */
 export const isPiAtom = (atom: string) => atom === PI;
 

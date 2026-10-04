@@ -459,14 +459,14 @@ describe("hints, for the problem the reader is asked to try", () => {
     // Then the pieces, which is the answer to the first question.
     expect(hints[1].show.map(emit)).toEqual([
       "x^{2}",
-      "\\operatorname{sin}\\left(3x\\right)^{e^{x}}",
+      "\\left(\\operatorname{sin}\\left(3x\\right)\\right)^{e^{x}}",
     ]);
 
     // Then a question about whichever piece is actually hard, and it points at
     // that piece rather than at the whole expression.
     expect(hints[2].text).toContain("base and the exponent");
     expect(hints[2].show.map(emit)).toEqual([
-      "\\operatorname{sin}\\left(3x\\right)^{e^{x}}",
+      "\\left(\\operatorname{sin}\\left(3x\\right)\\right)^{e^{x}}",
     ]);
   });
 

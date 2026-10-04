@@ -96,13 +96,16 @@ describe("substitution, found rather than matched", () => {
       div(number(1), mul(x, fn("ln", x))),
       "\\ln\\left|\\ln\\left(x\\right)\\right|"
     );
-    check(div(fn("ln", x), x), "\\frac{\\ln\\left(x\\right)^{2}}{2}");
+    check(
+      div(fn("ln", x), x),
+      "\\frac{\\left(\\ln\\left(x\\right)\\right)^{2}}{2}"
+    );
   });
 
   test("a power of a trigonometric function against its own derivative", () => {
     check(
       mul(pow(fn("sin", x), number(3)), fn("cos", x)),
-      "\\frac{\\sin\\left(x\\right)^{4}}{4}"
+      "\\frac{\\left(\\sin\\left(x\\right)\\right)^{4}}{4}"
     );
   });
 
@@ -168,11 +171,11 @@ describe("powers of trigonometric functions", () => {
   test("the odd powers, through 1 - cos^2 and a substitution", () => {
     check(
       pow(fn("sin", x), number(3)),
-      "\\frac{\\cos\\left(x\\right)^{3}}{3}-\\cos\\left(x\\right)"
+      "\\frac{\\left(\\cos\\left(x\\right)\\right)^{3}}{3}-\\cos\\left(x\\right)"
     );
     check(
       pow(fn("cos", x), number(5)),
-      "\\sin\\left(x\\right)-\\frac{2\\sin\\left(x\\right)^{3}}{3}+\\frac{\\sin\\left(x\\right)^{5}}{5}"
+      "\\sin\\left(x\\right)-\\frac{2\\left(\\sin\\left(x\\right)\\right)^{3}}{3}+\\frac{\\left(\\sin\\left(x\\right)\\right)^{5}}{5}"
     );
   });
 
@@ -571,11 +574,11 @@ describe("reduction formulas", () => {
   test("an odd power of a secant, two powers at a time", () => {
     check(
       pow(fn("sec", x), number(5)),
-      "\\frac{\\sec\\left(x\\right)^{3}\\tan\\left(x\\right)}{4}+\\frac{3\\left(\\sec\\left(x\\right)\\tan\\left(x\\right)+\\ln\\left|\\sec\\left(x\\right)+\\tan\\left(x\\right)\\right|\\right)}{8}"
+      "\\frac{\\left(\\sec\\left(x\\right)\\right)^{3}\\tan\\left(x\\right)}{4}+\\frac{3\\left(\\sec\\left(x\\right)\\tan\\left(x\\right)+\\ln\\left|\\sec\\left(x\\right)+\\tan\\left(x\\right)\\right|\\right)}{8}"
     );
     check(
       pow(fn("csc", x), number(5)),
-      "-\\frac{\\csc\\left(x\\right)^{3}\\cot\\left(x\\right)}{4}-\\frac{3\\left(\\csc\\left(x\\right)\\cot\\left(x\\right)+\\ln\\left|\\csc\\left(x\\right)+\\cot\\left(x\\right)\\right|\\right)}{8}"
+      "-\\frac{\\left(\\csc\\left(x\\right)\\right)^{3}\\cot\\left(x\\right)}{4}-\\frac{3\\left(\\csc\\left(x\\right)\\cot\\left(x\\right)+\\ln\\left|\\csc\\left(x\\right)+\\cot\\left(x\\right)\\right|\\right)}{8}"
     );
   });
 
@@ -603,7 +606,7 @@ describe("reduction formulas", () => {
   test("an odd power of a tangent keeps to tangents", () => {
     check(
       pow(fn("tan", x), number(5)),
-      "\\frac{\\tan\\left(x\\right)^{4}}{4}-\\frac{\\tan\\left(x\\right)^{2}}{2}-\\ln\\left|\\cos\\left(x\\right)\\right|"
+      "\\frac{\\left(\\tan\\left(x\\right)\\right)^{4}}{4}-\\frac{\\left(\\tan\\left(x\\right)\\right)^{2}}{2}-\\ln\\left|\\cos\\left(x\\right)\\right|"
     );
   });
 });
@@ -718,7 +721,7 @@ describe("products and powers of trigonometric functions", () => {
   test("a mixed product, where an odd power decides the substitution", () => {
     check(
       mul(pow(fn("sin", x), number(2)), pow(fn("cos", x), number(3))),
-      "\\frac{\\sin\\left(x\\right)^{3}}{3}-\\frac{\\sin\\left(x\\right)^{5}}{5}"
+      "\\frac{\\left(\\sin\\left(x\\right)\\right)^{3}}{3}-\\frac{\\left(\\sin\\left(x\\right)\\right)^{5}}{5}"
     );
     // Both even, so there is no factor to peel off and the half-angle
     // identities are the only way down.
@@ -731,11 +734,11 @@ describe("products and powers of trigonometric functions", () => {
   test("a tangent and a secant, by reduction", () => {
     check(
       pow(fn("tan", x), number(4)),
-      "x+\\frac{\\tan\\left(x\\right)^{3}}{3}-\\tan\\left(x\\right)"
+      "x+\\frac{\\left(\\tan\\left(x\\right)\\right)^{3}}{3}-\\tan\\left(x\\right)"
     );
     check(
       pow(fn("sec", x), number(4)),
-      "\\tan\\left(x\\right)+\\frac{\\tan\\left(x\\right)^{3}}{3}"
+      "\\tan\\left(x\\right)+\\frac{\\left(\\tan\\left(x\\right)\\right)^{3}}{3}"
     );
   });
 
@@ -818,11 +821,11 @@ describe("what had to be found rather than matched", () => {
   test("a logarithm or an inverse function raised to a power", () => {
     check(
       pow(fn("ln", x), number(2)),
-      "x\\ln\\left(x\\right)^{2}-2\\left(x\\ln\\left(x\\right)-x\\right)"
+      "x\\left(\\ln\\left(x\\right)\\right)^{2}-2\\left(x\\ln\\left(x\\right)-x\\right)"
     );
     check(
       mul(x, pow(fn("ln", x), number(2))),
-      "\\frac{\\ln\\left(x\\right)^{2}x^{2}}{2}-\\frac{\\ln\\left(x\\right)x^{2}}{2}+\\frac{x^{2}}{4}"
+      "\\frac{\\left(\\ln\\left(x\\right)\\right)^{2}x^{2}}{2}-\\frac{\\ln\\left(x\\right)x^{2}}{2}+\\frac{x^{2}}{4}"
     );
   });
 
@@ -830,7 +833,7 @@ describe("what had to be found rather than matched", () => {
     // x arcsin^2 - int 2x arcsin/sqrt(1-x^2): u = arcsin, dv = 2x/sqrt(1-x^2).
     check(
       pow(fn("arcsin", x), number(2)),
-      "x\\arcsin\\left(x\\right)^{2}-2x+2\\arcsin\\left(x\\right)\\sqrt{1-x^{2}}"
+      "x\\left(\\arcsin\\left(x\\right)\\right)^{2}-2x+2\\arcsin\\left(x\\right)\\sqrt{1-x^{2}}"
     );
   });
 

@@ -30,6 +30,7 @@ import {
 import { mentions, renameIdentifier } from "../../field-rendering/identifiers";
 import {
   evaluateExact,
+  irreducibleParts,
   toLatex,
   toNumber,
   fromInteger as toExact,
@@ -66,6 +67,7 @@ import { quadratureSteps, type QuadratureResult } from "./symbolic/quadrature";
 import {
   definiteIntegral,
   DefiniteError,
+  exactConstant,
   interiorSingularity,
   type Approach,
   type Bound,
@@ -609,6 +611,11 @@ export interface ExactReading {
    * ζ(3) and the rest have no name there until one is given.
    */
   definitions: { name: string; latex: string }[];
+  /**
+   * Parts of the exact form kept as written because nothing reduces them, as
+   * LaTeX: sin 3 in ln(2)/π + sin 3.
+   */
+  irreducible?: string[];
 }
 
 /**
@@ -1249,7 +1256,24 @@ export default class PhysicsLabSession {
       return undefined;
     }
     const value = evaluateExact(tree);
-    if (value === undefined) return undefined;
+    if (value === undefined) {
+      // Logarithms, trigonometry at special angles and the rest: what the
+      // definite integrals reduce their answers with. A part nothing reduces,
+      // like sin 3, stays exact as the expression it is, which used to leave
+      // the whole readout blank.
+      const constant = exactConstant(tree);
+      if (constant === undefined) return undefined;
+      const emit = (node: Node) => toLatexTree(this.textModeConfig, node);
+      const kept = irreducibleParts(constant).map(emit);
+      return {
+        latex: emit(exactToNode(constant)),
+        value: toNumber(constant),
+        decimal: exactDecimal(constant),
+        trivial: false,
+        definitions: [],
+        irreducible: kept,
+      };
+    }
     const exact = toLatex(value);
     return {
       latex: exact,

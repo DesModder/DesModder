@@ -129,10 +129,18 @@ function bracketFractionPowers(node: Node): Node {
     case "BinaryOperator": {
       const left = bracketFractionPowers(node.left);
       const right = bracketFractionPowers(node.right);
+      // A function raised to a power likewise: `(\ln x)^{2}`. Desmos reads
+      // `\ln\left(x\right)^{2}` as that, but on screen it is ln(x)², which
+      // reads as ln(x²), and ∫ln(x)/x dx = (ln x)²/2 looked wrong for it. A
+      // root's or a modulus's own bracket already says where the power goes.
+      const calledPower =
+        left.type === "FunctionCall" &&
+        left.callee.symbol !== "sqrt" &&
+        left.callee.symbol !== "abs";
       if (
         node.name === "Exponent" &&
-        left.type === "BinaryOperator" &&
-        left.name === "Divide"
+        ((left.type === "BinaryOperator" && left.name === "Divide") ||
+          calledPower)
       )
         return {
           ...node,

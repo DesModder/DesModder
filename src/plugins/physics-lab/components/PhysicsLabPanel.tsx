@@ -2267,6 +2267,27 @@ function exactTab(physicsLab: PhysicsLab, config: ConfigGetter) {
                   }}
                 </span>
               </div>
+              {/* An answer that repeats part of the question would read as the
+                  tab doing nothing. It is the answer: sin 3 has no simpler
+                  exact form, and saying so is the useful part. */}
+              <If predicate={() => (reading()?.irreducible?.length ?? 0) > 0}>
+                {() => (
+                  <div
+                    class="dsm-physics-lab-hint"
+                    data-physics-lab="exact-irreducible"
+                  >
+                    {() => {
+                      const count = reading()?.irreducible?.length ?? 0;
+                      return count === 1
+                        ? "Already exact. One part has no simpler exact form, so it is kept as written:"
+                        : `Already exact. ${count} parts have no simpler exact form, so they are kept as written:`;
+                    }}
+                    <StaticMathQuillView
+                      latex={() => (reading()?.irreducible ?? []).join(",\\ ")}
+                    />
+                  </div>
+                )}
+              </If>
               <If predicate={() => (reading()?.definitions.length ?? 0) > 0}>
                 {() => (
                   <div

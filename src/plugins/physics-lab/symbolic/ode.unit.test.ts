@@ -155,10 +155,30 @@ describe("separable equations that stay implicit", () => {
     expect(solution.latex).toBe("\\frac{y^{2}}{2}=\\frac{x^{2}}{2}+C");
   });
 
-  test("dy/dx = x·y² separates the same way", () => {
-    const solution = solved(mul(x, pow(y, number(2))));
+  test("dy/dx = y³ too: ∫dy/y³ is an even power, with two branches", () => {
+    const solution = solved(pow(y, number(3)));
     expect(solution.explicit).toBe(false);
-    expect(solution.latex).toBe("-\\frac{1}{y}=\\frac{x^{2}}{2}+C");
+    expect(solution.latex).toBe("-\\frac{1}{2y^{2}}=x+C");
+  });
+});
+
+describe("separable equations solved for y", () => {
+  // When ∫dy/h is one odd power of y it has a single real inverse, so y is
+  // given explicitly; C absorbs the sign a negative coefficient would carry.
+  test("dy/dx = x·y² separates and inverts", () => {
+    const solution = solved(mul(x, pow(y, number(2))));
+    expect(solution.explicit).toBe(true);
+    expect(solution.latex).toBe("y=\\frac{1}{C-\\frac{x^{2}}{2}}");
+  });
+
+  test("dy/dx = −y¹⁸, which the relation's own check used to refuse", () => {
+    // ∫dy/y¹⁸ at y = 2.5 is 10⁻⁸ beside an x side near 1: differencing the
+    // relation as one function lost it to rounding.
+    const solution = solved(negative(pow(y, number(18))));
+    expect(solution.explicit).toBe(true);
+    expect(solution.latex).toBe(
+      "y=\\left(17\\left(x+C\\right)\\right)^{-\\frac{1}{17}}"
+    );
   });
 });
 

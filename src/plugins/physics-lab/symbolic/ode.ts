@@ -659,19 +659,126 @@ function separable(
   let left: Node;
   let right: Node;
   try {
-    left = integrate(split.hInverse, dependent);
-    right = integrate(split.g, independent);
+    left = simplify(integrate(split.hInverse, dependent));
+    right = simplify(integrate(split.g, independent));
   } catch (error) {
     return failed(error);
   }
-  const relation = simplify(subtract(left, add(right, id(CONSTANT))));
-  const solution: ODESolution = {
-    latex: `${emit(simplify(left))}=${emit(simplify(add(right, id(CONSTANT))))}`,
-    method: "Separable, left as a relation between x and y",
-    explicit: false,
-    relation: { left: simplify(left), right: simplify(right) },
+  if (!separationHolds(split, left, right, f, independent, dependent)) {
+    return {
+      ok: false,
+      error:
+        "A candidate relation was found but does not satisfy the equation, so it has not been reported.",
+    };
+  }
+  const implicit: ODEResult = {
+    ok: true,
+    solution: {
+      latex: `${emit(left)}=${emit(simplify(add(right, id(CONSTANT))))}`,
+      method: "Separable, left as a relation between x and y",
+      explicit: false,
+      relation: { left, right },
+    },
   };
-  return verifiedImplicit(relation, solution, f, independent, dependent);
+  const solved = invertedPower(left, right, dependent);
+  if (solved === undefined) return implicit;
+  const explicit = verified(
+    {
+      latex: `${dependent}=${emit(solved)}`,
+      method: "Separable, then solved for y",
+      explicit: true,
+      tree: solved,
+    },
+    solved,
+    f,
+    independent,
+    dependent
+  );
+  return explicit.ok ? explicit : implicit;
+}
+
+/**
+ * Whether `∫dy/h = ∫g dx + C` really solves `y' = f`: g/h is f, and each
+ * side's derivative is what was integrated.
+ *
+ * Checked side by side rather than through the relation's implicit slope. In
+ * `1/(17y^{17}) = C - x`, from y' = −y¹⁸, the y side is 10⁻⁸ at y = 2.5 while
+ * the x side is near 1, so differencing the two together lost the y side to
+ * rounding and a right answer was refused.
+ */
+function separationHolds(
+  split: { g: Node; hInverse: Node },
+  left: Node,
+  right: Node,
+  f: Node,
+  independent: string,
+  dependent: string
+) {
+  const parameters = parameterBindings(
+    [f, left, right],
+    [independent, dependent, CONSTANT]
+  );
+  const points = SAMPLE_XS.flatMap((x) =>
+    [0.7, 1.4, 2.5].map((y) => ({
+      ...parameters,
+      [independent]: x,
+      [dependent]: y,
+    }))
+  );
+  return (
+    agreesOnSamples(
+      (bindings) =>
+        evaluate(split.g, bindings) / evaluate(split.hInverse, bindings),
+      (bindings) => evaluate(f, bindings),
+      points
+    ) &&
+    agreesOnSamples(
+      (bindings) => numericDerivative(left, dependent, bindings),
+      (bindings) => evaluate(split.hInverse, bindings),
+      points
+    ) &&
+    agreesOnSamples(
+      (bindings) => numericDerivative(right, independent, bindings),
+      (bindings) => evaluate(split.g, bindings),
+      points
+    )
+  );
+}
+
+/**
+ * `y` from `k·yⁿ = R + C` when n is an odd whole number: `((R + C)/k)^{1/n}`.
+ *
+ * Odd only. An odd power has one real inverse, so nothing is chosen; an even
+ * one has two branches, `±`, and picking one would drop half the solutions,
+ * so that relation stays as it is. The exponent is read off two points and
+ * confirmed at a third, the way Bernoulli's is.
+ */
+function invertedPower(
+  left: Node,
+  right: Node,
+  dependent: string
+): Node | undefined {
+  const parameters = parameterBindings([left], [dependent, CONSTANT]);
+  const at = (y: number) => evaluate(left, { ...parameters, [dependent]: y });
+  const n = Math.round(Math.log(at(2) / at(1)) / Math.log(2));
+  if (!Number.isFinite(n) || n === 0 || n % 2 === 0) return undefined;
+  for (const y of [0.5, 3]) {
+    const expected = at(1) * y ** n;
+    if (!(Math.abs(at(y) - expected) <= 1e-9 * Math.abs(expected)))
+      return undefined;
+  }
+  const coefficient = simplify(divide(left, power(id(dependent), number(n))));
+  if (dependsOn(coefficient, dependent)) return undefined;
+  // C is any constant, so −C is too: a negative k is taken out with it, and
+  // y' = −y² answers 1/(x + C) rather than −1/(C − x).
+  const negativeK = evaluate(coefficient, parameters) < 0;
+  const base = negativeK
+    ? divide(
+        add(simplify(negative(right)), id(CONSTANT)),
+        simplify(negative(coefficient))
+      )
+    : divide(add(right, id(CONSTANT)), coefficient);
+  return simplify(power(base, divide(number(1), number(n))));
 }
 
 /**
