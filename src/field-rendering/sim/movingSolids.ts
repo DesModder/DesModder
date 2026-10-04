@@ -72,6 +72,18 @@ export interface PartialSolids {
   moving: boolean;
 }
 
+/**
+ * One row's signed function at every cell centre, NaN where undefined, and
+ * its gradient by central differences over half a cell, in graph units, at
+ * least wherever a wall is near (`nearWall`); NaN where it was not taken or
+ * a neighbour is undefined. The CPU takes the gradient only where it is
+ * needed; the GPU sampler takes it everywhere, which costs it nothing.
+ */
+export interface ObstacleSamples {
+  signed: Float32Array;
+  gradient: Float32Array;
+}
+
 /** Cells per step a moving wall may go. */
 export const WALL_SPEED_LIMIT = 0.05;
 
@@ -103,71 +115,136 @@ export function partialSolids(
     steps: number
   ) => readonly [number, number]
 ): PartialSolids {
+  return partialSolidsFromSamples(
+    rows.map((row) => ({
+      body: row.body,
+      samples: sampleObstacle(row.obstacle, grid, scope),
+    })),
+    grid,
+    previous,
+    smooth
+  );
+}
+
+/** The distance either side of a centre the gradient is taken over. */
+export const gradientStep = (grid: MovingSolidsGrid) =>
+  0.5 *
+  Math.min(
+    (grid.tank.xMax - grid.tank.xMin) / grid.nx,
+    (grid.tank.yMax - grid.tank.yMin) / grid.ny
+  );
+
+/**
+ * A wall within half a cell of a centre puts the neighbour across it on the
+ * other side (a planar wall's nearest axis neighbour is at least 1/√2 of a
+ * cell further along its normal), so only cells beside a change of sign, or
+ * of definedness, need the gradient. The rest are wholly in or out. Cells on
+ * the tank's edge are always checked, since their neighbour across the wall
+ * may lie outside the grid.
+ */
+function nearWall(values: Float32Array, nx: number, ny: number, k: number) {
+  const i = k % nx;
+  const j = (k - i) / nx;
+  if (i === 0 || j === 0 || i === nx - 1 || j === ny - 1) return true;
+  // Unrolled rather than looped over a list of the four: this runs for every
+  // cell of every moving solid on every update, and the list was an
+  // allocation each time.
+  const here = values[k] <= 0;
+  const differs = (n: number) =>
+    !Number.isFinite(values[n]) || values[n] <= 0 !== here;
+  return differs(k - 1) || differs(k + 1) || differs(k - nx) || differs(k + nx);
+}
+
+/** {@link ObstacleSamples} on the CPU, the reference the GPU's are held to. */
+export function sampleObstacle(
+  obstacle: CompiledObstacle,
+  grid: MovingSolidsGrid,
+  scope: { time: number; params: ReadonlyMap<string, number> }
+): ObstacleSamples {
   const { nx, ny, tank } = grid;
   const cells = nx * ny;
   const dx = (tank.xMax - tank.xMin) / nx;
   const dy = (tank.yMax - tank.yMin) / ny;
-  const h = 0.5 * Math.min(dx, dy);
+  const h = gradientStep(grid);
+  const point = { ...scope, x: 0, y: 0 };
+  const F = (x: number, y: number) => {
+    point.x = x;
+    point.y = y;
+    return obstacle.signed(point);
+  };
+  const signed = new Float32Array(cells);
+  const gradient = new Float32Array(2 * cells).fill(NaN);
+  // The signed function at every centre first: one evaluation a cell.
+  for (let j = 0; j < ny; j++) {
+    const y = tank.yMin + (j + 0.5) * dy;
+    for (let i = 0; i < nx; i++)
+      signed[j * nx + i] = F(tank.xMin + (i + 0.5) * dx, y);
+  }
+  for (let k = 0; k < cells; k++) {
+    if (!Number.isFinite(signed[k]) || !nearWall(signed, nx, ny, k)) continue;
+    const x = tank.xMin + ((k % nx) + 0.5) * dx;
+    const y = tank.yMin + (Math.floor(k / nx) + 0.5) * dy;
+    gradient[2 * k] = (F(x + h, y) - F(x - h, y)) / (2 * h);
+    gradient[2 * k + 1] = (F(x, y + h) - F(x, y - h)) / (2 * h);
+  }
+  return { signed, gradient };
+}
+
+/** {@link partialSolids}, from each row's samples however they were taken. */
+export function partialSolidsFromSamples(
+  rows: readonly { body: number; samples: ObstacleSamples }[],
+  grid: MovingSolidsGrid,
+  previous?: {
+    signed: readonly (Float32Array | undefined)[];
+    elapsedSteps: number;
+  },
+  smooth?: (
+    body: number,
+    raw: readonly [number, number],
+    steps: number
+  ) => readonly [number, number]
+): PartialSolids {
+  const { nx, ny, tank } = grid;
+  const cells = nx * ny;
+  const dx = (tank.xMax - tank.xMin) / nx;
+  const dy = (tank.yMax - tank.yMin) / ny;
   const coverage = new Float32Array(cells);
   const velocity = new Float32Array(2 * cells);
   const body = new Uint8Array(cells);
   const area = new Map<number, number>();
   const boxes = new Map<number, [number, number, number, number]>();
-  const signed = rows.map(() => new Float32Array(cells));
+  const signed = rows.map((row) => row.samples.signed);
   // Per cell, for the velocity pass: the wall's normal (unit, in cells) and
   // its normal speed in cells per step, or NaN where the level set says
   // nothing.
   const normal = new Float32Array(2 * cells);
   const normalSpeed = new Float32Array(cells).fill(NaN);
   const steps = previous?.elapsedSteps ?? 0;
-  const point = { ...scope, x: 0, y: 0 };
 
   rows.forEach((row, r) => {
-    const F = (x: number, y: number) => {
-      point.x = x;
-      point.y = y;
-      return row.obstacle.signed(point);
-    };
     const before = previous?.signed[r];
-    const values = signed[r];
-    // The signed function at every centre first: one evaluation a cell.
+    const values = row.samples.signed;
+    const slopes = row.samples.gradient;
+    // This row's area and box, gathered here and stored once: a lookup per
+    // covered cell was most of this loop's time.
+    let rowArea = 0;
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
     for (let j = 0; j < ny; j++) {
-      point.y = tank.yMin + (j + 0.5) * dy;
       for (let i = 0; i < nx; i++) {
-        point.x = tank.xMin + (i + 0.5) * dx;
-        values[j * nx + i] = row.obstacle.signed(point);
-      }
-    }
-    // A wall within half a cell of a centre puts the neighbour across it on
-    // the other side (a planar wall's nearest axis neighbour is at least
-    // 1/√2 of a cell further along its normal), so only cells beside a change
-    // of sign, or of definedness, need the gradient. The rest are wholly in
-    // or out. Cells on the tank's edge are always checked, since their
-    // neighbour across the wall may lie outside the grid.
-    const inside = (k: number) => values[k] <= 0;
-    const nearWall = (i: number, j: number, k: number) => {
-      if (i === 0 || j === 0 || i === nx - 1 || j === ny - 1) return true;
-      const here = inside(k);
-      for (const n of [k - 1, k + 1, k - nx, k + nx]) {
-        if (!Number.isFinite(values[n]) || inside(n) !== here) return true;
-      }
-      return false;
-    };
-    for (let j = 0; j < ny; j++) {
-      const y = tank.yMin + (j + 0.5) * dy;
-      for (let i = 0; i < nx; i++) {
-        const x = tank.xMin + (i + 0.5) * dx;
         const k = j * nx + i;
         const f = values[k];
         if (!Number.isFinite(f)) continue;
-        const near = nearWall(i, j, k);
+        const near = nearWall(values, nx, ny, k);
         if (f > 0 && !near) continue;
         let gx = 0;
         let gy = 0;
         let g2 = 0;
         if (near) {
-          gx = (F(x + h, y) - F(x - h, y)) / (2 * h);
-          gy = (F(x, y + h) - F(x, y - h)) / (2 * h);
+          gx = slopes[2 * k];
+          gy = slopes[2 * k + 1];
           g2 = gx * gx + gy * gy;
         }
         const gradient = g2 > 0 && Number.isFinite(g2);
@@ -181,15 +258,11 @@ export function partialSolids(
         if (eps <= 0 || eps < coverage[k]) continue;
         coverage[k] = eps;
         body[k] = row.body;
-        area.set(row.body, (area.get(row.body) ?? 0) + eps);
-        const box = boxes.get(row.body);
-        if (box === undefined) boxes.set(row.body, [i, j, i, j]);
-        else {
-          box[0] = Math.min(box[0], i);
-          box[1] = Math.min(box[1], j);
-          box[2] = Math.max(box[2], i);
-          box[3] = Math.max(box[3], j);
-        }
+        rowArea += eps;
+        if (i < x0) x0 = i;
+        if (j < y0) y0 = j;
+        if (i > x1) x1 = i;
+        if (j > y1) y1 = j;
         normalSpeed[k] = NaN;
         // Only a wall cell has a normal speed: inside, ∇F can vanish.
         if (eps >= 1 || !gradient || before === undefined || steps <= 0)
@@ -205,6 +278,16 @@ export function partialSolids(
         normal[2 * k + 1] = nyc / length;
         normalSpeed[k] = -(f - previousF) / steps / g / dx;
       }
+    }
+    if (x0 > x1) return;
+    area.set(row.body, (area.get(row.body) ?? 0) + rowArea);
+    const box = boxes.get(row.body);
+    if (box === undefined) boxes.set(row.body, [x0, y0, x1, y1]);
+    else {
+      box[0] = Math.min(box[0], x0);
+      box[1] = Math.min(box[1], y0);
+      box[2] = Math.max(box[2], x1);
+      box[3] = Math.max(box[3], y1);
     }
   });
 
@@ -247,32 +330,46 @@ export function partialSolids(
   for (const [b, raw] of translation)
     applied.set(b, smooth ? smooth(b, raw, steps) : raw);
 
+  // Per body number, which is a byte: arrays rather than maps, since this
+  // loop visits every covered cell.
+  const appliedX = new Float64Array(256);
+  const appliedY = new Float64Array(256);
+  const rawX = new Float64Array(256);
+  const rawY = new Float64Array(256);
+  const still = new Uint8Array(256);
+  const movedBody = new Uint8Array(256);
+  for (const b of jumped) still[b] = 1;
+  for (const [b, [x, y]] of applied) {
+    appliedX[b] = x;
+    appliedY[b] = y;
+  }
+  for (const [b, [x, y]] of translation) {
+    rawX[b] = x;
+    rawY[b] = y;
+  }
   let fastest = 0;
-  const moved = new Set<number>(jumped);
   for (let k = 0; k < cells; k++) {
     const b = body[k];
     // A jump moves every cell of the body at once: none of it swept, so none
     // of it moves.
-    if (b === 0 || jumped.has(b)) continue;
-    const [ux, uy] = applied.get(b) ?? [0, 0];
-    let vx = ux;
-    let vy = uy;
+    if (b === 0 || still[b] === 1) continue;
+    let vx = appliedX[b];
+    let vy = appliedY[b];
     const vn = normalSpeed[k];
     if (Number.isFinite(vn)) {
       // A wall cell: what the level set says beyond this update's own
       // translation (a solid growing or shrinking) is added along the
       // normal. For a slide that is nothing, and the wall moves with the
       // applied translation.
-      const [rx, ry] = translation.get(b) ?? [0, 0];
       const ex = normal[2 * k];
       const ey = normal[2 * k + 1];
-      const along = vn - (rx * ex + ry * ey);
+      const along = vn - (rawX[b] * ex + rawY[b] * ey);
       vx += along * ex;
       vy += along * ey;
     }
-    const speed = Math.hypot(vx, vy);
-    if (speed > 0) moved.add(b);
-    fastest = Math.max(fastest, speed);
+    const speed = Math.sqrt(vx * vx + vy * vy);
+    if (speed > 0) movedBody[b] = 1;
+    if (speed > fastest) fastest = speed;
     if (speed > WALL_SPEED_LIMIT) {
       vx *= WALL_SPEED_LIMIT / speed;
       vy *= WALL_SPEED_LIMIT / speed;
@@ -280,6 +377,8 @@ export function partialSolids(
     velocity[2 * k] = vx;
     velocity[2 * k + 1] = vy;
   }
+  const moved = new Set<number>(jumped);
+  for (let b = 1; b < 256; b++) if (movedBody[b] === 1) moved.add(b);
   return {
     coverage,
     velocity,

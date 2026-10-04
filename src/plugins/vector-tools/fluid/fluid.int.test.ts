@@ -746,3 +746,116 @@ fluidTest(
   },
   120000
 );
+
+/**
+ * A moving solid's samples come from the GPU while the fluid runs
+ * (`obstacleSampler.ts`), and the CPU's are the reference: same definedness,
+ * the same signed function to float32, the same gradient wherever the CPU
+ * takes one, and the same cells built from either.
+ */
+fluidTest(
+  "Fluid tab: moving solids sampled on the GPU match the CPU",
+  async (driver) => {
+    await driver.enablePlugin("vector-tools");
+    await driver.assertSelectorEventually(BUTTON);
+    await driver.evaluate(() => {
+      Calc.setExpressions([
+        { id: "a", latex: "a=-3.3" },
+        { id: "b", latex: "b=0.4" },
+        {
+          id: "disc",
+          latex: String.raw`\left(x-a\right)^{2}+\left(y-b\right)^{2}\le1.2`,
+        },
+        // Undefined left of x = a: a wall there is only definedness.
+        { id: "root", latex: String.raw`y<\sqrt{x-a}-2` },
+        {
+          id: "restricted",
+          latex: String.raw`x^{2}+y^{2}\le4\left\{x>b\right\}`,
+        },
+      ]);
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      plugin.setArrowMode("off");
+      plugin.setFluid("mode", "windTunnel");
+    });
+    // Running, and with all three rows read: the lattice can start before the
+    // last row typed is.
+    await driver.waitForFunction(
+      () => {
+        const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
+        return fluid.isSimulating && fluid.activeObstacles.length === 3;
+      },
+      { timeout: 20000 }
+    );
+    const { partialSolidsFromSamples } = await import(
+      "../../../field-rendering/sim/movingSolids"
+    );
+    for (const rowId of ["disc", "root", "restricted"]) {
+      const result = await driver.evaluate(
+        async (id: string) =>
+          await (
+            DSM.enabledPlugins["vector-tools"] as any
+          ).fluid.sampleRowBothWays(id, { a: -3.27, b: 0.43 }),
+        rowId
+      );
+      const { grid } = result;
+      const back = (list: (number | null)[]) =>
+        Float32Array.from(list, (v) => v ?? NaN);
+      const gpu = {
+        signed: back(result.gpu.signed),
+        gradient: back(result.gpu.gradient),
+      };
+      const cpu = {
+        signed: back(result.cpu.signed),
+        gradient: back(result.cpu.gradient),
+      };
+      let definedness = 0;
+      let worstSigned = 0;
+      let worstSlope = 0;
+      for (let k = 0; k < cpu.signed.length; k++) {
+        const c = cpu.signed[k];
+        const g = gpu.signed[k];
+        // A centre within float32 rounding of the edge of definedness may
+        // land either side.
+        if (Number.isNaN(c) !== Number.isNaN(g)) {
+          definedness++;
+          continue;
+        }
+        if (Number.isNaN(c)) continue;
+        worstSigned = Math.max(
+          worstSigned,
+          Math.abs(c - g) / Math.max(1, Math.abs(c))
+        );
+        for (const n of [2 * k, 2 * k + 1]) {
+          const cs = cpu.gradient[n];
+          if (Number.isNaN(cs) || Number.isNaN(gpu.gradient[n])) continue;
+          worstSlope = Math.max(
+            worstSlope,
+            Math.abs(cs - gpu.gradient[n]) / Math.max(1, Math.abs(cs))
+          );
+        }
+      }
+      const build = (samples: typeof cpu) =>
+        partialSolidsFromSamples([{ body: 1, samples }], grid);
+      const fromCpu = build(cpu);
+      const fromGpu = build(gpu);
+      let worstCoverage = 0;
+      for (let k = 0; k < fromCpu.coverage.length; k++)
+        worstCoverage = Math.max(
+          worstCoverage,
+          Math.abs(fromCpu.coverage[k] - fromGpu.coverage[k])
+        );
+      const areaCpu = fromCpu.area.get(1) ?? 0;
+      const areaGpu = fromGpu.area.get(1) ?? 0;
+      expect({ rowId, definednessOff: definedness <= 2 }).toEqual({
+        rowId,
+        definednessOff: true,
+      });
+      expect(worstSigned).toBeLessThan(1e-5);
+      expect(worstSlope).toBeLessThan(1e-3);
+      expect(worstCoverage).toBeLessThan(1e-3);
+      expect(areaCpu).toBeGreaterThan(50);
+      expect(Math.abs(areaGpu - areaCpu) / areaCpu).toBeLessThan(1e-4);
+    }
+  },
+  60000
+);

@@ -17,6 +17,7 @@
 import type { Calc } from "#globals";
 import type { Boundaries } from "./lbm/boundaries";
 import { GpuD2Q9, type Sponge } from "./lbm/GpuD2Q9";
+import { ObstacleSampler } from "./obstacleSampler";
 
 const GRAPH_CANVAS_SELECTOR = "canvas.dcg-graph-inner";
 const CANVAS_ID = "dsm-vector-tools-fluid-canvas";
@@ -154,6 +155,7 @@ export class FluidOverlay {
   private resizeObserver?: ResizeObserver;
   private contextLost = false;
   private solidTexture?: WebGLTexture;
+  private obstacleSampler?: ObstacleSampler;
 
   constructor(
     private readonly calc: Calc,
@@ -171,6 +173,16 @@ export class FluidOverlay {
   /** The lattice itself, for stepping and measuring. */
   get current(): GpuD2Q9 | undefined {
     return this.lattice;
+  }
+
+  /**
+   * Samples moving solids on the lattice's own context, undefined while
+   * there is no lattice. See `obstacleSampler.ts`.
+   */
+  get sampler(): ObstacleSampler | undefined {
+    if (!this.gl || this.contextLost || !this.lattice) return undefined;
+    this.obstacleSampler ??= new ObstacleSampler(this.gl);
+    return this.obstacleSampler;
   }
 
   /** Builds a lattice from `spec`, at rest, replacing any there was. */
@@ -328,6 +340,8 @@ export class FluidOverlay {
   stop() {
     this.lattice?.dispose();
     this.lattice = undefined;
+    if (!this.contextLost) this.obstacleSampler?.dispose();
+    this.obstacleSampler = undefined;
     this.resizeObserver?.disconnect();
     this.resizeObserver = undefined;
     if (this.gl && this.display) this.gl.deleteProgram(this.display);
@@ -406,6 +420,8 @@ export class FluidOverlay {
       event.preventDefault();
       this.contextLost = true;
       this.lattice = undefined;
+      // Its programs and buffers went with the context.
+      this.obstacleSampler = undefined;
       this.onError(
         "The browser took the graphics context away from the fluid. Restart it from the Fluid tab."
       );

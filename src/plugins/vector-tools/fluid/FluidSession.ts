@@ -73,9 +73,16 @@ import { fluidLatticeSize, fluidLatticeTank, type FluidConfig } from "../model";
 import { FluidGraphWriter } from "./FluidGraphWriter";
 import {
   WALL_SPEED_LIMIT,
-  partialSolids,
+  partialSolidsFromSamples,
+  sampleObstacle,
+  type MovingSolidsGrid,
+  type ObstacleSamples,
   type PartialSolids,
 } from "../../../field-rendering/sim/movingSolids";
+import type {
+  ObstacleSampler,
+  PendingSample,
+} from "../../../field-rendering/sim/obstacleSampler";
 import {
   publishVelocitySample,
   withdrawVelocitySample,
@@ -131,6 +138,32 @@ export interface FieldDescription {
   xLatex: string;
   yLatex: string;
   fLatex: string;
+}
+
+/** The moving rows, and what they are to be sampled at. See `movingRequest`. */
+interface MovingRequest {
+  rows: { row: ObstacleRow; body: number }[];
+  scope: { time: number; params: ReadonlyMap<string, number> };
+  /** For a row just unparked, the values it was parked at. */
+  seeds: ({ time: number; params: ReadonlyMap<string, number> } | undefined)[];
+  /** The lattice's step when asked. */
+  step: number;
+  /** Steps since the start of the frame before, for a row with no past. */
+  sinceFrame: number;
+  key: string;
+  grid: MovingSolidsGrid;
+}
+
+/** A request's samples, row by row, and its unparked rows' seeds. */
+interface MovingSamples {
+  rows: ObstacleSamples[];
+  seeds: (ObstacleSamples | undefined)[];
+}
+
+/** Moving cells, built, and as the lattice takes them. */
+interface MovingCells {
+  solids: PartialSolids;
+  psm: { coverage: Float32Array; velocity: Float32Array; body: Uint8Array };
 }
 
 export interface FluidHost {
@@ -648,6 +681,34 @@ export class FluidSession {
     return createStandaloneLattice(options);
   }
 
+  /**
+   * One row's samples on the running lattice's GPU and on the CPU, as plain
+   * arrays with null for NaN, for the test that holds the one to the other.
+   */
+  async sampleRowBothWays(
+    rowId: string,
+    params: Record<string, number>,
+    time = 0
+  ) {
+    const row = this.solidRows.find((r) => r.id === rowId);
+    const { sampler } = this.overlay;
+    if (!row || !sampler || !this.spec) throw new Error("Nothing to sample.");
+    const grid = { nx: this.spec.nx, ny: this.spec.ny, tank: this.latticeTank };
+    const scope = { time, params: new Map(Object.entries(params)) };
+    const read = sampler.begin(row.obstacle!, grid, scope);
+    let gpu: ObstacleSamples | undefined;
+    while ((gpu = sampler.finish(read)) === undefined)
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    const cpu = sampleObstacle(row.obstacle!, grid, scope);
+    const plain = (samples: ObstacleSamples) => ({
+      signed: Array.from(samples.signed, (v) => (Number.isNaN(v) ? null : v)),
+      gradient: Array.from(samples.gradient, (v) =>
+        Number.isNaN(v) ? null : v
+      ),
+    });
+    return { grid, gpu: plain(gpu), cpu: plain(cpu) };
+  }
+
   // ---- the lattice ---------------------------------------------------------
 
   /**
@@ -696,7 +757,10 @@ export class FluidSession {
       this.movingKey = "";
       this.movingArea.clear();
       this.lastMoved.clear();
-      const moving = this.computeMoving(nx, ny, true);
+      const request =
+        this.movingRows.length > 0 ? this.movingRequest(nx, ny) : undefined;
+      const moving =
+        request && this.computeMoving(request, this.sampleNow(request), true);
       this.spec = {
         ...this.buildSpec(nx, ny, units, solids, undefined),
         psm: moving?.psm,
@@ -1098,7 +1162,13 @@ export class FluidSession {
    * wall with another's.
    */
   private moving:
-    | { solids: PartialSolids; step: number; rowIds: string[] }
+    | {
+        solids: PartialSolids;
+        step: number;
+        rowIds: string[];
+        request: MovingRequest;
+        samples: MovingSamples;
+      }
     | undefined;
   private movingKey = "";
   /** Each moving row's area when last accepted, to tell a resize from a move. */
@@ -1235,60 +1305,89 @@ export class FluidSession {
   }
 
   /**
-   * Coverage and wall velocity for the moving solids, if any. The velocity is
-   * how far each wall moved since the last update, over the steps between,
-   * with each solid's translation averaged over the last few updates.
+   * What the moving solids are to be sampled at now: each moving row's
+   * slider values and time, and, for a row just unparked, the values it was
+   * parked at, so the move that unparked it already gives its walls their
+   * speed.
    */
-  private computeMoving(
-    nx: number,
-    ny: number,
-    fresh = false,
-    now = performance.now()
-  ) {
+  private movingRequest(nx: number, ny: number): MovingRequest {
     const rows = this.movingRows;
-    if (rows.length === 0) return undefined;
     const params = this.parameterValues();
     const time = rows.some(({ row }) => row.obstacle!.usesTime)
       ? this.simulatedTime
       : 0;
-    const step = this.overlay.steps;
+    const seeds = rows.map(({ row }) => {
+      const from = this.unparkedFrom.get(row.id);
+      if (from === undefined) return undefined;
+      const merged = new Map(params);
+      for (const [name, value] of from) merged.set(name, value);
+      return { time, params: merged };
+    });
+    this.unparkedFrom.clear();
+    return {
+      rows,
+      scope: { time, params },
+      seeds,
+      step: this.overlay.steps,
+      sinceFrame: this.overlay.steps - this.frameStep,
+      key: this.movingKeyFor(nx, ny),
+      grid: { nx, ny, tank: this.latticeTank },
+    };
+  }
+
+  /** A request's samples taken on the CPU, at once. */
+  private sampleNow(request: MovingRequest): MovingSamples {
+    return {
+      rows: request.rows.map(({ row }) =>
+        sampleObstacle(row.obstacle!, request.grid, request.scope)
+      ),
+      seeds: request.seeds.map((scope, r) =>
+        scope === undefined
+          ? undefined
+          : sampleObstacle(request.rows[r].row.obstacle!, request.grid, scope)
+      ),
+    };
+  }
+
+  /**
+   * Coverage and wall velocity for the moving solids, from their samples.
+   * The velocity is how far each wall moved since the last update, over the
+   * steps between, with each solid's translation averaged over the last few
+   * updates.
+   */
+  private computeMoving(
+    request: MovingRequest,
+    samples: MovingSamples,
+    fresh = false,
+    now = performance.now()
+  ): MovingCells {
+    const { rows } = request;
     const rowIds = rows.map(({ row }) => row.id);
     // Each row's last signed function, found by its id. A row new since then
-    // has none and starts at rest; so does every row on a fresh start.
+    // starts at rest, unless it was just unparked; so does every row on a
+    // fresh start.
     const last = fresh ? undefined : this.moving;
     if (fresh) this.translations.clear();
-    // A row just unparked starts from where it was parked, so the move that
-    // unparked it already gives its walls their speed.
     const previousSigned = fresh
       ? undefined
-      : rows.map(({ row, body }) => {
+      : rows.map(({ row }, r) => {
           const index = last ? last.rowIds.indexOf(row.id) : -1;
           if (index >= 0) return last!.solids.signed[index];
-          const from = this.unparkedFrom.get(row.id);
-          if (from === undefined) return undefined;
-          const merged = new Map(params);
-          for (const [name, value] of from) merged.set(name, value);
-          return partialSolids(
-            [{ obstacle: row.obstacle!, body }],
-            { nx, ny, tank: this.latticeTank },
-            { time, params: merged }
-          ).signed[0];
+          return samples.seeds[r]?.signed;
         });
-    this.unparkedFrom.clear();
-    const elapsed = step - (last?.step ?? this.frameStep);
+    const elapsed = last ? request.step - last.step : request.sinceFrame;
     const rowOf = new Map(rows.map(({ row, body }) => [body, row.id]));
-    const solids = partialSolids(
-      rows.map(({ row, body }) => ({ obstacle: row.obstacle!, body })),
-      { nx, ny, tank: this.latticeTank },
-      { time, params },
+    const solids = partialSolidsFromSamples(
+      rows.map(({ body }, r) => ({ body, samples: samples.rows[r] })),
+      request.grid,
       previousSigned?.some((signed) => signed !== undefined)
         ? { signed: previousSigned, elapsedSteps: elapsed }
         : undefined,
       (body, raw, steps) =>
         this.smoothedTranslation(rowOf.get(body) ?? "", raw, steps, now)
     );
-    this.moving = { solids, step, rowIds };
-    this.movingKey = this.movingKeyFor(nx, ny);
+    this.moving = { solids, step: request.step, rowIds, request, samples };
+    this.movingKey = request.key;
     return {
       solids,
       psm: {
@@ -1303,6 +1402,53 @@ export class FluidSession {
   private movingChangedAt = 0;
   /** What was last said about a solid moving too fast, while it was. */
   private wallNotice = "";
+  /** Samples the GPU has been asked for and has not yet returned. */
+  private samplesInFlight:
+    | {
+        sampler: ObstacleSampler;
+        request: MovingRequest;
+        rows: { read: PendingSample; taken?: ObstacleSamples }[];
+        seeds: ({ read: PendingSample; taken?: ObstacleSamples } | undefined)[];
+      }
+    | undefined;
+
+  /** Lets go of samples in flight, as a new lattice or new rows do. */
+  private cancelSamples() {
+    const flight = this.samplesInFlight;
+    if (flight === undefined) return;
+    this.samplesInFlight = undefined;
+    if (flight.sampler !== this.overlay.sampler) return;
+    for (const entry of [...flight.rows, ...flight.seeds]) {
+      if (entry !== undefined && entry.taken === undefined)
+        flight.sampler.cancel(entry.read);
+    }
+  }
+
+  /**
+   * The samples in flight, once the GPU has taken all of them; undefined
+   * while it has not, or if the rows they were asked for have changed since.
+   */
+  private collectSamples(): MovingSamples | undefined {
+    const flight = this.samplesInFlight!;
+    const ids = this.movingRows.map(({ row }) => row.id).join("\n");
+    const asked = flight.request.rows.map(({ row }) => row.id).join("\n");
+    if (flight.sampler !== this.overlay.sampler || ids !== asked) {
+      this.cancelSamples();
+      return undefined;
+    }
+    let ready = true;
+    for (const entry of [...flight.rows, ...flight.seeds]) {
+      if (entry === undefined || entry.taken !== undefined) continue;
+      entry.taken = flight.sampler.finish(entry.read);
+      if (entry.taken === undefined) ready = false;
+    }
+    if (!ready) return undefined;
+    this.samplesInFlight = undefined;
+    return {
+      rows: flight.rows.map((entry) => entry.taken!),
+      seeds: flight.seeds.map((entry) => entry?.taken),
+    };
+  }
 
   /**
    * Follows the moving solids, every frame. Each wall's velocity is how far
@@ -1313,12 +1459,18 @@ export class FluidSession {
    * as a stop made the walls alternate between rest and twice their speed. A
    * change in a solid's area is a resize, not a move: Auto keeps going and
    * marks the flow as settling, Strict restarts (brief §8.1).
+   *
+   * The solids are sampled on the GPU where there is one (`obstacleSampler`),
+   * and the cells built from the samples when they come back, a frame later;
+   * meanwhile the walls keep the velocity they had.
    */
   private syncMoving(now: number) {
     if (!this.spec) return;
     if (this.updateParking(now)) this.applySolids();
     if (this.movingRows.length === 0) {
-      // The last moving solid was deleted, or no longer reads a slider.
+      // The last moving solid was parked, deleted, or no longer reads a
+      // slider.
+      this.cancelSamples();
       if (this.moving !== undefined) {
         this.moving = undefined;
         this.movingKey = "";
@@ -1326,6 +1478,19 @@ export class FluidSession {
         this.overlay.updatePartialSolids(undefined);
       }
       return;
+    }
+    const flight = this.samplesInFlight;
+    if (flight !== undefined) {
+      const samples = this.collectSamples();
+      if (samples !== undefined) {
+        this.acceptMoving(
+          this.computeMoving(flight.request, samples, false, now)
+        );
+      } else if (this.samplesInFlight !== undefined) {
+        // Not taken yet; the walls keep their velocity meanwhile.
+        return;
+      }
+      // Otherwise the rows changed while it was in flight: ask again below.
     }
     const { nx, ny } = this.spec;
     const key = this.movingKeyFor(nx, ny);
@@ -1339,11 +1504,51 @@ export class FluidSession {
         return;
       }
       if (now - this.movingChangedAt < STOPPED_AFTER_MS) return;
-    } else {
-      this.movingChangedAt = now;
+      // Stopped: the same samples again, so every wall comes to rest.
+      const last = this.moving!;
+      this.acceptMoving(
+        this.computeMoving(
+          { ...last.request, step: this.overlay.steps },
+          last.samples,
+          false,
+          now
+        )
+      );
+      return;
     }
-    const moving = this.computeMoving(nx, ny, false, now);
-    if (!moving) return;
+    this.movingChangedAt = now;
+    const request = this.movingRequest(nx, ny);
+    const { sampler } = this.overlay;
+    if (sampler === undefined) {
+      this.acceptMoving(
+        this.computeMoving(request, this.sampleNow(request), false, now)
+      );
+      return;
+    }
+    this.samplesInFlight = {
+      sampler,
+      request,
+      rows: request.rows.map(({ row }) => ({
+        read: sampler.begin(row.obstacle!, request.grid, request.scope),
+      })),
+      seeds: request.seeds.map((scope, r) =>
+        scope === undefined
+          ? undefined
+          : {
+              read: sampler.begin(
+                request.rows[r].row.obstacle!,
+                request.grid,
+                scope
+              ),
+            }
+      ),
+    };
+  }
+
+  /** Puts newly built moving cells into the lattice, with what follows. */
+  private acceptMoving(moving: MovingCells) {
+    if (!this.spec) return;
+    const { nx, ny } = this.spec;
     const step = this.overlay.steps;
     const config = this.host.config();
     const pass = this.units.cellsPerLength / this.latticeSpeed;
@@ -1664,6 +1869,7 @@ export class FluidSession {
 
   /** Lets go of every read in flight, as a new lattice or new bodies do. */
   private releaseReads() {
+    this.cancelSamples();
     if (this.reads === undefined) return;
     const { lattice, forces, macro } = this.reads;
     for (const read of forces.values()) lattice.cancelRead(read);

@@ -54,7 +54,7 @@ const KIND_CODE: Record<BoundaryKind, number> = {
   pressure: 4,
 };
 
-const VERTEX = `#version 300 es
+export const VERTEX = `#version 300 es
 void main() {
   vec2 corner = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
   gl_Position = vec4(corner * 2.0 - 1.0, 0.0, 1.0);
@@ -982,7 +982,7 @@ export class GpuD2Q9 {
   }
 }
 
-function link(
+export function link(
   gl: WebGL2RenderingContext,
   vertexSource: string,
   fragmentSource: string
