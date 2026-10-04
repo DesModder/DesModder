@@ -146,6 +146,8 @@ interface MovingRequest {
   scope: { time: number; params: ReadonlyMap<string, number> };
   /** For a row just unparked, the values it was parked at. */
   seeds: ({ time: number; params: ReadonlyMap<string, number> } | undefined)[];
+  /** When it was asked, in milliseconds, for averaging the translation. */
+  time: number;
   /** The lattice's step when asked. */
   step: number;
   /** Steps since the start of the frame before, for a row with no past. */
@@ -1407,6 +1409,7 @@ export class FluidSession {
       rows,
       scope: { time, params },
       seeds,
+      time: performance.now(),
       step: this.overlay.steps,
       sinceFrame: this.overlay.steps - this.frameStep,
       key: this.movingKeyFor(nx, ny),
@@ -1437,10 +1440,9 @@ export class FluidSession {
   private computeMoving(
     request: MovingRequest,
     samples: MovingSamples,
-    fresh = false,
-    now = performance.now()
+    fresh = false
   ): MovingCells {
-    const { rows } = request;
+    const { rows, time } = request;
     const rowIds = rows.map(({ row }) => row.id);
     // Each row's last signed function, found by its id. A row new since then
     // starts at rest, unless it was just unparked; so does every row on a
@@ -1463,7 +1465,7 @@ export class FluidSession {
         ? { signed: previousSigned, elapsedSteps: elapsed }
         : undefined,
       (body, raw, steps) =>
-        this.smoothedTranslation(rowOf.get(body) ?? "", raw, steps, now)
+        this.smoothedTranslation(rowOf.get(body) ?? "", raw, steps, time)
     );
     this.moving = { solids, step: request.step, rowIds, request, samples };
     this.movingKey = request.key;
@@ -1573,9 +1575,7 @@ export class FluidSession {
     if (flight !== undefined) {
       const samples = this.collectSamples();
       if (samples !== undefined) {
-        this.acceptMoving(
-          this.computeMoving(flight.request, samples, false, now)
-        );
+        this.acceptMoving(this.computeMoving(flight.request, samples));
       } else if (this.samplesInFlight !== undefined) {
         // Not taken yet; the walls keep their velocity meanwhile.
         return;
@@ -1596,41 +1596,48 @@ export class FluidSession {
       const last = this.moving!;
       this.acceptMoving(
         this.computeMoving(
-          { ...last.request, step: this.overlay.steps },
-          last.samples,
-          false,
-          now
+          { ...last.request, step: this.overlay.steps, time: now },
+          last.samples
         )
       );
       return;
     }
     const request = this.movingRequest(nx, ny);
-    const { sampler } = this.overlay;
-    if (sampler === undefined) {
-      this.acceptMoving(
-        this.computeMoving(request, this.sampleNow(request), false, now)
-      );
-      return;
+    const sampler = this.gpuSamplingFailed ? undefined : this.overlay.sampler;
+    if (sampler !== undefined) {
+      const reads: PendingSample[] = [];
+      const begin = (scope: MovingRequest["scope"], r: number) => {
+        const read = sampler.begin(
+          request.rows[r].row.obstacle!,
+          request.grid,
+          scope
+        );
+        reads.push(read);
+        return { read };
+      };
+      try {
+        this.samplesInFlight = {
+          sampler,
+          request,
+          rows: request.rows.map((_, r) => begin(request.scope, r)),
+          seeds: request.seeds.map((scope, r) =>
+            scope === undefined ? undefined : begin(scope, r)
+          ),
+        };
+        return;
+      } catch {
+        // A GPU that will not compile some row's GLSL: sample on the CPU for
+        // the rest of the session rather than stop the fluid, which is what
+        // an error in the frame loop does.
+        for (const read of reads) sampler.cancel(read);
+        this.gpuSamplingFailed = true;
+      }
     }
-    this.samplesInFlight = {
-      sampler,
-      request,
-      rows: request.rows.map(({ row }) => ({
-        read: sampler.begin(row.obstacle!, request.grid, request.scope),
-      })),
-      seeds: request.seeds.map((scope, r) =>
-        scope === undefined
-          ? undefined
-          : {
-              read: sampler.begin(
-                request.rows[r].row.obstacle!,
-                request.grid,
-                scope
-              ),
-            }
-      ),
-    };
+    this.acceptMoving(this.computeMoving(request, this.sampleNow(request)));
   }
+
+  /** Whether the GPU sampler failed once, and the CPU samples from here on. */
+  private gpuSamplingFailed = false;
 
   /** Puts newly built moving cells into the lattice, with what follows. */
   private acceptMoving(moving: MovingCells) {
