@@ -1598,3 +1598,40 @@ digits, not proved. Runs in 20 ms slices after typing pauses.
 from logarithms (`e^{k ln u} = u^k`), and `e^{x−y}` separating.
 
 Screenshot: `docs/assets/physics-lab-numeric-definite.png`.
+
+## Four of Rafael's cases (2026-10-04)
+
+Each is now checked against Desmos in one integration test, "four reported
+cases answer, and Desmos agrees with each".
+
+**The Derivative tab went blank on (x+3)²√x.** Desmos's parser now wraps a
+bracket in a `Paren` node, which this branch could not read; the fix lived on
+a side branch and is merged.
+
+**Exact value showed nothing for ln(2)/π + sin 3.** The tab evaluated with
+`evaluateExact`, which knows roots and `exp` only. It now falls back to
+`exactConstant` (`definite.ts`): logarithms into primes, trigonometry at
+multiples of π/12, the inverse functions, and anything irreducible kept
+exact as itself. The tab names the parts kept as written, so an answer that
+repeats part of the question reads as the answer it is.
+
+**dy/dx = −y¹⁸ was refused.** The answer was right and its check was not:
+the relation's implicit slope differenced 1/(17y¹⁷) − x as one function, and
+at y = 2.5 the y side is 10⁻⁸ beside an x side near 1. A separable answer is
+now checked side by side (g/h is f, and each side's derivative is what was
+integrated). When the y side is a single odd power of y it has one real
+inverse, so y is given explicitly — y′ = −y¹⁸ answers
+y = (17(x + C))^{−1/17}, y′ = −y² answers 1/(x + C) — with C taking the sign
+of a negative coefficient. Even powers stay relations: solving them means
+choosing a branch.
+
+**∫ln(x)/x dx looked wrong.** It was (ln x)²/2 all along, written
+`\ln\left(x\right)^{2}`, which renders as ln(x)² and reads as ln(x²). A
+function raised to a power is now bracketed, as a fraction raised to one
+already was, so sin(x)³ is written (sin(x))³ too. Roots and moduli are left
+alone.
+
+Still open: the Integral tab names its method but does not show the working.
+The integrator traces the techniques it used (`record` in `integrate.ts`);
+showing the substitution, the parts or the decomposition step by step means
+each technique recording its intermediate forms, and wants a mock-up first.

@@ -1061,6 +1061,9 @@ testWithPage(
         (el) => (el as HTMLElement).innerText
       )
     ).toContain("no simpler exact form");
+    await driver.page.screenshot({
+      path: "docs/assets/physics-lab-exact-irreducible.png",
+    });
     await driver.evaluate((latex: string) => {
       Calc.setExpression({ id: "eA", latex: `e_{x}=${latex}` });
     }, exact);
@@ -1092,6 +1095,9 @@ testWithPage(
     expect(solution).toBe(
       String.raw`y=\left(17\left(x+C\right)\right)^{-\frac{1}{17}}`
     );
+    await driver.page.screenshot({
+      path: "docs/assets/physics-lab-separable-odd-power.png",
+    });
     await driver.evaluate((latex: string) => {
       Calc.setExpression({ id: "iC", latex: "C=0.6" });
       Calc.setExpression({

@@ -40,13 +40,31 @@ The liquid comes next (brief §8.0).
   `S_{t1}`, with values still settling written as undefined.
 - **Moving solids:** a solid whose inequality reads a slider or `t` moves
   through the fluid as partially saturated cells (GPT's third round), pushing
-  it aside and carrying what is inside. Solids that cannot move keep the
-  sharper interpolated walls. A solid's translation is averaged over the
-  last 100 ms of updates, because Desmos reports a dragged slider every frame
-  or two and unevenly; one update alone scattered the wall speed by ±40%.
+  it aside and carrying what is inside. A solid's translation is averaged
+  over the last 100 ms of updates, because Desmos reports a dragged slider
+  every frame or two and unevenly; one update alone scattered the wall speed
+  by ±40%.
+  - **Parked while still.** A solid only sliders move is a fixed solid, with
+    the sharper interpolated walls and no fluid inside, while its sliders are
+    still; it turns into partially saturated cells the moment one changes,
+    starting from its parked shape, and is parked again half a second after
+    they stop. Every cell keeps its populations across the switch. A solid
+    that reads `t` never parks.
+  - **Sampled on the GPU.** Each moving row's signed function and gradient are
+    drawn into a float texture from the GLSL its compiler emits, and read
+    back a frame later (`obstacleSampler.ts`); the cells are built from those
+    samples by the same code the CPU's feed. On two parabolas over 300 × 182
+    cells, a drag cost 12.6 ms of the tab's time a frame on the CPU and costs
+    5.7 ms now, and the median frame went from 33 to 16.8 ms.
+  - **The inlet blows only into the fluid part of a cell.** Where a moving
+    solid covers it, the inlet prescribes the solid's own velocity
+    (`openPrescribed`); blowing into the solid filled it until the fluid
+    burst out of its sides and the lattice went unstable.
 - **Rafael's guards (brief §8.1):**
-  - Lattice speed: Auto, Accurate or Lively. Auto halves the lattice speed and
-    restarts if the flow anywhere passes Mach 0.3. Lively keeps its speed and
+  - Lattice speed: Auto, Accurate or Lively. Auto halves the lattice speed if
+    the flow anywhere passes Mach 0.3. The wind tunnel is rescaled in place
+    and runs on with the flow it had (`rescale`, below); the stirred box, and
+    a flow that has gone unstable, restart. Lively keeps its speed and
     says "speed limit exceeded" while the flow is past Mach 0.3, and nothing
     measured meanwhile counts as settled.
   - Resizing a solid (its area changing by more than 2%): Auto updates it in
@@ -70,8 +88,9 @@ The liquid comes next (brief §8.0).
   through pixel-pack buffers and fences, and collected a frame later, labelled
   with the step they were taken at. Measured live (300 × 120, two solids),
   synchronous reads were 78% of each frame's main-thread time: 12.6 ms a frame
-  then, 3.2 ms now. A sliding solid adds about 4.7 ms a frame while it moves,
-  the cost of evaluating its inequality once per cell.
+  then, 3.2 ms now. Moving solids are sampled the same way (above).
+- **The backdrop follows the arrows.** The dark backdrop is laid by the
+  particles while they run, and by the arrows when the particles are off.
 
 ## How it works
 
@@ -87,6 +106,8 @@ The liquid comes next (brief §8.0).
 | Scheduler, units, probe | `StepScheduler.ts`, `latticeUnits.ts`, `capabilities.ts` | fixed steps; graph units to lattice units; a GPU check that renders and reads back                                                                  |
 | Display                 | `sim/FluidOverlay.ts`                                    | the lattice's context, and a two-pass display: a value per cell, then a filtered screen pass                                                        |
 | Moving solids           | `sim/movingSolids.ts`                                    | coverage from the signed function, and a wall velocity: the level set's normal speed at walls, and a least-squares translation everywhere           |
+| Moving-solid sampler    | `sim/obstacleSampler.ts`                                 | the signed function and its gradient at every cell centre, drawn on the lattice's context and read back asynchronously                              |
+| Speed change            | `CpuD2Q9.rescale`, `GpuD2Q9.rescale`                     | the flow at a new lattice speed: equilibrium at s·u and s²·δρ, non-equilibrium times s(τ′ − 1)/(τ − 1)                                              |
 | The tab                 | `plugins/vector-tools/fluid/`                            | `FluidSession` (lattice, clock, measurements, guards), `FluidGraphWriter` (writeback)                                                               |
 
 ## How it was verified
@@ -113,6 +134,10 @@ CPU oracle.
 | Stirred box, curl against gradient of the same strength    | the gradient moves the fluid at under 5% of the curl                     |
 | Moving cylinder against a held one (GPT's Galilean pair)   | GPU within 10⁻³ of GPT's 2.013008 and 2.016551                           |
 | A disc slid by a slider at 2 units/s, live                 | fluid inside moves at 0.02793 cells/step against its walls' 0.02771      |
+| Moving solids sampled on the GPU against the CPU           | signed values to 10⁻⁵, gradients to 10⁻³, coverage to 10⁻³, area 10⁻⁴    |
+| Inlet across a moving solid, 8 s of flow                   | no restart; the inside at no more pressure than the fluid around it      |
+| Speed halved mid-decay, Taylor–Green, 48 cells             | 0.08% from the run that never changed speed (0.31% from equilibrium)     |
+| GPU rescale against CPU, at once / 50 steps on             | 10⁻⁸ / 2·10⁻⁷ per population                                             |
 
 Evidence pictures: `assets/fluid-gate1-taylor-green.png`,
 `fluid-gate2-poiseuille.png`, `fluid-gate3-dfg.png` and
@@ -131,6 +156,16 @@ Evidence pictures: `assets/fluid-gate1-taylor-green.png`,
   last valid state while a solid moves above Re 200, and to roll back and cap
   Re at 200 if the flow goes invalid. For now the tab's general guard
   applies: an invalid flow halves the lattice speed and restarts.
+- **Parking and unparking rebuild the mask on the CPU**, 9 to 31 ms once at
+  the start of a drag and half a second after it, mostly placing the walls'
+  link fractions (up to 40 evaluations a link).
+- **While a solid moves, its walls are partially saturated cells**, a blend
+  over a cell rather than a line, with fluid inside that moves with it. A
+  sharper moving wall (interpolated bounce-back with refilled cells) is the
+  alternative, untested here.
+- **Reynolds number is per reference length**, one graph unit unless set.
+  A solid several units across runs at several times that, where real flow
+  is unsteady: two parabolas four units across at Re 100 are at about 400.
 - **The reconstructed outlet bends the flow in its last two columns**, where
   a cell-centre ρu stops being the flux (0.5–0.6%). The sponge keeps this
   from reflecting, and nothing measures there.
