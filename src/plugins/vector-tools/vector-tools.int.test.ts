@@ -1936,3 +1936,151 @@ testWithPage(
   },
   90000
 );
+
+testWithPage(
+  "x(y-1) is a product, as Desmos evaluates it, and divergence and curl say so",
+  async (driver) => {
+    const { raw } = String;
+    await resetLibrary(driver);
+
+    // What Desmos itself makes of a value followed by a bracket, which is what
+    // the rewrite has to agree with: a power after the bracket belongs to the
+    // bracket, and a power of the bracketed whole squares the product.
+    const desmosValues = await driver.page.evaluate(
+      async (latexes) => {
+        Calc.setExpressions([
+          { id: "vt_probe_a", latex: "a=2" },
+          { id: "vt_probe_b", latex: "b=3" },
+        ]);
+        const read = async (latex: string) =>
+          await new Promise<number>((resolve) => {
+            const helper = Calc.HelperExpression({ latex }) as any;
+            let settled = false;
+            const finish = () => {
+              if (settled) return;
+              settled = true;
+              helper.unobserve("numericValue");
+              resolve(helper.numericValue);
+            };
+            helper.observe("numericValue", () => setTimeout(finish, 20));
+            setTimeout(finish, 4000);
+          });
+        const out: number[] = [];
+        for (const latex of latexes) out.push(await read(latex));
+        Calc.removeExpressions([{ id: "vt_probe_a" }, { id: "vt_probe_b" }]);
+        return out;
+      },
+      [
+        raw`a\left(b-1\right)`,
+        raw`a\left(b-1\right)^{2}`,
+        raw`\left(a\left(b-1\right)\right)^{2}`,
+      ]
+    );
+    expect(desmosValues).toEqual([4, 8, 16]);
+
+    await driver.enablePlugin("vector-tools");
+    await driver.assertSelectorEventually(BUTTON);
+    await driver.click(BUTTON);
+    await driver.assertSelector(PANEL);
+    await openTab(driver, "field");
+
+    const analysis = async () =>
+      await driver.evaluate(() => {
+        const result = (DSM.enabledPlugins["vector-tools"] as any)
+          .fieldAnalysis;
+        return result.ok
+          ? {
+              ok: true,
+              divergence: result.divergenceLatex as string,
+              curl: result.curlLatex as string,
+              verdict:
+                document.querySelector<HTMLElement>(
+                  '[data-vector-tools="conservative"]'
+                )?.innerText ?? "",
+            }
+          : { ok: false, error: result.error as string };
+      });
+    const setField = async (p: string, q: string) => {
+      await driver.evaluate(
+        (args: string[]) => {
+          const plugin = DSM.enabledPlugins["vector-tools"] as any;
+          plugin.setSource("components");
+          plugin.setSlot("p", args[0]);
+          plugin.setSlot("q", args[1]);
+        },
+        [p, q]
+      );
+      await driver.waitForSync();
+    };
+    // The environment scan is coalesced off the dispatcher, so a definition
+    // reaches the analysis a moment after it reaches the expression list.
+    const settle = async () => {
+      await driver.waitForSync();
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    };
+
+    // ∇·F = (y-1) + (x+2) and ∇×F = ∂Q/∂x − ∂P/∂y = y − x.
+    await setField(raw`x\left(y-1\right)`, raw`y\left(x+2\right)`);
+    const found = await analysis();
+    expect(found).toMatchObject({
+      ok: true,
+      divergence: "y+x+1",
+      curl: "y-x",
+    });
+    expect(found.verdict).toContain("Not conservative");
+    // P and Q in the frame with what came of them, so the picture is the
+    // evidence on its own.
+    await driver.evaluate(() => {
+      document
+        .querySelector('[data-vector-tools="analysis"]')
+        ?.scrollIntoView({ block: "end" });
+    });
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    await driver.page.screenshot({
+      path: "docs/assets/vector-tools-implicit-products.png",
+    });
+
+    // The power after the bracket, and the power of the bracketed whole:
+    // ∂/∂y of x(y-1)² and of (x(y-1))², through the curl of (P, 0).
+    await setField(raw`x\left(y-1\right)^{2}`, "0");
+    expect(await analysis()).toMatchObject({
+      ok: true,
+      curl: raw`-\left(2x\left(y-1\right)\right)`,
+    });
+    await setField(raw`\left(x\left(y-1\right)\right)^{2}`, "0");
+    expect(await analysis()).toMatchObject({
+      ok: true,
+      curl: raw`-2\left(x^{2}\left(y-1\right)\right)`,
+    });
+
+    // A name is a value only once the graph says so. Undefined, `a(x+1)` might
+    // be a function, and is refused rather than guessed at; defined as a
+    // number, it is a product; defined as a function, it is a call again.
+    await setField(raw`a\left(x+1\right)`, "0");
+    expect(await analysis()).toMatchObject({ ok: false });
+    await driver.evaluate(() =>
+      Calc.setExpression({ id: "vt_value_a", latex: "a=2" })
+    );
+    await settle();
+    expect(await analysis()).toMatchObject({ ok: true, divergence: "a" });
+    await driver.evaluate(() => {
+      Calc.removeExpression({ id: "vt_value_a" });
+      Calc.setExpression({
+        id: "vt_function_a",
+        latex: "a\\left(u\\right)=u^{2}",
+      });
+    });
+    await settle();
+    const refused = await analysis();
+    expect(refused).toMatchObject({ ok: false });
+    expect(refused.error).toContain("a");
+
+    await driver.evaluate(() =>
+      (DSM.enabledPlugins["vector-tools"] as any).resetConfig()
+    );
+    await driver.disablePlugin("vector-tools");
+    await driver.setBlank();
+    await driver.waitForSync();
+  },
+  90000
+);

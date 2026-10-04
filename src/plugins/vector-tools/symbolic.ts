@@ -23,6 +23,7 @@ export {
   subtract,
   identifiersIn,
   implicitDerivative,
+  implicitProducts,
   SymbolicError,
   toLatex,
   type Node,

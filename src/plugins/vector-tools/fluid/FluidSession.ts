@@ -1094,7 +1094,6 @@ export class FluidSession {
   ) {
     const rows = this.movingRows;
     if (rows.length === 0) return undefined;
-    const config = this.host.config();
     const params = this.parameterValues();
     const time = rows.some(({ row }) => row.obstacle!.usesTime)
       ? this.simulatedTime
@@ -1287,7 +1286,7 @@ export class FluidSession {
     const norm = 0.5 * this.latticeSpeed ** 2 * units.cellsPerLength;
     const settled = !this.settling;
     const out: BodyMeasurement[] = [];
-    for (const [body, record] of this.bodies) {
+    for (const record of this.bodies.values()) {
       const after = (s: Sample) => s.step >= this.settleUntil;
       const drag = record.drag.filter(after);
       const lift = record.lift.filter(after);

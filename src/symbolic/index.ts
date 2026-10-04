@@ -42,6 +42,7 @@ export {
   SymbolicError,
 } from "./differentiate";
 export { absToBars, dropRedundantParens, toLatex } from "./latex";
+export { implicitProducts } from "./products";
 export { condense, type Condensed } from "./condense";
 export {
   expand,

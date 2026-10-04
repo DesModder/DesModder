@@ -1273,7 +1273,11 @@ export default class PhysicsLabSession {
   derivative(latex: string, variable = "x"): Derivation | undefined {
     if (latex.trim() === "") return undefined;
     try {
-      const tree = parseLatex(this.textModeConfig, latex);
+      // `x(x+1)` parses as a call of a function named x; see implicitProducts.
+      const tree = implicitProducts(
+        parseLatex(this.textModeConfig, latex),
+        variable
+      );
       return differentiate(this.textModeConfig, tree, variable);
     } catch {
       return undefined;
@@ -1305,7 +1309,13 @@ export default class PhysicsLabSession {
     let result: DerivationView;
     let exampleDerivative: Node | undefined;
     try {
-      const tree = parseLatex(this.textModeConfig, fLatex);
+      // Read as a product before anything sees it, the worked example
+      // included: it is built from this tree, and an example copied from a
+      // call would be refused for the same reason the original was.
+      const tree = implicitProducts(
+        parseLatex(this.textModeConfig, fLatex),
+        variable
+      );
       const derivation = differentiate(this.textModeConfig, tree, variable);
       const emit = (node: Node) => toLatexTree(this.textModeConfig, node);
       const resultLatex = emit(derivation.result);
@@ -1542,13 +1552,18 @@ export default class PhysicsLabSession {
     const truth = this.derivativeCache?.exampleDerivative;
     if (truth === undefined) return undefined;
 
+    const { variable } = this.config.derivative;
     let tree: Node;
     try {
-      tree = parseLatex(this.textModeConfig, attempt);
+      // An answer written `2x(x+1)` is a product too, and marking it as a
+      // call nobody defined would call a right answer unreadable.
+      tree = implicitProducts(
+        parseLatex(this.textModeConfig, attempt),
+        variable
+      );
     } catch {
       return "unreadable";
     }
-    const { variable } = this.config.derivative;
     const samples = ATTEMPT_SAMPLES.map((value) => ({ [variable]: value }));
     // An expression that is undefined everywhere it is checked has not been
     // marked at all, and reporting that as wrong would be a lie about it.

@@ -421,6 +421,23 @@ const vizSymbol = {
   TTest: "TTest",
 } as const;
 
+/**
+ * The base of a power or the argument of a factorial, keeping one bracket the
+ * aug tree otherwise drops.
+ *
+ * Desmos cannot tell `x(y-1)` from a call until it knows what x is, so its
+ * parser keeps the two spellings apart: `x(y-1)^2` is a FunctionExponent and
+ * `(x(y-1))^2` is an Exponent of a Paren. Both would become the same tree
+ * here, and when x is a value they mean different things — x·(y-1)² and
+ * (x·(y-1))². So a call that arrives in brackets says so.
+ */
+function postfixBaseToTree(node: AnyNode): Aug.Latex.AnyChild {
+  const tree = childNodeToTree(node);
+  if (node.type === "Paren" && tree.type === "FunctionCall")
+    return { ...tree, parenWrapped: true };
+  return tree;
+}
+
 function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
   switch (node.type) {
     case "Constant":
@@ -443,7 +460,7 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
       };
     case "FunctionCall":
       if (node._symbol === "factorial" && node.args.length === 1)
-        return { type: "Factorial", arg: childNodeToTree(node.args[0]) };
+        return { type: "Factorial", arg: postfixBaseToTree(node.args[0]) };
       return {
         type: "FunctionCall",
         callee: parseIdentifier(node._symbol),
@@ -550,6 +567,10 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         parenWrapped: node.type === "ParenSeq",
         args: node.args.map(childNodeToTree),
       };
+    case "Paren":
+      // Grouping only. The aug tree carries no parentheses for grouping;
+      // augLatexToRaw puts them back wherever precedence needs them.
+      return childNodeToTree(node.args[0]);
     case "UpdateRule":
       return {
         type: "UpdateRule",
@@ -636,7 +657,10 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
       return {
         type: "BinaryOperator",
         name: node.type === "DotMultiply" ? "Multiply" : node.type,
-        left: childNodeToTree(node.args[0]),
+        left:
+          node.type === "Exponent"
+            ? postfixBaseToTree(node.args[0])
+            : childNodeToTree(node.args[0]),
         right: childNodeToTree(node.args[1]),
       };
     case "Negative":

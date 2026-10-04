@@ -256,6 +256,13 @@ export interface ParenSeq extends Expression {
   args: ChildExprNode[];
 }
 
+export interface Paren extends Expression {
+  // "(a+b)": one parenthesised expression with no comma, kept as a node for
+  // grouping since Desmos's 2026-10 builds. "(a,b)" is still a ParenSeq.
+  type: "Paren";
+  args: [ChildExprNode];
+}
+
 interface MovablePoint extends ParenSeq {
   moveStrategy: unknown;
   defaultDragMode: unknown;
@@ -658,6 +665,7 @@ export type ChildExprNode =
   | ListAccess
   | BareSeq
   | ParenSeq
+  | Paren
   | UpdateRule
   | AssignmentExpression
   | ListComprehension

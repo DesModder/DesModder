@@ -610,6 +610,16 @@ exactly when the curl folds to 0, "probably" when it only vanishes at the 49
 points of a grid over the sampling domain, and plainly not otherwise. That is
 also the conservative-field check listed below. The GPU overlay is still to do.
 
+Desmos's parser reads `x(y-1)` as a call of a function named x and leaves its
+evaluator to decide. The analysis decides the same way, from the environment
+(§4.3): a one-argument call of x, y, t, e, π, τ or a value the graph defines is
+a product; a call of a defined function, or of a name nothing defines, stays a
+call and is refused rather than guessed at. `x(y-1)^2` is x·(y-1)² and
+`(x(y-1))^2` is (x·(y-1))², as Desmos evaluates them — the aug tree keeps that
+bracket as `parenWrapped` for exactly this. The shared rewrite is
+`implicitProducts` in `src/symbolic/products.ts`; Physics Lab's integral and
+limit use it with the one variable.
+
 Two halves:
 
 - **As a coloured overlay from the GPU** — a full-screen fragment pass with

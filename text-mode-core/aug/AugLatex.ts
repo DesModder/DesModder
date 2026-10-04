@@ -118,6 +118,12 @@ export interface FunctionCall {
   type: "FunctionCall";
   callee: Identifier;
   args: AnyChild[];
+  // "(x(y-1))^2" rather than "x(y-1)^2". Set only on a call that is the base
+  // of a power or the argument of a factorial, the two places the brackets
+  // change the meaning: when x turns out to be a value rather than a function,
+  // Desmos reads the first as (x·(y-1))² and the second as x·(y-1)².
+  // A reading, not a printing instruction: augLatexToRaw does not emit it.
+  parenWrapped?: boolean;
 }
 
 export interface Integral {
