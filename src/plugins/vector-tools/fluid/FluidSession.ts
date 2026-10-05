@@ -1037,10 +1037,14 @@ export class FluidSession {
         max: 0.12,
         reference: [u, 0],
       },
-      // Sound leaves through the inlet rather than ringing between it and
-      // the outlet (`absorbingInflow`); the mean pressure there follows over
+      // Sound is absorbed beside the inlet rather than ringing between it
+      // and the outlet (`InletLayer`); the mean pressure there follows over
       // about 2000 steps, a couple of the tunnel's round trips.
-      absorbingInlet: 1 / 2000,
+      inletLayer: {
+        width: Math.min(16, Math.round(nx / 16)),
+        max: 0.25,
+        meanRate: 1 / 2000,
+      },
       initial: [0, 0],
       forceField: undefined,
       psm: undefined,

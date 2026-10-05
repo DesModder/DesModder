@@ -957,7 +957,7 @@ fluidTest(
  * inlet and the outlet at the tunnel's round-trip period: the inflow pulsed
  * by 3.5% and the particles drew vertical bands at the inlet, as though the
  * stream came round again. The inlet now lets sound out
- * (`absorbingInflow`): measured, the pressure swing there fell from
+ * (`InletLayer`): measured, the pressure swing there fell from
  * 8.9·10⁻³ to 9.7·10⁻⁴ in δρ and the pulsing to 0.7%.
  */
 fluidTest(

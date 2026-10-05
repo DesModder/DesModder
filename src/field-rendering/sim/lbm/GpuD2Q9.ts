@@ -37,6 +37,7 @@ import {
   validateBoundaries,
   type Boundaries,
   type BoundaryKind,
+  type InletLayer,
 } from "./boundaries";
 
 export interface GpuLatticeOptions {
@@ -112,7 +113,9 @@ uniform vec2 u_wallVelocity[4];
 uniform bool u_regularize[4];
 uniform float u_openDeltaRho[4];
 uniform float u_inletScale;
-uniform float u_absorbingInlet;
+uniform float u_layerWidth;
+uniform float u_layerMax;
+uniform float u_layerMeanRate;
 uniform sampler2D u_g3;
 uniform float u_spongeWidth;
 uniform float u_spongeMax;
@@ -298,17 +301,13 @@ void main() {
   // openPrescribed in boundaries.ts: an inlet blows only into the fluid part
   // of a cell, and moves the solid part at the solid's own speed.
   vec2 inflow = texelFetch(u_inlet, ivec2(c.y, 0), 0).xy * u_inletScale;
-  // absorbingInflow in boundaries.ts: the row's slow mean δρ rides in the
-  // force target's last channel, from one step to the next.
+  // InletLayer in boundaries.ts: each velocity side's row keeps a slow mean
+  // of its δρ, in the force target's last channel from one step to the next.
   int openSide = c.x == 0 ? 0 : (c.x == n.x - 1 ? 1 : -1);
   float inletMean = 0.0;
-  if (openSide >= 0 && u_kind[openSide] == 3 && u_absorbingInlet > 0.0) {
-    float dr = texelFetch(u_g2, c, 0).y;
+  if (openSide >= 0 && u_kind[openSide] == 3 && u_layerWidth > 0.0) {
     float mean = texelFetch(u_g3, c, 0).w;
-    vec2 normal = vec2(FRAME_VECTOR[openSide * 4], FRAME_VECTOR[openSide * 4 + 1]);
-    float out_ = 0.5773502691896258 * (dr - mean);
-    inflow = vec2(inflow.x - out_ * normal.x, inflow.y - out_ * normal.y);
-    inletMean = mean + u_absorbingInlet * (dr - mean);
+    inletMean = mean + u_layerMeanRate * (texelFetch(u_g2, c, 0).y - mean);
   }
   vec2 prescribed = psm.x > 0.0 ? (1.0 - psm.x) * inflow + psm.x * psm.zw : inflow;
   if (c.x == 0 && u_kind[0] >= 3) {
@@ -388,6 +387,28 @@ void main() {
     linkBody = int(psm.y + 0.5);
   }
 
+  // The inlet layer (InletLayer, inletLayerStrength in boundaries.ts):
+  // toward the inflow at last step's row mean δρ, fading in from the side.
+  if (u_layerWidth > 0.0) {
+    for (int side = 0; side < 2; side++) {
+      if (u_kind[side] != 3) continue;
+      float distance = side == 0 ? float(c.x) : float(n.x - 1 - c.x);
+      if (distance >= u_layerWidth) continue;
+      float t = (u_layerWidth - distance) / u_layerWidth;
+      float strength = u_layerMax * t * t;
+      if (psm.x > 0.0) strength = strength * (1.0 - psm.x);
+      float mean = texelFetch(u_g3, ivec2(side == 0 ? 0 : n.x - 1, c.y), 0).w;
+      vec2 target = texelFetch(u_inlet, ivec2(c.y, 0), 0).xy * u_inletScale;
+      float rhoT = 1.0 + mean;
+      float usqT = 1.5 * (target.x * target.x + target.y * target.y);
+      for (int i = 0; i < 9; i++) {
+        float cu = float(CXS[i]) * target.x + float(CYS[i]) * target.y;
+        float eqT = WS[i] * (mean + rhoT * ((3.0 * cu + (4.5 * cu) * cu) - usqT));
+        g[i] = (1.0 - strength) * g[i] + strength * eqT;
+      }
+    }
+  }
+
   // spongeStrength in boundaries.ts.
   float start = float(n.x - 1) - u_spongeWidth;
   if (u_spongeWidth > 0.0 && float(c.x) >= start) {
@@ -431,7 +452,7 @@ void main() {
   vec4 a = texelFetch(u_g0, c, 0);
   vec4 b = texelFetch(u_g1, c, 0);
   vec4 m = texelFetch(u_g2, c, 0);
-  // The absorbing inlet's mean pressure, like any other: times s².
+  // The inlet layer's mean pressure, like any other: times s².
   o3 = vec4(0.0, 0.0, 0.0, (u_scale * u_scale) * texelFetch(u_g3, c, 0).w);
   if (u_hasSolid && texelFetch(u_solid, c, 0).r > 0.0) {
     o0 = a;
@@ -528,8 +549,8 @@ export class GpuD2Q9 {
   force: readonly [number, number];
   /** Multiplies the inlet profile, for an eased start or a gust. */
   inletScale = 1;
-  /** `CpuD2Q9.absorbingInlet`: 0 for a rigid inlet. */
-  absorbingInlet = 0;
+  /** `CpuD2Q9.inletLayer`. */
+  inletLayer: InletLayer | undefined;
   /** The Smagorinsky constant, 0 for plain BGK. See `CollisionParameters`. */
   smagorinsky = 0;
   /** What the force field is multiplied by (`CpuD2Q9.forceScale`). */
@@ -832,7 +853,9 @@ export class GpuD2Q9 {
     gl.uniform1f(at("u_forceScale"), this.forceScale);
     gl.uniform1i(at("u_hasPsm"), this.hasPsm ? 1 : 0);
     gl.uniform1f(at("u_inletScale"), this.inletScale);
-    gl.uniform1f(at("u_absorbingInlet"), this.absorbingInlet);
+    gl.uniform1f(at("u_layerWidth"), this.inletLayer?.width ?? 0);
+    gl.uniform1f(at("u_layerMax"), this.inletLayer?.max ?? 0);
+    gl.uniform1f(at("u_layerMeanRate"), this.inletLayer?.meanRate ?? 0);
     const specs = SIDES.map((side) => this.boundaries[side]);
     gl.uniform1iv(
       at("u_kind"),

@@ -165,15 +165,16 @@ describe("walls and open sides", () => {
 
 /**
  * A sound pulse sent at the inlet: a rigid velocity inlet sends it all back,
- * and an absorbing one (`absorbingInflow`) lets it out. A tunnel whose inlet
- * reflected rang at its round-trip period, and the particles drew the ringing
- * as bands across the stream.
+ * and the absorbing layer beside it (`InletLayer`) takes it in. A tunnel whose
+ * inlet reflected rang at its round-trip period, and the particles drew the
+ * ringing as bands across the stream.
  */
-describe("the absorbing inlet", () => {
+describe("the inlet layer", () => {
   const nx = 400;
   const ny = 4;
   const u = 0.05;
   const c = 1 / Math.sqrt(3);
+  const layer = { width: 16, max: 0.25, meanRate: 1 / 2000 };
   const boundaries: Boundaries = {
     left: { kind: "velocity", regularize: true },
     right: { kind: "pressure", deltaRho: 0, regularize: true },
@@ -182,22 +183,19 @@ describe("the absorbing inlet", () => {
   };
 
   /** The largest δρ left in the middle once the pulse has been and gone. */
-  const echo = (absorbing: number) => {
+  const echo = (inletLayer: typeof layer | undefined, width: number) => {
     const lattice = new CpuD2Q9({ nx, ny, tau: 0.55 });
     lattice.setBoundaries(boundaries);
     lattice.inlet = {
       ux: new Float64Array(ny).fill(u),
       uy: new Float64Array(ny),
     };
-    lattice.absorbingInlet = absorbing;
+    lattice.inletLayer = inletLayer;
     // A pulse travelling left only: u′ = −c ρ′.
     lattice.initialize((x) => {
-      const pulse = 1e-3 * Math.exp(-(((x - 200) / 12) ** 2));
+      const pulse = 1e-3 * Math.exp(-(((x - 200) / width) ** 2));
       return { deltaRho: pulse, ux: u - c * pulse, uy: 0 };
     });
-    let before = 0;
-    for (let k = 0; k < nx * ny; k++)
-      before = Math.max(before, Math.abs(lattice.deltaRho[k]));
     // To the inlet and halfway back: 200 cells at c − u, 100 at c + u.
     lattice.step(Math.round(200 / (c - u) + 100 / (c + u)));
     let after = 0;
@@ -207,24 +205,26 @@ describe("the absorbing inlet", () => {
     return after / 1e-3;
   };
 
-  test("lets a pulse out where a rigid inlet sends it back", () => {
-    const rigid = echo(0);
-    const absorbing = echo(1 / 2000);
-    expect(rigid).toBeGreaterThan(0.8);
-    expect(absorbing).toBeLessThan(0.1 * rigid);
-    // Measured: 0.90 against 0.018.
+  test("takes in a pulse that a rigid inlet sends back", () => {
+    // Measured: 0.90 and 0.99 back from the rigid inlet; about 0.01 here,
+    // for a short pulse and a long one.
+    for (const width of [12, 40]) {
+      expect(echo(undefined, width)).toBeGreaterThan(0.8);
+      expect(echo(layer, width)).toBeLessThan(0.02);
+    }
   });
 
-  test("keeps the steady inflow it is given", () => {
+  test("keeps the inflow it is given exactly", () => {
     const lattice = new CpuD2Q9({ nx: 60, ny, tau: 0.55 });
     lattice.setBoundaries(boundaries);
     lattice.inlet = {
       ux: new Float64Array(ny).fill(u),
       uy: new Float64Array(ny),
     };
-    lattice.absorbingInlet = 1 / 2000;
+    lattice.inletLayer = layer;
     lattice.initialize(() => ({ ux: u, uy: 0 }));
     lattice.step(4000);
+    expect(lattice.ux[2 * 60]).toBeCloseTo(u, 6);
     expect(lattice.ux[2 * 60 + 30]).toBeCloseTo(u, 5);
   });
 });

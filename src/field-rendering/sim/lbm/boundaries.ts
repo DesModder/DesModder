@@ -245,31 +245,41 @@ export function openPrescribed(
   ];
 }
 
-/** The lattice's speed of sound, 1/√3 cells a step. */
-export const SOUND_SPEED = 0.5773502691896258;
-
 /**
- * A velocity side that lets sound out instead of reflecting it.
+ * An absorbing layer beside a velocity side, so sound leaves the tunnel
+ * instead of ringing in it.
  *
  * A side that holds the velocity fixed reflects every pressure wave that
- * reaches it, so a tunnel between it and the outlet rings like a pipe: with a
- * solid touching the inlet, its noise built a standing wave with the
- * tunnel's round-trip period, the inflow pulsed by 3.5%, and the particles
- * drew it as bands across the stream. In linear acoustics a wave leaving
- * through the side has u′ = −c_s ρ′ along its inward normal, so prescribing
- * that leaves nothing reflected (the first-order characteristic condition).
- * ρ′ is measured from each row's slow mean δρ (`mean`), so the steady
- * pressure a solid raises at the inlet is kept, and with it the inflow.
+ * reaches it: with a solid touching the inlet, its noise built a standing
+ * wave with the tunnel's round-trip period, the inflow pulsed by 3.5%, and the
+ * particles drew it as bands across the stream. Prescribing the outgoing
+ * characteristic at the side itself (u = U − c_s ρ′) let the wave out, but
+ * fed each step's density straight back into the next step's velocity, and
+ * below τ ≈ 0.55 that loop grew until the lattice blew up (GPT's round 4 found
+ * it in the DFG channel; it took a tunnel like ours at τ 0.519 too).
+ *
+ * The side stays rigid, which is stable, and the first `width` cells relax
+ * toward the equilibrium at the inflow velocity and each row's slow mean δρ
+ * (`meanRate` per step), with strength `max` at the side falling
+ * quadratically to nothing, as the outlet's sponge does. A blend toward a
+ * fixed state cannot amplify anything, and the slow mean keeps the steady
+ * pressure a solid raises there. Measured, 16 cells at 0.25 send back about
+ * 1% of a pulse, against 90% from the rigid side alone.
  */
-export function absorbingInflow(
-  inflow: readonly [number, number],
-  normal: readonly [number, number],
-  deltaRho: number,
-  mean: number,
-  r: (value: number) => number
-): [number, number] {
-  const out = r(r(SOUND_SPEED) * r(deltaRho - mean));
-  return [r(inflow[0] - r(out * normal[0])), r(inflow[1] - r(out * normal[1]))];
+export interface InletLayer {
+  width: number;
+  max: number;
+  meanRate: number;
+}
+
+/** The inlet layer's strength `distance` cells in from the side. */
+export function inletLayerStrength(
+  distance: number,
+  layer: InletLayer
+): number {
+  if (distance >= layer.width) return 0;
+  const t = (layer.width - distance) / layer.width;
+  return layer.max * t * t;
 }
 
 /** The sponge's strength at column x: 0 before it, rising to `max`. */

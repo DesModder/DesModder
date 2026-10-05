@@ -35,8 +35,8 @@ import {
   SIDES,
   isOpen,
   isWall,
-  absorbingInflow,
   openPrescribed,
+  type InletLayer,
   reconstructOpen,
   sideFrame,
   spongeStrength,
@@ -333,12 +333,8 @@ export class CpuD2Q9 {
   /** A velocity side's profile, per row, scaled by `inletScale`. */
   inlet: { ux: Float64Array; uy: Float64Array } | undefined;
   inletScale = 1;
-  /**
-   * Lets sound out through a velocity side instead of reflecting it (0 for
-   * the rigid inlet). See `absorbingInflow`: the value is the rate at which
-   * each row's mean δρ follows its δρ, per step.
-   */
-  absorbingInlet = 0;
+  /** An absorbing layer beside each velocity side; see `InletLayer`. */
+  inletLayer: InletLayer | undefined;
   /** Each velocity side's rows' slow mean δρ, `side·ny + y`, left then right. */
   readonly inletMean: Float64Array;
   /** The Smagorinsky constant, 0 for plain BGK. See `CollisionParameters`. */
@@ -397,7 +393,11 @@ export class CpuD2Q9 {
       this.sponge === undefined
         ? undefined
         : shiftedEquilibrium(0, ...this.sponge.reference).map(r);
+    const layer = this.inletLayer;
     for (let n = 0; n < count; n++) {
+      // Last step's row means, which the layer reads while this step updates
+      // them, as the GPU reads one set and writes the other.
+      const means = layer ? Float64Array.from(this.inletMean) : undefined;
       const from = this.populations;
       const to = this.next;
       const post = (i: number, k: number) => from[i * cells + k];
@@ -502,22 +502,21 @@ export class CpuD2Q9 {
             if (x !== (side === "left" ? 0 : nx - 1)) continue;
             const spec = boundaries[side];
             if (!isOpen(spec)) continue;
-            let inflow: [number, number] = this.inlet
+            if (layer !== undefined && spec.kind === "velocity") {
+              // The row's slow mean, from this cell's δρ, which is still the
+              // last step's here. The layer reads last step's means.
+              const m = (side === "left" ? 0 : ny) + y;
+              const mean = r(means![m]);
+              this.inletMean[m] = r(
+                mean + r(r(layer.meanRate) * r(r(this.deltaRho[k]) - mean))
+              );
+            }
+            const inflow: [number, number] = this.inlet
               ? [
                   r(this.inlet.ux[y] * this.inletScale),
                   r(this.inlet.uy[y] * this.inletScale),
                 ]
               : [0, 0];
-            if (this.absorbingInlet > 0 && spec.kind === "velocity") {
-              // This cell's δρ is still the last step's here.
-              const m = (side === "left" ? 0 : ny) + y;
-              const dr = r(this.deltaRho[k]);
-              const mean = r(this.inletMean[m]);
-              inflow = absorbingInflow(inflow, frames[side].n, dr, mean, r);
-              this.inletMean[m] = r(
-                mean + r(r(this.absorbingInlet) * r(dr - mean))
-              );
-            }
             const prescribed = this.psm
               ? openPrescribed(
                   inflow,
@@ -554,6 +553,33 @@ export class CpuD2Q9 {
             this.cellForce[2 * k] += fx;
             this.cellForce[2 * k + 1] += fy;
             this.cellBody[k] = body;
+          }
+          if (layer !== undefined && this.inlet) {
+            // The shader's operation order (GpuD2Q9, the inlet layer).
+            for (const side of ["left", "right"] as const) {
+              if (boundaries[side].kind !== "velocity") continue;
+              const distance = side === "left" ? x : nx - 1 - x;
+              if (distance >= layer.width) continue;
+              const t = r(r(layer.width - distance) / layer.width);
+              let s = r(r(r(layer.max) * t) * t);
+              if (eps > 0) s = r(s * r(1 - eps));
+              const mean = r(means![(side === "left" ? 0 : ny) + y]);
+              const tx = r(this.inlet.ux[y] * this.inletScale);
+              const ty = r(this.inlet.uy[y] * this.inletScale);
+              const rhoT = r(1 + mean);
+              const usqT = r(1.5 * r(r(tx * tx) + r(ty * ty)));
+              for (let i = 0; i < Q; i++) {
+                const cu = r(r(CX[i] * tx) + r(CY[i] * ty));
+                const eqT = r(
+                  r(W[i]) *
+                    r(
+                      mean +
+                        r(rhoT * r(r(r(3 * cu) + r(r(4.5 * cu) * cu)) - usqT))
+                    )
+                );
+                g[i] = r(r(r(1 - s) * g[i]) + r(s * eqT));
+              }
+            }
           }
           if (this.sponge && spongeEq) {
             const s = r(
@@ -629,7 +655,7 @@ export class CpuD2Q9 {
       this.ux[k] = ux2;
       this.uy[k] = uy2;
     }
-    // The absorbing inlet's mean pressure, like any other: times s².
+    // The inlet layer's mean pressure, like any other: times s².
     for (let m = 0; m < this.inletMean.length; m++)
       this.inletMean[m] = r(r(s * s) * this.inletMean[m]);
     this.tau = tau;

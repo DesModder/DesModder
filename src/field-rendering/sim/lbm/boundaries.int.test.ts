@@ -2,6 +2,7 @@ import { testWithPage } from "#tests";
 import { CpuD2Q9 } from "./d2q9";
 import type { Boundaries } from "./boundaries";
 import { runOnGpu } from "./gpuTesting";
+import { dfgChannel } from "./dfg";
 
 /**
  * Gate 2 on the GPU: the tank's edges and solids, against the CPU reference
@@ -276,12 +277,12 @@ testWithPage(
 );
 
 /**
- * The absorbing inlet (`absorbingInflow`) on the GPU as on the CPU: a sound
+ * The inlet layer (`InletLayer`) on the GPU as on the CPU: a sound
  * pulse sent at it, stepped past its arrival, with each row's mean carried
  * from step to step in the force target.
  */
 testWithPage(
-  "Fluid: the GPU's absorbing inlet steps as the CPU's does",
+  "Fluid: the GPU's inlet layer steps as the CPU's does",
   async (driver) => {
     await driver.enablePlugin("vector-tools");
     const nx = 120;
@@ -289,6 +290,7 @@ testWithPage(
     const u = 0.05;
     const c = 1 / Math.sqrt(3);
     const options = { nx, ny, tau: 0.55 };
+    const layer = { width: 16, max: 0.25, meanRate: 1 / 2000 };
     const boundaries: Boundaries = {
       left: { kind: "velocity", regularize: true },
       right: { kind: "pressure", deltaRho: 0, regularize: true },
@@ -302,7 +304,7 @@ testWithPage(
     const cpu = new CpuD2Q9({ ...options, arithmetic: "float32" });
     cpu.setBoundaries(boundaries);
     cpu.inlet = { ux: Float64Array.from(inlet.ux), uy: new Float64Array(ny) };
-    cpu.absorbingInlet = 1 / 2000;
+    cpu.inletLayer = layer;
     cpu.initialize((x) => {
       const pulse = 1e-3 * Math.exp(-(((x - 40) / 8) ** 2));
       return { deltaRho: pulse, ux: u - c * pulse, uy: 0 };
@@ -312,7 +314,7 @@ testWithPage(
       options,
       Float32Array.from(cpu.populations),
       [1, 100],
-      { boundaries, inlet, absorbingInlet: 1 / 2000 }
+      { boundaries, inlet, inletLayer: layer }
     );
     const worst = (a: ArrayLike<number>, b: ArrayLike<number>) => {
       let w = 0;
@@ -322,11 +324,76 @@ testWithPage(
     cpu.step(1);
     expect(worst(one.populations, cpu.populations)).toBeLessThan(1e-8);
     cpu.step(99);
-    // Looser than the other boundaries' 2e-7: the inlet feeds each step's
-    // density back into its velocity, which carries float32 rounding on
-    // while the pulse is leaving (measured 3.5e-7).
+    // This scene's float32 drift is 3.5e-7 at 100 steps with the layer or
+    // without it (the pulse at both regularised sides); the layer adds none.
     expect(worst(later.populations, cpu.populations)).toBeLessThan(5e-7);
     await driver.disablePlugin("vector-tools");
   },
   90000
+);
+
+/**
+ * GPT's round 4 found the first absorbing inlet blowing up in the DFG 2D-2
+ * channel: it prescribed u = U − c_s(δρ − δρ̄) from the inlet cell's own last
+ * density, and at τ 0.519 that loop grew until the lattice failed, in a
+ * tunnel like the tab's too, and at τ 0.505 even filtered. The layer that
+ * replaced it keeps the inlet rigid and only blends toward a fixed state, so
+ * it cannot grow anything: both cases, started impulsively at full speed,
+ * stay finite for 10⁴ steps.
+ */
+testWithPage(
+  "Fluid: the inlet layer stays stable where the characteristic inlet blew up",
+  async (driver) => {
+    await driver.enablePlugin("vector-tools");
+    const layer = { width: 16, max: 0.25, meanRate: 1 / 2000 };
+    const s = dfgChannel(16, 100);
+    const rest = new CpuD2Q9({ nx: s.nx, ny: s.ny, tau: s.tau });
+    rest.initialize(() => ({ ux: 0, uy: 0 }));
+    const finite = (values: number[]) =>
+      values.every((value) => Number.isFinite(value));
+    const slip: Boundaries = {
+      left: { kind: "velocity", regularize: true },
+      right: { kind: "pressure", deltaRho: 0, regularize: true },
+      bottom: { kind: "slip" },
+      top: { kind: "slip" },
+    };
+    const cases = [
+      {
+        name: "DFG 2D-2, tau 0.519",
+        tau: s.tau,
+        boundaries: s.boundaries,
+        solid: s.solid,
+        inlet: s.inletUx,
+      },
+      {
+        name: "slip tunnel, tau 0.505",
+        tau: 0.505,
+        boundaries: slip,
+        solid: Uint8Array.from(s.solid, (b) => (b === 1 ? 1 : 0)),
+        inlet: new Array<number>(s.ny).fill(s.uMean),
+      },
+    ];
+    for (const c of cases) {
+      const [end] = await runOnGpu(
+        driver,
+        { nx: s.nx, ny: s.ny, tau: c.tau },
+        Float32Array.from(rest.populations),
+        [10000],
+        {
+          boundaries: c.boundaries,
+          solid: Array.from(c.solid),
+          links: Array.from(s.links),
+          inlet: { ux: c.inlet, uy: new Array<number>(s.ny).fill(0) },
+          sponge: { width: 32, max: 0.12, reference: [s.uMean, 0] },
+          inletLayer: layer,
+        }
+      );
+      expect({ name: c.name, finite: finite(end.populations) }).toEqual({
+        name: c.name,
+        finite: true,
+      });
+    }
+    await driver.disablePlugin("vector-tools");
+  },
+  180000
 );
