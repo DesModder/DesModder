@@ -70,14 +70,25 @@ export default class PillboxMenus extends PluginController<undefined> {
     this.util.tick();
   }
 
+  /**
+   * Adds a button, or replaces the one with this id. Listed once whatever
+   * happens: a plugin whose `afterEnable` added its button and then threw was
+   * enabled again and added it twice, and removing it then deleted its spec
+   * but left the second copy listed, which every redraw read as undefined.
+   */
   addPillboxButton(info: PillboxButtonSpec) {
     this.pillboxButtons[info.id] = info;
-    this.pillboxButtonsOrder.push(info.id);
+    if (!this.pillboxButtonsOrder.includes(info.id))
+      this.pillboxButtonsOrder.push(info.id);
     this.updateMenuView();
   }
 
   removePillboxButton(id: string) {
-    this.pillboxButtonsOrder.splice(this.pillboxButtonsOrder.indexOf(id), 1);
+    // Every copy, and nothing for an id that is not listed: `splice(-1, 1)`
+    // would have removed whichever button happened to be last.
+    this.pillboxButtonsOrder = this.pillboxButtonsOrder.filter(
+      (listed) => listed !== id
+    );
     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete this.pillboxButtons[id];
     if (this.pillboxMenuOpen === id) {

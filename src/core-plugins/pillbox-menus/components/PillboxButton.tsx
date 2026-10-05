@@ -28,7 +28,12 @@ export class PillboxButton extends Component<{
         }}
       >
         <DropdownPopoverWithAnchorShim
-          tooltip={() => format(this.pm.pillboxButtons[id].tooltip)}
+          // A button's spec can be gone for one redraw before the list that
+          // holds it catches up; read it as nothing rather than throw.
+          tooltip={() => {
+            const spec = this.pm.pillboxButtons[id];
+            return spec ? format(spec.tooltip) : "";
+          }}
           tooltipGravity={() => (this.horizontal ? "s" : "w")}
           anchor={() => (
             <div
@@ -42,7 +47,7 @@ export class PillboxButton extends Component<{
               tabIndex={0}
               // TODO: manageFocus?
             >
-              <i class={() => this.pm.pillboxButtons[id].iconClass ?? ""} />
+              <i class={() => this.pm.pillboxButtons[id]?.iconClass ?? ""} />
             </div>
           )}
           orientation={() => (this.horizontal ? "bottom-left" : "left")}
@@ -54,7 +59,9 @@ export class PillboxButton extends Component<{
             >
               <Switch key={this.props.buttonId}>
                 {() =>
-                  this.pm.pillboxButtons[this.props.buttonId()].popup(this.pm)
+                  this.pm.pillboxButtons[this.props.buttonId()]?.popup(
+                    this.pm
+                  ) ?? <span />
                 }
               </Switch>
             </div>
