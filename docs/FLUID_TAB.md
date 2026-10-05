@@ -222,8 +222,42 @@ Evidence pictures: `assets/fluid-gate1-taylor-green.png`,
     then 8.7%. Held at the same speeds (g ∝ 1/a, front read in a/10 rows),
     the mean error against Martin & Moyce is 9.0%, 4.9%, 3.9% at a = 15,
     30, 45 with holes left, and 10.6%, 5.9%, 4.5% with them filled.
-  - **Discharge is still not validated**: Cd 0.71 at this size against
-    about 0.61 for a sharp-edged orifice, and GPT's 0.85 → 0.70 under
-    refinement.
+  - **It was honey in slow motion.** Mapped to metres, the first mock-up
+    (τ 0.53) was 460–2800× as viscous as water and played 13× slower than
+    real time. The mock-up is now a 1 m tank of water: lattice gravity held
+    at 3e-5 (doubling it pushed scenes past Mach 0.3), the step from
+    dt = √(g_lat·dx/g), and τ = 0.5 + 3ν·dt/dx² ≈ 0.50001.
+  - **Regularized collision makes water's viscosity stable.** BGK at τ near
+    0.5 reached Mach 0.36 on noise and blew up at stronger gravity;
+    Latt–Chopard regularization, keeping the non-equilibrium's momentum and
+    stress only, holds peak Mach at 0.18 or less. Dropping the momentum part
+    as well, the textbook form, applies half the gravity under Guo forcing
+    (hydrostatic pressure came out at 0.50); with it, 0.999.
+  - **At water's viscosity the front moves at the experiment's speed**:
+    1.32 √(gH) late on at a = 45, against Martin & Moyce's 1.32; the thick
+    liquid managed 1.15. Positions run 3–6% ahead, where their gate slowed
+    the first moments, and 9% at 3 mm cells, where water's boundary layer is
+    far thinner than a cell and the tip film slides.
+  - **Drops a cell or two wide bounced off the lid at full speed** and fell
+    to Mach 0.34: spray, a surface cell with no bulk liquid beside it, is
+    held to Mach 0.25. A numerical guard, not physics.
+  - **The GPU solver** (WebGL2, float32, in the page) matches the CPU to
+    1e-8 after a step and to rounding through 500; past that the splash is
+    chaotic and they part. 12 200 steps a second at 6 mm cells on Iris Xe,
+    22× the CPU, so Auto picks 6 mm in real time; 4 mm runs at real time
+    with nothing to spare. Two things made it that fast: populations are
+    written once by the collision and never copied (a cell the liquid has
+    just reached is flagged and the next collision builds its equilibrium,
+    for itself and for neighbours streaming from it), worth 1.4–1.7×;
+    merging the five passes into three by recomputing neighbours' flags was
+    slower, so the passes stay five.
+  - **Float32 mass drifted** 3e-4 in 12 s, enough to fail the 0.1% gate in
+    a minute: a full cell's mass sits near 1.0017, where float32 resolves
+    1e-7, and the ledger's small shares fell below that. Stored as its
+    difference from the cell's density, exactly zero when full, it keeps
+    4e-7 over an 18 s pour.
+  - **Discharge is still not validated**: Cd 0.89–0.90 at 6 mm and water's
+    viscosity, against 0.61 for a sharp-edged slot (Kirchhoff, π/(π+2)).
+    An 8-cell gap does not resolve the jet narrowing past the edge.
 - **Gate 7 onward:** 3D FieldPlay on the camera match in
   `DESMOS_3D_CAMERA.md`.

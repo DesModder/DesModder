@@ -322,10 +322,9 @@
       >Visual liquid — pressure, discharge and forces are not validated</span
     >
     <p class="lede">
-      A mock-up of the Fluid tab's liquid, running GPT's round-4 free-surface
-      solver: a D2Q9 lattice whose cells are liquid, gas or the surface between
-      them, with every bit of mass accounted for. Pour, draw walls and watch it
-      settle. In Desmos the walls would be your inequalities.
+      A mock-up of the Fluid tab's liquid: a tank 1 m wide of water, with
+      water's own viscosity, played in real time on your GPU. Pour, draw walls
+      and watch it settle. In Desmos the walls would be your inequalities.
     </p>
   </header>
 
@@ -362,12 +361,32 @@
         ></div>
       </section>
       <section>
+        <span class="label" id="size-label">Cell size</span>
+        <div
+          class="chips"
+          role="group"
+          aria-labelledby="size-label"
+          id="sizes"
+        ></div>
+        <p class="hint" id="size-hint">
+          Smaller cells show thinner sheets and smaller drops but cost more.
+          Auto picks the smallest your GPU runs in real time.
+        </p>
+      </section>
+      <section>
         <span class="label" id="show-label">Colour by</span>
         <div
           class="chips"
           role="group"
           aria-labelledby="show-label"
           id="shows"
+        ></div>
+        <span class="label" id="pace-label">Play at</span>
+        <div
+          class="chips"
+          role="group"
+          aria-labelledby="pace-label"
+          id="paces"
         ></div>
       </section>
       <section>
@@ -382,9 +401,8 @@
         ></div>
         <p class="hint">
           Pressure never fills a surface cell that has liquid all round it, so
-          pools show holes. Filling them slowly closes the holes but puts the
-          dam-break front about one point further from the experiment at every
-          size.
+          pools show holes. Filling them slowly closes the holes; it moved the
+          dam-break front by about one point.
         </p>
         <div class="row">
           <button class="btn primary" id="play" type="button">Pause</button>
@@ -417,71 +435,98 @@
   </div>
 
   <div class="notes">
-    <h2>Where the method stands</h2>
+    <h2>How close to real water</h2>
     <div class="wrap">
       <table>
         <thead>
           <tr>
-            <th>Test</th>
+            <th>Check</th>
             <th>Result</th>
             <th>Verdict</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>Closed tank, 10 000 steps: mass</td>
-            <td>drift 10⁻¹⁵ (GPT, 16 and 32 deep); 10⁻¹³ here</td>
-            <td>passes the 0.1% gate</td>
+            <td>Viscosity</td>
+            <td>
+              water's, 1.0 mm²/s. The first mock-up was 460–2800× thicker,
+              nearer honey
+            </td>
+            <td>regularized collision makes it stable</td>
           </tr>
           <tr>
-            <td>Closed tank: pressure at mid-depth against ρgh</td>
-            <td>0.07% off (GPT); 0.2% here</td>
+            <td>Time</td>
+            <td>
+              one second here is one second of a 1 m tank; the first mock-up ran
+              13× slow
+            </td>
+            <td>
+              real time at 6 mm cells on an Iris Xe: 12 000 steps a second, 22×
+              the CPU
+            </td>
+          </tr>
+          <tr>
+            <td>Dam-break front speed, late stage</td>
+            <td>
+              1.32 √(<span class="math">gH</span>) at
+              <span class="math">a</span> = 45; the experiment 1.32; thick
+              liquid 1.15
+            </td>
+            <td>matches</td>
+          </tr>
+          <tr>
+            <td>Dam-break front position</td>
+            <td>
+              3–6% ahead of Martin &amp; Moyce, whose gate slowed the first
+              moments
+            </td>
+            <td>within the spread of experiments</td>
+          </tr>
+          <tr>
+            <td>
+              Still tank: pressure halfway down against ρ<span class="math"
+                >gh</span
+              >
+            </td>
+            <td>0.1% off</td>
             <td>passes the 1% gate</td>
           </tr>
           <tr>
-            <td>Dam break, GPT's two resolutions</td>
-            <td>5.3% then 8.7% mean error</td>
-            <td>looked unconverged</td>
+            <td>Mass</td>
+            <td>
+              10⁻⁷ over a minute on the GPU, stored as its difference from
+              density; whole, float32 lost 3×10⁻⁴ in 12 s
+            </td>
+            <td>passes the 0.1% gate</td>
           </tr>
           <tr>
-            <td>
-              Dam break, refined here with speeds held the same (<span
-                class="math"
-                >g</span
-              >
-              ∝ 1/<span class="math">a</span>)
-            </td>
-            <td>
-              <span class="math">a</span> = 15, 30, 45: 9.0%, 4.9%, 3.9% (holes
-              left); 10.6%, 5.9%, 4.5% (holes filled)
-            </td>
-            <td>converges toward the experiment</td>
+            <td>Drops one or two cells wide</td>
+            <td>too small to resolve; held to Mach 0.25</td>
+            <td>a numerical guard, not physics</td>
           </tr>
           <tr>
-            <td>Splash after the wave hits the far wall</td>
+            <td>Friction on the floor</td>
             <td>
-              a stranded 1%-full cell reached Mach 0.94; emptied now, peak Mach
-              0.12
+              water's boundary layer is far thinner than a cell, so the front's
+              thin tip slides: 9% ahead at 3 mm cells
             </td>
-            <td>fixed here, mass still exact</td>
+            <td>a known limit of the grid</td>
+          </tr>
+          <tr>
+            <td>What it leaves out</td>
+            <td>
+              the third dimension, the air, surface tension (small at this size)
+            </td>
+            <td>known limits</td>
           </tr>
           <tr>
             <td>Tank with a hole: discharge coefficient</td>
-            <td>0.85 then 0.70 when refined (GPT)</td>
-            <td>changes 18%: not validated</td>
-          </tr>
-          <tr>
-            <td>Moving solids, surface tension, Auto's speed change</td>
-            <td>not built</td>
-            <td>separate milestones</td>
+            <td>0.89–0.90 at 6 mm cells; a sharp-edged slot gives 0.61</td>
+            <td>not validated: the jet's narrowing is under-resolved</td>
           </tr>
         </tbody>
       </table>
     </div>
-    <p class="hint">
-      This page runs on the CPU at 160 × 96 cells. The tab would run the same
-      passes on the GPU, beside the wind tunnel and stirred box.
-    </p>
   </div>
 </div>
 <script>
@@ -508,6 +553,8 @@
   }
 
   const EQ = new Float64Array(9);
+  const SPRAY_CAP = 0.25 / Math.sqrt(3);
+  const REGULARIZED = typeof process === "undefined" || !process.env.BGK;
   // BGK with Guo forcing and an optional Smagorinsky closure (collideCell).
   function collide(g, tau, smag, fx, fy, out) {
     let omega = 1 / tau;
@@ -539,13 +586,46 @@
     }
     const keep = 1 - omega,
       source = 1 - 0.5 * omega;
-    for (let i = 0; i < 9; i++) {
-      const cu = CX[i] * ux + CY[i] * uy,
-        cf = CX[i] * fx + CY[i] * fy;
-      const s =
-        W[i] * (3 * ((CX[i] - ux) * fx + (CY[i] - uy) * fy) + 9 * cu * cf);
-      g[i] = keep * g[i] + omega * EQ[i] + source * s;
-    }
+    if (REGULARIZED) {
+      // Latt & Chopard: keep only the non-equilibrium's momentum and stress,
+      // the parts physics acts on, and drop the ghost moments BGK lets ring.
+      // The momentum part is −F/2 under Guo's half-force velocity; dropping it
+      // applies half the gravity (hydrostatic pressure came out at 0.50).
+      let mx = 0,
+        my = 0,
+        xx = 0,
+        yy = 0,
+        xy = 0;
+      for (let i = 1; i < 9; i++) {
+        const n = g[i] - EQ[i];
+        mx += CX[i] * n;
+        my += CY[i] * n;
+        xx += CX[i] * CX[i] * n;
+        yy += CY[i] * CY[i] * n;
+        xy += CX[i] * CY[i] * n;
+      }
+      for (let i = 0; i < 9; i++) {
+        const cu = CX[i] * ux + CY[i] * uy,
+          cf = CX[i] * fx + CY[i] * fy;
+        const s =
+          W[i] * (3 * ((CX[i] - ux) * fx + (CY[i] - uy) * fy) + 9 * cu * cf);
+        const neq =
+          W[i] *
+          (3 * (CX[i] * mx + CY[i] * my) +
+            4.5 *
+              ((CX[i] * CX[i] - 1 / 3) * xx +
+                (CY[i] * CY[i] - 1 / 3) * yy +
+                2 * CX[i] * CY[i] * xy));
+        g[i] = EQ[i] + keep * neq + source * s;
+      }
+    } else
+      for (let i = 0; i < 9; i++) {
+        const cu = CX[i] * ux + CY[i] * uy,
+          cf = CX[i] * fx + CY[i] * fy;
+        const s =
+          W[i] * (3 * ((CX[i] - ux) * fx + (CY[i] - uy) * fy) + 9 * cu * cf);
+        g[i] = keep * g[i] + omega * EQ[i] + source * s;
+      }
     out[0] = dr;
     out[1] = ux;
     out[2] = uy;
@@ -732,7 +812,8 @@
         equilibrium(0, this.ux[k], this.uy[k], gas);
         let dm = 0,
           wet = 0,
-          dry = 0;
+          dry = 0,
+          bulk = 0;
         for (let i = 0; i < 9; i++) {
           const j = nb[OPP[i] * N + k];
           if (j < 0 || t[j] === SOLID) g[i] = p[OPP[i] * N + k];
@@ -743,6 +824,7 @@
             g[i] = p[i * N + j];
             if (i) {
               wet++;
+              if (t[j] === FLUID) bulk++;
               const factor =
                 t[k] === FLUID || t[j] === FLUID ? 1 : 0.5 * (phi[k] + phi[j]);
               dm += factor * (p[i * N + j] - p[OPP[i] * N + k]);
@@ -758,6 +840,19 @@
           -this.gravity * rho[k],
           macro
         );
+        // Spray, a surface cell with no bulk liquid beside it, is a drop one or
+        // two cells wide: too small for the lattice to resolve, and bounced off
+        // the lid without a splash it reached Mach 0.34. Past Mach 0.25 it is
+        // slowed to that speed. A numerical guard, not physics.
+        if (t[k] === INTERFACE && bulk === 0) {
+          const sp = Math.hypot(macro[1], macro[2]);
+          if (sp > SPRAY_CAP) {
+            const f = SPRAY_CAP / sp;
+            macro[1] *= f;
+            macro[2] *= f;
+            equilibrium(macro[0], macro[1], macro[2], g);
+          }
+        }
         nRho[k] = 1 + macro[0];
         nUx[k] = macro[1];
         nUy[k] = macro[2];
@@ -899,15 +994,722 @@
     }
   }
 
-  // The mock-up's page: scenes, tools, rendering and live checks around Liquid.
+  // The free-surface liquid on the GPU: liquid.js's five gather passes as
+  // WebGL2 fragment shaders, float32 throughout. A step is five draws:
+  //   1 collide  O,C -> O'  stream, gas-side rebuild, mass exchange, collision
+  //   2 advance  C,O' -> X  an advancing surface wins over a retreat beside it
+  //   3 settle   C,O',X -> V  liquid beside gas stays surface; new cells start
+  //   4 excess   C,O',V -> Y  each cell's own mass, and the share it gives away
+  //   5 gather   C,V,Y -> C'  every liquid cell takes its neighbours' shares
+  // Populations are written once, by the collision, and never copied: a cell
+  // the liquid has just reached is flagged "fresh", and the next collision
+  // builds its equilibrium populations on the fly, for itself and for every
+  // neighbour that streams from it. Copying them through passes 3 and 5 cost
+  // more than the collision itself.
+  // Mass is stored as its difference from the cell's density, which is exactly
+  // zero for a full cell: stored whole, a full cell's mass sits near 1.0017,
+  // where float32 resolves 1e-7, and the ledger's small shares fell below that
+  // (mass drifted 3e-4 in 12 s of a draining tank).
+  //   O0 g0..g3   O1 g4..g7   O2 tent, ux, uy   O3 mass−rho, rho, g8, enclosed
+  //   C0 type (+4 if fresh), phi, ux, uy        C1 mass−rho, reservoir, rho
+  const GPU_COMMON = `#version 300 es
+precision highp float; precision highp int; precision highp sampler2D;
+uniform ivec2 N;
+const ivec2 C[9] = ivec2[9](ivec2(0,0), ivec2(1,0), ivec2(0,1), ivec2(-1,0), ivec2(0,-1), ivec2(1,1), ivec2(-1,1), ivec2(-1,-1), ivec2(1,-1));
+const int OPP[9] = int[9](0, 3, 4, 1, 2, 7, 8, 5, 6);
+const float W[9] = float[9](4.0/9.0, 1.0/9.0, 1.0/9.0, 1.0/9.0, 1.0/9.0, 1.0/36.0, 1.0/36.0, 1.0/36.0, 1.0/36.0);
+const int GAS = 0, INTERFACE = 1, FLUID = 2, SOLID = 3;
+bool inside(ivec2 p) { return p.x >= 0 && p.y >= 0 && p.x < N.x && p.y < N.y; }
+int kind(float t) { return int(t + 0.5) & 3; }
+bool fresh(float t) { return int(t + 0.5) >= 4; }
+float feq(int i, float dr, vec2 u) {
+  float cu = dot(vec2(C[i]), u);
+  return W[i] * (dr + (1.0 + dr) * (3.0 * cu + 4.5 * cu * cu - 1.5 * dot(u, u)));
+}
+void equilibrium(float dr, vec2 u, out float e[9]) { for (int i = 0; i < 9; i++) e[i] = feq(i, dr, u); }
+`;
+  const GPU_VERTEX = `#version 300 es
+void main() { vec2 p = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2); gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0); }`;
+
+  const GPU_COLLIDE =
+    GPU_COMMON +
+    `
+uniform sampler2D O0, O1, O3, C0, C1;
+uniform float tau, smag, gravity, sprayCap;
+layout(location = 0) out vec4 o0; layout(location = 1) out vec4 o1;
+layout(location = 2) out vec4 o2; layout(location = 3) out vec4 o3;
+float popAt(ivec2 p, int i, vec4 c0) {
+  if (fresh(c0.x)) return feq(i, texelFetch(C1, p, 0).z - 1.0, c0.zw);
+  if (i < 4) return texelFetch(O0, p, 0)[i];
+  if (i < 8) return texelFetch(O1, p, 0)[i - 4];
+  return texelFetch(O3, p, 0).z;
+}
+void main() {
+  ivec2 x = ivec2(gl_FragCoord.xy);
+  vec4 c0 = texelFetch(C0, x, 0), c1 = texelFetch(C1, x, 0);
+  int tk = kind(c0.x);
+  if (tk == SOLID || tk == GAS) { o0 = vec4(0.0); o1 = vec4(0.0); o2 = vec4(float(tk), 0.0, 0.0, 0.0); o3 = vec4(c1.x + (c1.z - 1.0), 1.0, 0.0, 0.0); return; }
+  float f[9];
+  if (fresh(c0.x)) equilibrium(c1.z - 1.0, c0.zw, f);
+  else {
+    vec4 a = texelFetch(O0, x, 0), b = texelFetch(O1, x, 0);
+    f = float[9](a.x, a.y, a.z, a.w, b.x, b.y, b.z, b.w, texelFetch(O3, x, 0).z);
+  }
+  float gas[9]; equilibrium(0.0, c0.zw, gas);
+  float g[9]; g[0] = f[0];
+  float dm = 0.0; int wet = 0, dry = 0, bulk = 0;
+  for (int i = 1; i < 9; i++) {
+    ivec2 j = x - C[i];
+    int o = OPP[i];
+    if (!inside(j)) { g[i] = f[o]; continue; }
+    vec4 cj = texelFetch(C0, j, 0);
+    int tj = kind(cj.x);
+    if (tj == SOLID) g[i] = f[o];
+    else if (tj == GAS) { g[i] = gas[i] + gas[o] - f[o]; dry++; }
+    else {
+      float pij = popAt(j, i, cj);
+      g[i] = pij; wet++;
+      if (tj == FLUID) bulk++;
+      float factor = (tk == FLUID || tj == FLUID) ? 1.0 : 0.5 * (c0.y + cj.y);
+      dm += factor * (pij - f[o]);
+    }
+  }
+  // Collision: regularized BGK, Guo forcing, Smagorinsky (liquid.js collide).
+  float fx = 0.0, fy = -gravity * c1.z;
+  float dr = 0.0, jx = 0.0, jy = 0.0;
+  for (int i = 0; i < 9; i++) { dr += g[i]; jx += float(C[i].x) * g[i]; jy += float(C[i].y) * g[i]; }
+  float rho = 1.0 + dr;
+  vec2 u = vec2(jx + 0.5 * fx, jy + 0.5 * fy) / rho;
+  float eq[9]; equilibrium(dr, u, eq);
+  float omega = 1.0 / tau;
+  float mx = 0.0, my = 0.0, xx = 0.0, yy = 0.0, xy = 0.0;
+  for (int i = 1; i < 9; i++) {
+    float n = g[i] - eq[i]; float cx = float(C[i].x), cy = float(C[i].y);
+    mx += cx * n; my += cy * n; xx += cx * cx * n; yy += cy * cy * n; xy += cx * cy * n;
+  }
+  if (smag > 0.0) {
+    float sx = xx + u.x * fx, sy = yy + u.y * fy, sxy = xy + 0.5 * (u.x * fy + u.y * fx);
+    float stress = sqrt(sx * sx + sy * sy + 2.0 * sxy * sxy);
+    omega = 1.0 / (0.5 * (tau + sqrt(tau * tau + (18.0 * 1.41421356 * smag * smag * stress) / rho)));
+  }
+  float keep = 1.0 - omega, source = 1.0 - 0.5 * omega;
+  for (int i = 0; i < 9; i++) {
+    float cx = float(C[i].x), cy = float(C[i].y);
+    float cu = cx * u.x + cy * u.y, cf = cx * fx + cy * fy;
+    float s = W[i] * (3.0 * ((cx - u.x) * fx + (cy - u.y) * fy) + 9.0 * cu * cf);
+    float neq = W[i] * (3.0 * (cx * mx + cy * my) + 4.5 * ((cx * cx - 1.0 / 3.0) * xx + (cy * cy - 1.0 / 3.0) * yy + 2.0 * cx * cy * xy));
+    g[i] = eq[i] + keep * neq + source * s;
+  }
+  // Spray guard (liquid.js): a drop too small to resolve is held to Mach 0.25.
+  if (tk == INTERFACE && bulk == 0) {
+    float sp = length(u);
+    if (sp > sprayCap) { u *= sprayCap / sp; equilibrium(dr, u, g); }
+  }
+  float nMd = c1.x + dm + (c1.z - rho); // mass − new rho
+  int tent = tk;
+  float enclosed = 0.0;
+  if (tk == INTERFACE) {
+    tent = wet == 0 ? GAS : nMd >= 0.0 ? FLUID : nMd <= -rho ? GAS : INTERFACE;
+    enclosed = (wet > 0 && dry == 0) ? 1.0 : 0.0;
+  }
+  o0 = vec4(g[0], g[1], g[2], g[3]); o1 = vec4(g[4], g[5], g[6], g[7]);
+  o2 = vec4(float(tent), u, 0.0); o3 = vec4(nMd, rho, g[8], enclosed);
+}`;
+
+  const GPU_ADVANCE =
+    GPU_COMMON +
+    `
+uniform sampler2D C0, O2;
+out vec4 o;
+void main() {
+  ivec2 x = ivec2(gl_FragCoord.xy);
+  int t = kind(texelFetch(C0, x, 0).x), tent = kind(texelFetch(O2, x, 0).x);
+  int fixedType = tent;
+  if (t != SOLID && tent == GAS) {
+    int wet = 0, dry = 0; bool advanced = false;
+    for (int i = 1; i < 9; i++) {
+      ivec2 j = x + C[i];
+      if (!inside(j)) continue;
+      int tj = kind(texelFetch(C0, j, 0).x);
+      if (tj == INTERFACE && kind(texelFetch(O2, j, 0).x) == FLUID) { advanced = true; break; }
+      if (tj == GAS) dry++; else if (tj != SOLID) wet++;
+    }
+    if (advanced || (t == GAS && wet > 0 && dry == 0)) fixedType = INTERFACE;
+  }
+  o = vec4(float(fixedType), 0.0, 0.0, 0.0);
+}`;
+
+  // V: fin, rho, ux, uy. A cell the liquid has just reached starts at its
+  // liquid neighbours' mean; its populations follow from that next step.
+  const GPU_SETTLE =
+    GPU_COMMON +
+    `
+uniform sampler2D C0, O2, O3, X;
+out vec4 o;
+void main() {
+  ivec2 x = ivec2(gl_FragCoord.xy);
+  int fixedType = kind(texelFetch(X, x, 0).x), fin = fixedType;
+  if (fixedType == FLUID)
+    for (int i = 1; i < 9; i++) { ivec2 j = x + C[i]; if (inside(j) && kind(texelFetch(X, j, 0).x) == GAS) { fin = INTERFACE; break; } }
+  float rho = texelFetch(O3, x, 0).y; vec2 u = texelFetch(O2, x, 0).yz;
+  if (kind(texelFetch(C0, x, 0).x) == GAS && fin == INTERFACE) {
+    float r = 0.0, c = 0.0; u = vec2(0.0);
+    for (int i = 1; i < 9; i++) {
+      ivec2 j = x + C[i];
+      if (!inside(j)) continue;
+      int tj = kind(texelFetch(C0, j, 0).x);
+      if (tj == FLUID || tj == INTERFACE) { r += texelFetch(O3, j, 0).y; u += texelFetch(O2, j, 0).yz; c += 1.0; }
+    }
+    rho = c > 0.0 ? r / c : 1.0; u = c > 0.0 ? u / c : vec2(0.0);
+  }
+  o = vec4(float(fin), rho, u);
+}`;
+
+  const GPU_EXCESS =
+    GPU_COMMON +
+    `
+uniform sampler2D C1, O3, V;
+uniform float fillRate;
+out vec4 o;
+void main() {
+  ivec2 x = ivec2(gl_FragCoord.xy);
+  vec4 v = texelFetch(V, x, 0);
+  int fin = kind(v.x);
+  float reservoir = texelFetch(C1, x, 0).y;
+  float nRho = v.y;
+  if (fin == SOLID) { o = vec4(-nRho, 0.0, reservoir, 0.0); return; }
+  vec4 o3 = texelFetch(O3, x, 0);
+  float nMd = o3.x + (o3.y - nRho); // a cell just reached took its neighbours' density
+  float base = fin == FLUID ? 0.0 : fin == GAS ? -nRho : clamp(nMd, -nRho, 0.0); // all less rho
+  if (fillRate > 0.0 && fin == INTERFACE && o3.w > 0.5) base = min(0.0, base + fillRate * nRho);
+  float excess = nMd - base + reservoir;
+  float recipients = 0.0;
+  for (int i = 1; i < 9; i++) {
+    ivec2 j = x + C[i];
+    if (!inside(j)) continue;
+    int tj = kind(texelFetch(V, j, 0).x);
+    if (tj == FLUID || tj == INTERFACE) recipients += 1.0;
+  }
+  o = recipients > 0.0 ? vec4(base, excess / recipients, 0.0, 0.0) : vec4(base, 0.0, excess, 0.0);
+}`;
+
+  const GPU_GATHER =
+    GPU_COMMON +
+    `
+uniform sampler2D C0, V, Y;
+layout(location = 0) out vec4 o0; layout(location = 1) out vec4 o1;
+void main() {
+  ivec2 x = ivec2(gl_FragCoord.xy);
+  vec4 y = texelFetch(Y, x, 0), v = texelFetch(V, x, 0);
+  int fin = kind(v.x);
+  float base = y.x;
+  if (fin == FLUID || fin == INTERFACE)
+    for (int i = 1; i < 9; i++) { ivec2 j = x + C[i]; if (inside(j)) base += texelFetch(Y, j, 0).y; }
+  float phi = fin == FLUID ? 1.0 : fin == INTERFACE ? clamp((base + v.y) / v.y, 0.0, 1.0) : 0.0;
+  bool isNew = kind(texelFetch(C0, x, 0).x) == GAS && fin == INTERFACE;
+  o0 = vec4(float(fin + (isNew ? 4 : 0)), phi, v.zw);
+  o1 = vec4(base, y.z, v.y, 0.0);
+}`;
+
+  // Pour, draw walls or erase, inside a disc: C -> C'.
+  const GPU_BRUSH =
+    GPU_COMMON +
+    `
+uniform sampler2D C0, C1;
+uniform vec2 centre; uniform float radius, share, speed; uniform int mode;
+layout(location = 0) out vec4 o0; layout(location = 1) out vec4 o1;
+void main() {
+  ivec2 x = ivec2(gl_FragCoord.xy);
+  vec4 c0 = texelFetch(C0, x, 0), c1 = texelFetch(C1, x, 0);
+  vec2 d = vec2(x) - centre;
+  int t = kind(c0.x);
+  if (dot(d, d) <= radius * radius) {
+    if (mode == 0 && t != SOLID) {
+      if (t == GAS || t == INTERFACE) {
+        if (t == GAS) { c1.x = -1.0; c1.z = 1.0; } // empty: mass 0 at density 1
+        c0.x = float(INTERFACE + 4); // fresh: populations at equilibrium, moving down
+        c0.zw = vec2(0.0, -speed);
+      }
+      c1.x += share;
+      c0.y = clamp((c1.x + c1.z) / c1.z, 0.0, 1.0);
+    } else if (mode == 1 && t == GAS) c0.x = float(SOLID);
+    else if (mode == 2 && t == SOLID && x.x > 0 && x.x < N.x - 1 && x.y > 0) { c0 = vec4(float(GAS), 0.0, 0.0, 0.0); c1.x = -c1.z; }
+  }
+  o0 = c0; o1 = c1;
+}`;
+
+  // Liquid where the smoothed fill passes a third, opaque by two-thirds.
+  const GPU_RENDER =
+    GPU_COMMON +
+    `
+uniform sampler2D C0, C1;
+uniform vec2 canvas; uniform int show; uniform float scale;
+uniform vec3 deep, fast, wall, accent;
+uniform vec4 tap; // x, y, size in cells, visible
+out vec4 o;
+void main() {
+  vec2 gp = gl_FragCoord.xy / canvas * vec2(N) - 0.5;
+  ivec2 near = clamp(ivec2(floor(gp + 0.5)), ivec2(0), N - 1);
+  if (tap.w > 0.5) {
+    vec2 d = gp - tap.xy;
+    if ((abs(d.x) <= 3.0 * tap.z && d.y >= 3.0 * tap.z && d.y <= 6.0 * tap.z) || (abs(d.x) <= 1.5 * tap.z && d.y >= 1.0 * tap.z && d.y < 3.0 * tap.z)) { o = vec4(wall, 1.0); return; }
+  }
+  int tn = kind(texelFetch(C0, near, 0).x);
+  if (tn == SOLID) { o = vec4(wall, 1.0); return; }
+  if (show == 2) {
+    if (tn == GAS) { o = vec4(0.0); return; }
+    vec3 c = tn == INTERFACE ? accent : deep; float a = tn == INTERFACE ? 1.0 : 0.8;
+    o = vec4(c * a, a); return;
+  }
+  ivec2 b = clamp(ivec2(floor(gp)), ivec2(0), N - 2);
+  vec2 fr = clamp(gp - vec2(b), 0.0, 1.0);
+  float f = 0.0, v = 0.0, wsum = 0.0;
+  for (int j = 0; j < 4; j++) {
+    ivec2 k = b + ivec2(j & 1, j >> 1);
+    vec4 c0 = texelFetch(C0, k, 0);
+    if (kind(c0.x) == SOLID) continue;
+    float w = ((j & 1) == 1 ? fr.x : 1.0 - fr.x) * ((j >> 1) == 1 ? fr.y : 1.0 - fr.y);
+    wsum += w; f += w * c0.y;
+    v += w * (show == 1 ? max(0.0, texelFetch(C1, k, 0).z - 1.0) : length(c0.zw));
+  }
+  float fill = wsum > 0.0 ? f / wsum : 0.0;
+  if (fill < 1.0 / 3.0) { o = vec4(0.0); return; }
+  float t = min(1.0, v / wsum * scale);
+  vec3 c = mix(deep, fast, show == 1 ? 1.0 - t : t);
+  float a = 0.92 * min(1.0, (fill - 1.0 / 3.0) * 3.0);
+  o = vec4(c * a, a);
+}`;
+
+  class GpuLiquid {
+    static supported(gl) {
+      return !!gl && !!gl.getExtension("EXT_color_buffer_float");
+    }
+
+    /** `initial` is a CPU Liquid: its first state is uploaded as it stands. */
+    constructor(gl, initial) {
+      const { nx, ny } = initial;
+      if (!GpuLiquid.supported(gl))
+        throw new Error("This GPU cannot draw into float textures.");
+      Object.assign(this, {
+        gl,
+        nx,
+        ny,
+        N: nx * ny,
+        tau: initial.tau,
+        smagorinsky: initial.smagorinsky,
+        gravity: initial.gravity,
+        fillRate: initial.fillRate,
+      });
+      this.steps = 0;
+      this.poured = 0;
+      const tex = () => {
+        const t = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, t);
+        gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA32F, nx, ny);
+        for (const p of [gl.TEXTURE_MIN_FILTER, gl.TEXTURE_MAG_FILTER])
+          gl.texParameteri(gl.TEXTURE_2D, p, gl.NEAREST);
+        for (const p of [gl.TEXTURE_WRAP_S, gl.TEXTURE_WRAP_T])
+          gl.texParameteri(gl.TEXTURE_2D, p, gl.CLAMP_TO_EDGE);
+        return t;
+      };
+      const set = (n) => {
+        const textures = Array.from({ length: n }, tex),
+          fbo = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+        textures.forEach((t, i) =>
+          gl.framebufferTexture2D(
+            gl.FRAMEBUFFER,
+            gl.COLOR_ATTACHMENT0 + i,
+            gl.TEXTURE_2D,
+            t,
+            0
+          )
+        );
+        gl.drawBuffers(textures.map((_, i) => gl.COLOR_ATTACHMENT0 + i)); // framebuffer state: set once
+        if (
+          gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE
+        )
+          throw new Error("This GPU cannot draw into float textures.");
+        return { textures, fbo, n };
+      };
+      this.O = set(4);
+      this.O2 = set(4);
+      this.C = set(2);
+      this.C2 = set(2);
+      this.X = set(1);
+      this.V = set(1);
+      this.Y = set(1);
+      const build = (src) => {
+        const p = gl.createProgram();
+        for (const [type, code] of [
+          [gl.VERTEX_SHADER, GPU_VERTEX],
+          [gl.FRAGMENT_SHADER, src],
+        ]) {
+          const s = gl.createShader(type);
+          gl.shaderSource(s, code);
+          gl.compileShader(s);
+          if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
+            throw new Error(gl.getShaderInfoLog(s));
+          gl.attachShader(p, s);
+        }
+        gl.linkProgram(p);
+        if (!gl.getProgramParameter(p, gl.LINK_STATUS))
+          throw new Error(gl.getProgramInfoLog(p));
+        const u = {};
+        const count = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+        for (let i = 0; i < count; i++) {
+          const name = gl.getActiveUniform(p, i).name;
+          u[name] = gl.getUniformLocation(p, name);
+        }
+        return { p, u, sent: {} };
+      };
+      this.prog = {
+        collide: build(GPU_COLLIDE),
+        advance: build(GPU_ADVANCE),
+        settle: build(GPU_SETTLE),
+        excess: build(GPU_EXCESS),
+        gather: build(GPU_GATHER),
+        brush: build(GPU_BRUSH),
+        render: build(GPU_RENDER),
+      };
+      this.upload(initial);
+    }
+
+    upload(s) {
+      const { gl, nx, ny, N } = this,
+        o = Array.from({ length: 4 }, () => new Float32Array(4 * N)),
+        c = [new Float32Array(4 * N), new Float32Array(4 * N)];
+      for (let k = 0; k < N; k++) {
+        for (let i = 0; i < 4; i++) {
+          o[0][4 * k + i] = s.p[i * N + k];
+          o[1][4 * k + i] = s.p[(i + 4) * N + k];
+        }
+        o[3].set([s.mass[k] - s.rho[k], s.rho[k], s.p[8 * N + k], 0], 4 * k);
+        c[0].set([s.type[k], s.phi[k], s.ux[k], s.uy[k]], 4 * k);
+        c[1].set([s.mass[k] - s.rho[k], s.reservoir[k], s.rho[k], 0], 4 * k);
+      }
+      const put = (texture, data) => {
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texSubImage2D(
+          gl.TEXTURE_2D,
+          0,
+          0,
+          0,
+          nx,
+          ny,
+          gl.RGBA,
+          gl.FLOAT,
+          data
+        );
+      };
+      o.forEach((data, i) => put(this.O.textures[i], data));
+      c.forEach((data, i) => put(this.C.textures[i], data));
+      this.solid = Uint8Array.from(s.type, (t) => (t === 3 ? 1 : 0));
+    }
+
+    // A draw costs tens of microseconds in calls before the GPU does anything,
+    // so unchanged state is not resent.
+    draw(prog, inputs, target, uniforms = {}) {
+      const { gl } = this,
+        { p, u } = prog;
+      gl.useProgram(p);
+      let unit = 0;
+      for (const [name, texture] of Object.entries(inputs)) {
+        gl.activeTexture(gl.TEXTURE0 + unit);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        if (prog.sent[name] !== unit) {
+          gl.uniform1i(u[name], unit);
+          prog.sent[name] = unit;
+        }
+        unit++;
+      }
+      if (u.N && !prog.sent.N) {
+        gl.uniform2i(u.N, this.nx, this.ny);
+        prog.sent.N = true;
+      }
+      for (const [name, [kind, ...v]] of Object.entries(uniforms)) {
+        if (!u[name]) continue;
+        const key = v.join(",");
+        if (prog.sent[name] !== key) {
+          gl[kind](u[name], ...v);
+          prog.sent[name] = key;
+        }
+      }
+      if (target) {
+        if (this.boundTarget !== target) {
+          gl.bindFramebuffer(gl.FRAMEBUFFER, target.fbo);
+          this.boundTarget = target;
+        }
+        if (!this.gridViewport) {
+          gl.viewport(0, 0, this.nx, this.ny);
+          this.gridViewport = true;
+        }
+      } else {
+        this.boundTarget = null;
+        this.gridViewport = false;
+      }
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+
+    step(count = 1) {
+      const { gl } = this;
+      gl.disable(gl.BLEND);
+      for (let n = 0; n < count; n++) {
+        const [O0, O1, , O3] = this.O.textures,
+          [C0, C1] = this.C.textures,
+          [Q0, Q1, Q2, Q3] = this.O2.textures;
+        const on = (pass) => !this.only || this.only === pass; // `only` times one pass alone
+        if (on("collide"))
+          this.draw(this.prog.collide, { O0, O1, O3, C0, C1 }, this.O2, {
+            tau: ["uniform1f", this.tau],
+            smag: ["uniform1f", this.smagorinsky],
+            gravity: ["uniform1f", this.gravity],
+            sprayCap: ["uniform1f", 0.25 / Math.sqrt(3)],
+          });
+        if (on("advance")) this.draw(this.prog.advance, { C0, O2: Q2 }, this.X);
+        if (on("settle"))
+          this.draw(
+            this.prog.settle,
+            { C0, O2: Q2, O3: Q3, X: this.X.textures[0] },
+            this.V
+          );
+        if (on("excess"))
+          this.draw(
+            this.prog.excess,
+            { C1, O3: Q3, V: this.V.textures[0] },
+            this.Y,
+            { fillRate: ["uniform1f", this.fillRate] }
+          );
+        if (on("gather"))
+          this.draw(
+            this.prog.gather,
+            { C0, V: this.V.textures[0], Y: this.Y.textures[0] },
+            this.C2
+          );
+        void Q0;
+        void Q1;
+        [this.O, this.O2] = [this.O2, this.O];
+        [this.C, this.C2] = [this.C2, this.C];
+        this.steps++;
+      }
+    }
+
+    brush(mode, cx, cy, radius, share = 0, speed = 0) {
+      const [C0, C1] = this.C.textures;
+      this.gl.disable(this.gl.BLEND);
+      this.draw(this.prog.brush, { C0, C1 }, this.C2, {
+        centre: ["uniform2f", cx, cy],
+        radius: ["uniform1f", radius],
+        share: ["uniform1f", share],
+        speed: ["uniform1f", speed],
+        mode: ["uniform1i", mode],
+      });
+      [this.C, this.C2] = [this.C2, this.C];
+    }
+
+    /** Mass `amount` spread over the open cells of a disc, moving down at `speed`. */
+    pour(cx, cy, radius, amount, speed) {
+      let open = 0;
+      for (
+        let y = Math.max(0, Math.floor(cy - radius));
+        y <= Math.min(this.ny - 1, Math.ceil(cy + radius));
+        y++
+      )
+        for (
+          let x = Math.max(0, Math.floor(cx - radius));
+          x <= Math.min(this.nx - 1, Math.ceil(cx + radius));
+          x++
+        )
+          if (
+            (x - cx) ** 2 + (y - cy) ** 2 <= radius * radius &&
+            !this.solid[y * this.nx + x]
+          )
+            open++;
+      if (!open) return;
+      this.brush(0, cx, cy, radius, amount / open, speed);
+      this.poured += amount;
+    }
+
+    paint(cx, cy, radius, wall) {
+      this.brush(wall ? 1 : 2, cx, cy, radius);
+      this.dirtySolids = true;
+    }
+
+    readInto(c0, c1, pbo) {
+      const { gl, nx, ny } = this;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.C.fbo);
+      this.boundTarget = undefined;
+      [c0, c1].forEach((a, i) => {
+        if (pbo) gl.bindBuffer(gl.PIXEL_PACK_BUFFER, pbo[i]);
+        gl.readBuffer(gl.COLOR_ATTACHMENT0 + i);
+        if (pbo) gl.readPixels(0, 0, nx, ny, gl.RGBA, gl.FLOAT, 0);
+        else gl.readPixels(0, 0, nx, ny, gl.RGBA, gl.FLOAT, a);
+      });
+      if (pbo) gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+    }
+
+    /** The state as CPU arrays, at once. It stalls the GPU, so it is rare. */
+    read() {
+      const c0 = new Float32Array(4 * this.N),
+        c1 = new Float32Array(4 * this.N);
+      this.readInto(c0, c1, null);
+      return this.unpack(c0, c1);
+    }
+
+    /** Starts a read that does not stall: copies into buffers, fenced. Up to
+     *  four are in flight, since one takes three or four frames to come back. */
+    requestRead(tag) {
+      const { gl, N } = this;
+      this.pending ??= [];
+      this.spare ??= [];
+      if (this.pending.length >= 4) return false;
+      const pbo =
+        this.spare.pop() ||
+        [gl.createBuffer(), gl.createBuffer()].map((b) => {
+          gl.bindBuffer(gl.PIXEL_PACK_BUFFER, b);
+          gl.bufferData(gl.PIXEL_PACK_BUFFER, 16 * N, gl.STREAM_READ);
+          return b;
+        });
+      this.readInto(null, null, pbo);
+      this.pending.push({
+        fence: gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0),
+        tag,
+        pbo,
+      });
+      gl.flush();
+      return true;
+    }
+
+    /** The oldest finished read, if it has finished: { data, tag }, else null. */
+    poll() {
+      const { gl, N } = this,
+        p = this.pending && this.pending[0];
+      if (!p) return null;
+      const status = gl.clientWaitSync(p.fence, 0, 0);
+      if (status === gl.TIMEOUT_EXPIRED || status === gl.WAIT_FAILED)
+        return null;
+      gl.deleteSync(p.fence);
+      this.pending.shift();
+      const c0 = new Float32Array(4 * N),
+        c1 = new Float32Array(4 * N);
+      [c0, c1].forEach((a, i) => {
+        gl.bindBuffer(gl.PIXEL_PACK_BUFFER, p.pbo[i]);
+        gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, a);
+      });
+      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+      this.spare.push(p.pbo);
+      return { data: this.unpack(c0, c1), tag: p.tag };
+    }
+
+    unpack(c0, c1) {
+      const { nx, ny, N } = this;
+      const out = {
+        nx,
+        ny,
+        N,
+        type: new Uint8Array(N),
+        mass: new Float32Array(N),
+        reservoir: new Float32Array(N),
+        phi: new Float32Array(N),
+        rho: new Float32Array(N),
+        ux: new Float32Array(N),
+        uy: new Float32Array(N),
+      };
+      for (let k = 0; k < N; k++) {
+        out.type[k] = Math.round(c0[4 * k]) & 3;
+        out.phi[k] = c0[4 * k + 1];
+        out.ux[k] = c0[4 * k + 2];
+        out.uy[k] = c0[4 * k + 3];
+        out.rho[k] = c1[4 * k + 2];
+        out.mass[k] = c1[4 * k] + c1[4 * k + 2];
+        out.reservoir[k] = c1[4 * k + 1];
+      }
+      if (this.dirtySolids) {
+        this.solid = Uint8Array.from(out.type, (t) => (t === 3 ? 1 : 0));
+        this.dirtySolids = false;
+      }
+      return out;
+    }
+
+    render(width, height, show, scale, colours, tap) {
+      const { gl } = this;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.viewport(0, 0, width, height);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      const c = (rgb) => [
+        "uniform3f",
+        rgb[0] / 255,
+        rgb[1] / 255,
+        rgb[2] / 255,
+      ];
+      this.draw(
+        this.prog.render,
+        { C0: this.C.textures[0], C1: this.C.textures[1] },
+        null,
+        {
+          canvas: ["uniform2f", width, height],
+          show: ["uniform1i", show],
+          scale: ["uniform1f", scale],
+          deep: c(colours.deep),
+          fast: c(colours.fast),
+          wall: c(colours.wallRgb),
+          accent: c(colours.accentRgb),
+          tap: [
+            "uniform4f",
+            tap ? tap.x : 0,
+            tap ? tap.y : 0,
+            tap ? tap.size : 1,
+            tap ? 1 : 0,
+          ],
+        }
+      );
+    }
+
+    /** Waits for the GPU: used only to time it. */
+    finish() {
+      const px = new Float32Array(4);
+      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.C.fbo);
+      this.boundTarget = undefined;
+      this.gl.readBuffer(this.gl.COLOR_ATTACHMENT0);
+      this.gl.readPixels(0, 0, 1, 1, this.gl.RGBA, this.gl.FLOAT, px);
+    }
+
+    dispose() {
+      const { gl } = this;
+      for (const set of [
+        this.O,
+        this.O2,
+        this.C,
+        this.C2,
+        this.X,
+        this.V,
+        this.Y,
+      ]) {
+        set.textures.forEach((t) => gl.deleteTexture(t));
+        gl.deleteFramebuffer(set.fbo);
+      }
+      for (const { p } of Object.values(this.prog)) gl.deleteProgram(p);
+      for (const p of this.pending || []) {
+        gl.deleteSync(p.fence);
+        this.spare.push(p.pbo);
+      }
+      for (const pbo of this.spare || [])
+        pbo.forEach((b) => gl.deleteBuffer(b));
+    }
+  }
+
+  // The mock-up's page: a 1 m tank of water in real time. Scenes, tools, cell
+  // size, rendering and live checks around Liquid (CPU) and GpuLiquid (GPU).
   (() => {
-    const NX = 160,
-      NY = 96,
-      G = 3e-5,
-      A = 30;
     const RT3 = Math.sqrt(3);
-    // Martin & Moyce (1952), square-ish column n² = 2: [T, X].
+    const TANK = 1,
+      NU_WATER = 1.0e-6,
+      G = 9.81; // metres, m²/s, m/s²
+    const G_LAT = 3e-5; // lattice gravity: keeps the fastest liquid near Mach 0.15
+    // Martin & Moyce (1952), a column twice as tall as wide: [T, X].
     const MM = [
+      [0, 1],
       [0.41, 1.11],
       [0.84, 1.22],
       [1.19, 1.44],
@@ -924,67 +1726,119 @@
       [3.11, 3.89],
       [3.33, 4.11],
     ];
-    const border = (x, y) => x === 0 || x === NX - 1 || y === 0;
-    const HOLE = { wall: 50, low: 6, high: 14 };
+    const mmAt = (T) => {
+      for (let i = 1; i < MM.length; i++)
+        if (T <= MM[i][0]) {
+          const [t0, x0] = MM[i - 1],
+            [t1, x1] = MM[i];
+          return x0 + ((x1 - x0) * (T - t0)) / (t1 - t0);
+        }
+      return null;
+    };
+
+    // A grid `nx` cells across the tank, in metres and seconds. The step comes
+    // from holding lattice gravity fixed; viscosity then sets τ.
+    function grid(nx) {
+      const ny = Math.round(nx * 0.6),
+        dx = TANK / nx,
+        dt = Math.sqrt((G_LAT * dx) / G);
+      return {
+        nx,
+        ny,
+        dx,
+        dt,
+        tau: 0.5 + (3 * NU_WATER * dt) / (dx * dx),
+        r: nx / 160,
+      };
+    }
+    const LEVELS = [120, 160, 240, 320, 480];
+    const TAP = { width: 0.025, speed: 1.0 }; // a 2.5 cm stream at 1 m/s
+    const POUR_RATE = TAP.width * TAP.speed; // m² a second in this 2D slice
 
     const SCENES = {
       dam: {
         name: "Dam break",
-        hint: "A column 30 cells wide and 60 tall let go at once: the classic check of a free-surface solver against Martin & Moyce's experiment.",
-        make: () =>
-          new Liquid({
-            nx: NX,
-            ny: NY,
-            gravity: G,
-            solid: border,
-            fill: (x, y) => (x >= 1 && x <= A && y >= 1 && y <= 2 * A ? 1 : 0),
-          }),
+        hint: "A column 19 cm wide and 38 cm tall let go at once: the classic check of a free-surface solver against Martin & Moyce's experiment.",
+        make: (gr) => {
+          const a = Math.round(30 * gr.r);
+          return liquid(
+            gr,
+            (x, y) => wallOf(gr, x, y),
+            (x, y) => (x >= 1 && x <= a && y >= 1 && y <= 2 * a ? 1 : 0)
+          );
+        },
       },
       pour: {
         name: "Pour",
-        hint: "A tap pours onto a shelf. With the Pour tool, press anywhere to move the tap there.",
-        tap: { x: 60, y: 85 },
-        make: () =>
-          new Liquid({
-            nx: NX,
-            ny: NY,
-            gravity: G,
-            solid: (x, y) => border(x, y) || (y === 40 && x > 30 && x < 90),
-            fill: () => 0,
-          }),
+        hint: "A tap pours a 2.5 cm stream at 1 m/s onto a shelf. With the Pour tool, press anywhere to move the tap there.",
+        tap: (gr) => ({ x: Math.round(60 * gr.r), y: Math.round(85 * gr.r) }),
+        make: (gr) =>
+          liquid(
+            gr,
+            (x, y) =>
+              wallOf(gr, x, y) ||
+              (y === Math.round(40 * gr.r) && x > 30 * gr.r && x < 90 * gr.r),
+            () => 0
+          ),
       },
       hole: {
         name: "Tank with a hole",
-        hint: "Liquid drains through an 8-cell gap low in a wall. The discharge coefficient compares the flow with Torricelli's √(2gh).",
-        make: () =>
-          new Liquid({
-            nx: NX,
-            ny: NY,
-            gravity: G,
-            solid: (x, y) =>
-              border(x, y) ||
-              (x >= HOLE.wall &&
-                x < HOLE.wall + 3 &&
-                !(y >= HOLE.low && y < HOLE.high)),
-            fill: (x, y) => (x < HOLE.wall && y >= 1 && y < 80 ? 1 : 0),
-          }),
+        hint: "Water drains through a 5 cm gap low in a wall. The discharge coefficient compares the flow with Torricelli's √(2gh).",
+        make: (gr) => {
+          const h = hole(gr);
+          return liquid(
+            gr,
+            (x, y) =>
+              wallOf(gr, x, y) ||
+              (x >= h.wall &&
+                x < h.wall + h.thick &&
+                !(y >= h.low && y < h.high)),
+            (x, y) => (x < h.wall && y >= 1 && y < 80 * gr.r ? 1 : 0)
+          );
+        },
       },
       still: {
         name: "Still tank",
-        hint: "Liquid at rest. Halfway down, the pressure should be ρgh and the mass should never change.",
-        make: () =>
-          new Liquid({
-            nx: NX,
-            ny: NY,
-            gravity: G,
-            solid: border,
-            fill: (x, y) => (y >= 1 && y <= 60 ? 1 : 0),
-          }),
+        hint: "Water at rest. Halfway down, the pressure should be ρgh and the mass should never change.",
+        make: (gr) =>
+          liquid(
+            gr,
+            (x, y) => wallOf(gr, x, y),
+            (x, y) => (y >= 1 && y <= Math.round(60 * gr.r) ? 1 : 0)
+          ),
       },
     };
+    const hole = (gr) => ({
+      wall: Math.round(50 * gr.r),
+      thick: Math.max(2, Math.round(3 * gr.r)),
+      low: Math.round(6 * gr.r),
+      high: Math.round(14 * gr.r),
+    });
+    const wallOf = (gr, x, y) => x === 0 || x === gr.nx - 1 || y === 0;
+    const liquid = (gr, solid, fill) =>
+      new Liquid({
+        nx: gr.nx,
+        ny: gr.ny,
+        tau: gr.tau,
+        smagorinsky: 0.1,
+        gravity: G_LAT,
+        fillRate: state.fill === "slow" ? 0.05 : 0,
+        solid,
+        fill,
+      });
+
     const TOOLS = { pour: "Pour", wall: "Draw walls", erase: "Erase walls" };
     const SHOWS = { speed: "Speed", pressure: "Pressure", cells: "Cell types" };
     const FILLS = { slow: "Fill slowly", leave: "Leave them" };
+    const PACES = { 1: "Real time", 0.25: "Slow motion ¼" };
+    const SIZES = {
+      auto: "Auto",
+      120: "8 mm",
+      160: "6 mm",
+      240: "4 mm",
+      320: "3 mm",
+      480: "2 mm",
+    };
 
     const $ = (id) => document.getElementById(id);
     const state = {
@@ -992,15 +1846,23 @@
       tool: "pour",
       show: "speed",
       fill: "slow",
+      pace: "1",
+      size: "auto",
       playing: true,
-      sim: null,
+      gr: null,
+      engine: null,
       start: 0,
       error: null,
       front: [],
       cd: null,
       history: [],
       tap: null,
-      rate: 0,
+      simTime: 0,
+      debt: 0,
+      ratio: 0,
+      peak: 0,
+      data: null,
+      capacity: 0,
     };
     try {
       const saved = localStorage.getItem("liquid-show");
@@ -1011,6 +1873,56 @@
     if (matchMedia("(prefers-reduced-motion: reduce)").matches)
       state.playing = false;
 
+    // ---- The GPU, if it can draw into float textures; the CPU at 6 mm if not.
+    const paper = $("paper"),
+      fluid = $("fluid"),
+      stage = $("stage");
+    const forceCpu = location.hash === "#cpu"; // for testing the fallback
+    const gl = forceCpu
+      ? null
+      : fluid.getContext("webgl2", {
+          premultipliedAlpha: true,
+          antialias: false,
+        });
+    const gpu = typeof GpuLiquid !== "undefined" && GpuLiquid.supported(gl);
+    const ctx2d = gpu ? null : fluid.getContext("2d");
+    const pctx = paper.getContext("2d");
+
+    // Steps a second this GPU sustains at a cell size. Small grids are bound by
+    // the cost of a draw, large ones by cells, so each size is timed itself.
+    function benchmark(nx) {
+      const gr = grid(nx),
+        e = new GpuLiquid(gl, SCENES.dam.make(gr));
+      e.step(10);
+      e.finish();
+      let best = Infinity;
+      for (let round = 0; round < 2; round++) {
+        const t0 = performance.now();
+        e.step(120);
+        e.finish();
+        best = Math.min(best, (performance.now() - t0) / 120);
+      }
+      e.dispose();
+      return 1000 / best;
+    }
+    // The smallest cells that keep real time with a fifth to spare for drawing.
+    function chooseLevel() {
+      if (!gpu) return 160;
+      if (state.size !== "auto") return Number(state.size);
+      if (!state.auto) {
+        state.auto = LEVELS[0];
+        state.timings = {};
+        for (const nx of [...LEVELS].reverse()) {
+          const rate = (state.timings[nx] = benchmark(nx));
+          if (rate * 0.8 >= 1 / grid(nx).dt) {
+            state.auto = nx;
+            break;
+          }
+        }
+      }
+      return state.auto;
+    }
+
     function chips(host, options, key, onPick) {
       host.replaceChildren(
         ...Object.entries(options).map(([id, label]) => {
@@ -1018,7 +1930,7 @@
           b.type = "button";
           b.className = "chip";
           b.textContent = typeof label === "string" ? label : label.name;
-          b.setAttribute("aria-pressed", String(state[key] === id));
+          b.setAttribute("aria-pressed", String(String(state[key]) === id));
           b.addEventListener("click", () => {
             onPick(id);
             for (const c of host.children)
@@ -1031,91 +1943,176 @@
 
     function load(scene) {
       state.scene = scene;
-      state.sim = SCENES[scene].make();
-      state.sim.fillRate = state.fill === "slow" ? 0.05 : 0;
-      state.start = state.sim.totalMass();
-      state.error = null;
-      state.front = [];
-      state.cd = null;
-      state.history = [];
-      state.tap = SCENES[scene].tap
-        ? { ...SCENES[scene].tap, on: true, fixed: true }
-        : null;
+      const gr = (state.gr = grid(chooseLevel()));
+      if (state.engine && state.engine.dispose) state.engine.dispose();
+      const cpu = SCENES[scene].make(gr);
+      state.engine = gpu ? new GpuLiquid(gl, cpu) : cpu;
+      state.start = cpu.totalMass();
+      Object.assign(state, {
+        error: null,
+        front: [],
+        cd: null,
+        history: [],
+        simTime: 0,
+        debt: 0,
+        peak: 0,
+        data: cpu,
+        dataPoured: 0,
+      });
+      const tap = SCENES[scene].tap;
+      state.tap = tap ? { ...tap(gr), on: true, fixed: true } : null;
       $("scene-hint").textContent = SCENES[scene].hint;
       $("chart-section").hidden = scene !== "dam";
+      if (!gpu)
+        $("size-hint").textContent =
+          "This browser has no float GPU drawing, so the liquid runs on the CPU at 6 mm cells, slower than real time.";
       drawPaper();
       render();
       readout();
     }
 
-    // ---- Stepping: as many steps as fit in about 9 ms a frame.
+    // ---- Stepping: real time, from the wall clock; at most two frames' worth at once.
+    const POUR_EVERY = 4;
     let last = performance.now(),
-      stepsThisSecond = 0,
-      secondStart = last;
+      lastRead = 0,
+      ratioWall = 0,
+      ratioSim = 0;
     function frame(now) {
-      if (state.playing && !state.error) {
-        const t0 = performance.now();
-        let n = 0;
-        try {
-          do {
-            advance();
-            n++;
-          } while (performance.now() - t0 < 9 && n < 40);
-        } catch (e) {
-          state.error = e.message;
-          state.playing = false;
-          $("play").textContent = "Play";
-        }
-        stepsThisSecond += n;
-        render();
-      }
-      if (now - secondStart > 500) {
-        state.rate = (stepsThisSecond * 1000) / (now - secondStart);
-        stepsThisSecond = 0;
-        secondStart = now;
-        readout();
-      }
-      last = now;
+      tick(now);
       requestAnimationFrame(frame);
     }
-
-    const TAP_LIMIT = 0.4 * (NX - 2) * (NY - 1);
-    function advance() {
-      const s = state.sim;
-      if (state.tap && state.tap.on && s.poured < TAP_LIMIT)
-        s.pour(state.tap.x, state.tap.y, 3, 0.6, 0.03);
-      s.oneStep();
-      measure(s);
+    function tick(now) {
+      const wall = Math.max(0, Math.min(0.1, (now - last) / 1000));
+      last = now;
+      if (state.playing && !state.error) {
+        const gr = state.gr,
+          pace = Number(state.pace);
+        state.debt += wall * pace;
+        let n = Math.floor(state.debt / gr.dt);
+        const cap = Math.ceil(pace / gr.dt / 30);
+        if (n > cap) {
+          n = cap;
+          state.debt = 0;
+        } else state.debt -= n * gr.dt;
+        // The GPU queues its work; the CPU does it here, so it gets 10 ms a frame
+        // and falls behind real time rather than freezing the page.
+        const t0 = performance.now();
+        let done = 0;
+        try {
+          while (done < n && (gpu || performance.now() - t0 < 10)) {
+            const chunk = Math.min(POUR_EVERY, n - done);
+            if (
+              state.tap &&
+              state.tap.on &&
+              state.engine.poured < 0.4 * gr.nx * gr.ny
+            )
+              state.engine.pour(
+                state.tap.x,
+                state.tap.y,
+                TAP.width / 2 / gr.dx,
+                (POUR_RATE * gr.dt * chunk) / gr.dx ** 2,
+                (TAP.speed * gr.dt) / gr.dx
+              );
+            state.engine.step(chunk);
+            done += chunk;
+          }
+        } catch (e) {
+          fail(e.message);
+        }
+        if (done < n) state.debt = 0;
+        state.simTime += done * gr.dt;
+        ratioWall += wall;
+        ratioSim += done * gr.dt;
+        if (state.scene === "dam") {
+          const T =
+            state.simTime *
+            Math.sqrt((2 * G) / (Math.round(30 * gr.r) * gr.dx));
+          const next = MM[state.front.length + 1];
+          if (next && T >= next[0]) sample();
+        }
+      }
+      if (now - lastRead > 250) {
+        lastRead = now;
+        if (ratioWall > 0) {
+          state.ratio = ratioSim / ratioWall;
+          ratioWall = ratioSim = 0;
+        }
+        sample();
+        readout();
+      }
+      if (gpu)
+        for (let done = state.engine.poll(); done; done = state.engine.poll())
+          consider(done.data, done.tag);
+      render();
+    }
+    function fail(message) {
+      state.error = message;
+      state.playing = false;
+      $("play").textContent = "Play";
     }
 
-    function measure(s) {
-      if (state.scene === "dam") {
-        const T = s.steps * Math.sqrt((2 * G) / A);
-        const i = state.front.length;
-        if (i < MM.length && T >= MM[i][0]) {
-          let front = 0;
-          for (let x = 1; x < NX - 1; x++)
-            for (let y = 1; y <= 3; y++)
-              if (s.phi[y * NX + x] >= 0.5) front = Math.max(front, x);
-          state.front.push([T, front / A]);
+    // Asks for the state as it stands now; the GPU answers a frame or two later
+    // without stalling, tagged with the time it was asked for.
+    function sample() {
+      const tag = {
+        simTime: state.simTime,
+        steps: state.engine.steps,
+        poured: state.engine.poured,
+      };
+      if (gpu) state.engine.requestRead(tag);
+      else consider(state.engine, tag);
+    }
+    // Every check that needs the state.
+    function consider(d, tag) {
+      const gr = state.gr;
+      if (d.N !== gr.nx * gr.ny) return; // a read from before a reload
+      state.data = d;
+      state.dataPoured = tag.poured;
+      let peak = 0;
+      for (let k = 0; k < d.N; k++) {
+        if (!Number.isFinite(d.rho[k])) {
+          fail(`The liquid went unstable after ${tag.steps} steps.`);
+          return;
         }
-      } else if (state.scene === "hole" && s.steps % 50 === 0) {
+        if (d.type[k] === 1 || d.type[k] === 2) {
+          const s = Math.hypot(d.ux[k], d.uy[k]);
+          if (s > peak) peak = s;
+        }
+      }
+      state.peak = Math.max(state.peak, peak);
+      if (state.scene === "dam") {
+        const a = Math.round(30 * gr.r),
+          rows = Math.max(1, Math.round(a / 10));
+        const T = tag.simTime * Math.sqrt((2 * G) / (a * gr.dx));
+        if (T > MM.at(-1)[0] + 0.05) return;
+        let front = 0;
+        for (let x = 1; x < gr.nx - 1; x++)
+          for (let y = 1; y <= rows; y++)
+            if (d.phi[y * gr.nx + x] >= 0.5) front = Math.max(front, x);
+        const lastT = state.front.length ? state.front.at(-1)[0] : -1;
+        if (T > lastT + 0.02) state.front.push([T, front / a]);
+      } else if (state.scene === "hole") {
+        const h = hole(gr);
         let left = 0,
           column = 0;
-        for (let y = 1; y < NY; y++) {
-          for (let x = 1; x < HOLE.wall; x++)
-            left += s.mass[y * NX + x] + s.reservoir[y * NX + x];
-          column += s.phi[y * NX + 20];
+        for (let y = 1; y < gr.ny; y++) {
+          for (let x = 1; x < h.wall; x++)
+            left += d.mass[y * gr.nx + x] + d.reservoir[y * gr.nx + x];
+          column += d.phi[y * gr.nx + Math.round(20 * gr.r)];
         }
-        state.history.push([s.steps, left]);
-        if (state.history.length > 5) state.history.shift();
-        const h = column - (HOLE.low + HOLE.high - 1) / 2 + 0.5;
-        if (state.history.length === 5 && s.steps > 400 && h > 4) {
+        state.history.push([tag.steps, left]);
+        if (state.history.length > 3) state.history.shift();
+        const head = column - (h.low + h.high - 1) / 2 + 0.5;
+        if (
+          state.history.length === 3 &&
+          tag.simTime > 0.3 &&
+          head > 4 * gr.r
+        ) {
           const [s0, m0] = state.history[0];
-          const q = (m0 - left) / (s.steps - s0);
+          const q = (m0 - left) / (tag.steps - s0);
           state.cd = {
-            value: q / ((HOLE.high - HOLE.low) * Math.sqrt(2 * G * h)),
-            h,
+            value: q / ((h.high - h.low) * Math.sqrt(2 * G_LAT * head)),
+            head: head * gr.dx,
           };
         }
       }
@@ -1123,47 +2120,60 @@
 
     // ---- Readouts and the verdict.
     function readout() {
-      const s = state.sim;
-      const total = s.totalMass(),
-        ref = state.start + s.poured;
+      const gr = state.gr,
+        d = state.data;
+      let total = 0;
+      for (let k = 0; k < d.N; k++) total += d.mass[k] + d.reservoir[k];
+      const ref = state.start + (state.dataPoured ?? 0); // poured when the state was read
       const drift = (total - ref) / Math.max(ref, 1);
-      const mach = s.peakSpeed * RT3;
+      const mach = state.peak * RT3;
       const rows = [
-        ["Steps", s.steps.toLocaleString()],
-        ["Steps a second", Math.round(state.rate).toLocaleString()],
+        ["Time", `${state.simTime.toFixed(2)} s`],
+        [
+          "Speed",
+          state.playing && !state.error
+            ? state.ratio >= 0.97 * Number(state.pace)
+              ? state.pace === "1"
+                ? "real time"
+                : "¼ of real time"
+              : `${state.ratio.toFixed(2)} × real time`
+            : "paused",
+        ],
+        ["Cells", `${gr.nx} × ${gr.ny}, ${(gr.dx * 1000).toFixed(1)} mm`],
         [
           "Mass kept",
           `${drift >= 0 ? "+" : "−"}${Math.abs(drift).toExponential(1)}`,
         ],
-        ["Fastest so far", `Mach ${mach.toFixed(2)}`],
+        ["Fastest seen", `Mach ${mach.toFixed(2)}`],
       ];
       let verdict = null;
       if (state.scene === "dam") {
-        const T = s.steps * Math.sqrt((2 * G) / A);
         const f = state.front.at(-1);
-        rows.push(["Time T", T.toFixed(2)]);
+        const ref2 = f ? mmAt(f[0]) : null;
         rows.push([
           "Front X",
-          f
-            ? `${f[1].toFixed(2)} vs ${MM[state.front.length - 1][1].toFixed(2)}`
+          f && ref2
+            ? `${f[1].toFixed(2)} vs ${ref2.toFixed(2)} at T ${f[0].toFixed(2)}`
             : "—",
         ]);
-        if (state.front.length) {
+        const scored = state.front.filter(
+          ([T]) => T >= 0.4 && mmAt(T) !== null
+        );
+        if (scored.length) {
           const err =
-            state.front.reduce(
-              (acc, [, x], i) => acc + Math.abs(x - MM[i][1]) / MM[i][1],
-              0
-            ) / state.front.length;
+            scored.reduce((acc, [T, x]) => acc + (x - mmAt(T)) / mmAt(T), 0) /
+            scored.length;
           verdict = [
-            err < 0.1 ? "good" : "warn",
-            `Front within ${(err * 100).toFixed(1)}% of the experiment on average so far. Refined with speeds held the same, this front converges toward the experiment.`,
+            Math.abs(err) < 0.1 ? "good" : "warn",
+            `The front is ${Math.abs(err * 100).toFixed(1)}% ${err >= 0 ? "ahead of" : "behind"} Martin & Moyce on average so far. Their gate slowed the first moments; later, this front moves at their speed.`,
           ];
         }
         drawChart();
       } else if (state.scene === "still") {
-        const y = 30,
-          k = y * NX + 80;
-        const ratio = (s.rho[k] - 1) / 3 / (G * (60 - y + 0.5));
+        const y = Math.round(30 * gr.r),
+          k = y * gr.nx + Math.round(gr.nx / 2);
+        const ratio =
+          (d.rho[k] - 1) / 3 / (G_LAT * (Math.round(60 * gr.r) - y + 0.5));
         rows.push(["Pressure ÷ ρgh", ratio.toFixed(4)]);
         verdict =
           Math.abs(ratio - 1) < 0.01
@@ -1178,7 +2188,7 @@
       } else if (state.scene === "hole") {
         rows.push([
           "Head h",
-          state.cd ? `${state.cd.h.toFixed(1)} cells` : "—",
+          state.cd ? `${(state.cd.head * 100).toFixed(1)} cm` : "—",
         ]);
         rows.push([
           "Discharge Cd",
@@ -1187,15 +2197,18 @@
         if (state.cd)
           verdict = [
             "warn",
-            "Not validated: GPT's Cd went 0.85 → 0.70 when refined. A real sharp-edged orifice is near 0.61.",
+            "Not validated: a sharp-edged slot gives 0.61 (Kirchhoff, π/(π+2)). Five-centimetre gaps eight cells wide do not resolve the jet narrowing past the edge.",
           ];
       } else if (state.scene === "pour") {
-        rows.push(["Poured", `${Math.round(s.poured).toLocaleString()} cells`]);
+        rows.push([
+          "Poured",
+          `${(state.engine.poured * gr.dx ** 2 * 1e4).toFixed(0)} cm² of water`,
+        ]);
         verdict = [
           "good",
-          s.poured >= TAP_LIMIT
-            ? "The tap has stopped at 40% full. Every cell poured is still in the tank."
-            : "Every cell poured is still in the tank.",
+          state.engine.poured >= 0.4 * gr.nx * gr.ny
+            ? "The tap has stopped at 40% full. Every drop poured is still in the tank."
+            : "Every drop poured is still in the tank.",
         ];
       }
       if (Math.abs(drift) > 1e-3)
@@ -1211,22 +2224,20 @@
       if (state.error)
         verdict = ["warn", `${state.error} Start again to reset it.`];
       $("readout").replaceChildren(
-        ...rows.flatMap(([t, d]) => {
+        ...rows.flatMap(([t, v]) => {
           const dt = document.createElement("dt"),
             dd = document.createElement("dd");
           dt.textContent = t;
-          dd.textContent = d;
+          dd.textContent = v;
           return [dt, dd];
         })
       );
       const v = $("verdict");
       v.hidden = !verdict;
-      if (verdict) {
-        v.className = `verdict ${verdict[0]}`;
-        v.textContent = verdict[1];
-      }
+      v.className = verdict ? `verdict ${verdict[0]}` : "verdict";
+      v.textContent = verdict ? verdict[1] : "";
       $("caption").innerHTML =
-        `<span><b>${NX} × ${NY}</b> cells</span><span><i>g</i> = 3×10⁻⁵ cells/step²</span><span>τ = 0.53, Smagorinsky 0.1</span><span>CPU, float64</span>`;
+        `<span><b>1 m</b> tank of water</span><span>ν = 1.0 mm²/s, τ = ${gr.tau.toFixed(5)}</span><span><i>g</i> = 9.81 m/s²</span><span>${gpu ? "GPU, float32" : "CPU, float64"}</span>`;
     }
 
     // ---- Colours come from the page's tokens, so both themes work.
@@ -1256,38 +2267,20 @@
       colours.wallRgb = hex(colours["--wall"]);
       colours.accentRgb = hex(colours["--accent"]);
     }
-    matchMedia("(prefers-color-scheme: dark)").addEventListener(
-      "change",
-      () => {
-        readColours();
-        drawPaper();
-        render();
-        drawChart();
-      }
-    );
-    new MutationObserver(() => {
+    const recolour = () => {
       readColours();
       drawPaper();
       render();
       drawChart();
-    }).observe(document.documentElement, {
+    };
+    matchMedia("(prefers-color-scheme: dark)").addEventListener(
+      "change",
+      recolour
+    );
+    new MutationObserver(recolour).observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["data-theme"],
     });
-
-    const paper = $("paper"),
-      fluid = $("fluid"),
-      stage = $("stage");
-    const fctx = fluid.getContext("2d"),
-      pctx = paper.getContext("2d");
-    const SUB = 2,
-      OW = NX * SUB,
-      OH = NY * SUB;
-    const off = document.createElement("canvas");
-    off.width = OW;
-    off.height = OH;
-    const octx = off.getContext("2d"),
-      image = octx.createImageData(OW, OH);
 
     function fit() {
       const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -1299,27 +2292,28 @@
           c.height = h;
         }
     }
+    // Graph paper in centimetres: a line every 2.5 cm, a darker one every 12.5 cm.
     function drawPaper() {
       fit();
       const w = paper.width,
         h = paper.height,
-        cell = w / NX;
+        perMetre = w / TANK;
       pctx.fillStyle = colours["--paper"];
       pctx.fillRect(0, 0, w, h);
       for (const [step, colour] of [
-        [4, colours["--grid-minor"]],
-        [20, colours["--grid-major"]],
+        [0.025, colours["--grid-minor"]],
+        [0.125, colours["--grid-major"]],
       ]) {
         pctx.strokeStyle = colour;
         pctx.lineWidth = 1;
         pctx.beginPath();
-        for (let x = step; x < NX; x += step) {
-          const X = Math.round(x * cell) + 0.5;
+        for (let x = step; x < TANK - 1e-9; x += step) {
+          const X = Math.round(x * perMetre) + 0.5;
           pctx.moveTo(X, 0);
           pctx.lineTo(X, h);
         }
-        for (let y = step; y < NY; y += step) {
-          const Y = Math.round(h - y * cell) + 0.5;
+        for (let y = step; y * perMetre < h; y += step) {
+          const Y = Math.round(h - y * perMetre) + 0.5;
           pctx.moveTo(0, Y);
           pctx.lineTo(w, Y);
         }
@@ -1327,13 +2321,49 @@
       }
     }
 
-    // Liquid where the smoothed fill is at least one half, sampled at twice the grid.
     function render() {
-      const s = state.sim,
-        d = image.data,
+      if (!state.engine) return;
+      fit();
+      const gr = state.gr,
+        scale = state.show === "pressure" ? 1 / (3 * G_LAT * gr.ny) : 1 / 0.06;
+      const show = { speed: 0, pressure: 1, cells: 2 }[state.show];
+      const tap =
+        state.tap && (state.tap.on || state.tap.fixed)
+          ? { x: state.tap.x, y: state.tap.y, size: gr.r }
+          : null;
+      if (gpu)
+        state.engine.render(
+          fluid.width,
+          fluid.height,
+          show,
+          scale,
+          colours,
+          tap
+        );
+      else renderCpu(gr, scale, tap);
+    }
+
+    // The CPU fallback draws the same picture, sampled at twice the grid.
+    let off = null,
+      octx = null,
+      image = null;
+    function renderCpu(gr, scale, tap) {
+      const s = state.engine,
+        SUB = 2,
+        OW = gr.nx * SUB,
+        OH = gr.ny * SUB,
         { deep, fast, wallRgb, accentRgb } = colours;
-      const { phi, type, ux, uy, rho } = s;
-      const scale = state.show === "pressure" ? 1 / (3 * G * NY) : 1 / 0.06;
+      if (!off || off.width !== OW) {
+        off = document.createElement("canvas");
+        off.width = OW;
+        off.height = OH;
+        octx = off.getContext("2d");
+        image = octx.createImageData(OW, OH);
+      }
+      const d = image.data,
+        { phi, type, ux, uy, rho } = s,
+        NX = gr.nx,
+        NY = gr.ny;
       for (let py = 0; py < OH; py++) {
         const gy = NY - 1 - ((py + 0.5) / SUB - 0.5);
         const y0 = Math.max(0, Math.min(NY - 2, Math.floor(gy))),
@@ -1381,14 +2411,13 @@
                 ? Math.max(0, rho[k] - 1)
                 : Math.hypot(ux[k], uy[k]));
           }
-          // Opaque from two-thirds full, fading out by one-third: froth reads as froth, not holes.
           const fill = wsum > 0 ? f / wsum : 0;
           if (fill < 1 / 3) {
             d[o + 3] = 0;
             continue;
           }
-          const t = Math.min(1, (v / wsum) * scale);
-          const a = state.show === "pressure" ? 1 - t : t;
+          const t = Math.min(1, (v / wsum) * scale),
+            a = state.show === "pressure" ? 1 - t : t;
           d[o] = deep[0] + (fast[0] - deep[0]) * a;
           d[o + 1] = deep[1] + (fast[1] - deep[1]) * a;
           d[o + 2] = deep[2] + (fast[2] - deep[2]) * a;
@@ -1396,24 +2425,24 @@
         }
       }
       octx.putImageData(image, 0, 0);
-      fit();
-      fctx.clearRect(0, 0, fluid.width, fluid.height);
-      fctx.imageSmoothingEnabled = true;
-      fctx.drawImage(off, 0, 0, fluid.width, fluid.height);
-      if (state.tap && (state.tap.on || state.tap.fixed)) {
+      ctx2d.clearRect(0, 0, fluid.width, fluid.height);
+      ctx2d.imageSmoothingEnabled = true;
+      ctx2d.drawImage(off, 0, 0, fluid.width, fluid.height);
+      if (tap) {
         const cell = fluid.width / NX,
-          X = (state.tap.x + 0.5) * cell,
-          Y = fluid.height - (state.tap.y + 0.5) * cell;
-        fctx.fillStyle = colours["--wall"];
-        fctx.fillRect(X - 3 * cell, Y - 6 * cell, 6 * cell, 3 * cell);
-        fctx.fillRect(X - 1.5 * cell, Y - 3 * cell, 3 * cell, 2 * cell);
+          X = (tap.x + 0.5) * cell,
+          Y = fluid.height - (tap.y + 0.5) * cell,
+          u = cell * tap.size;
+        ctx2d.fillStyle = colours["--wall"];
+        ctx2d.fillRect(X - 3 * u, Y - 6 * u, 6 * u, 3 * u);
+        ctx2d.fillRect(X - 1.5 * u, Y - 3 * u, 3 * u, 2 * u);
       }
     }
 
     // ---- The dam-break chart: the experiment's circles and this lattice's line.
     function drawChart() {
       const c = $("chart");
-      if (!c || $("chart-section").hidden) return;
+      if (!c || $("chart-section").hidden || !colours) return;
       const ctx = c.getContext("2d"),
         w = c.width,
         h = c.height,
@@ -1442,7 +2471,7 @@
       ctx.fillText("X", L + 8, T + 16);
       ctx.strokeStyle = colours["--ink"];
       ctx.lineWidth = 2;
-      for (const [t, x] of MM) {
+      for (const [t, x] of MM.slice(1)) {
         ctx.beginPath();
         ctx.arc(xs(t), ys(x), 6, 0, 2 * Math.PI);
         ctx.stroke();
@@ -1461,32 +2490,54 @@
     let down = false,
       lastCell = null;
     function cellAt(e) {
-      const r = fluid.getBoundingClientRect();
+      const r = fluid.getBoundingClientRect(),
+        gr = state.gr;
       return {
-        x: Math.floor(((e.clientX - r.left) / r.width) * NX),
-        y: NY - 1 - Math.floor(((e.clientY - r.top) / r.height) * NY),
+        x: Math.floor(((e.clientX - r.left) / r.width) * gr.nx),
+        y: gr.ny - 1 - Math.floor(((e.clientY - r.top) / r.height) * gr.ny),
       };
     }
     function paintLine(a, b) {
-      const wall = state.tool === "wall",
-        n = Math.max(1, Math.abs(b.x - a.x), Math.abs(b.y - a.y));
+      const gr = state.gr,
+        wall = state.tool === "wall",
+        radius = Math.max(1.5, 1.5 * gr.r);
+      const n = Math.max(
+        1,
+        Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / Math.max(1, radius))
+      );
       for (let i = 0; i <= n; i++) {
-        const cx = Math.round(a.x + ((b.x - a.x) * i) / n),
-          cy = Math.round(a.y + ((b.y - a.y) * i) / n);
-        for (let dy = -1; dy <= 1; dy++)
-          for (let dx = -1; dx <= 1; dx++) {
-            const x = cx + dx,
-              y = cy + dy;
-            if (!wall && (border(x, y) || x < 0 || x >= NX)) continue;
-            state.sim.paint(x, y, wall);
-          }
+        const cx = a.x + ((b.x - a.x) * i) / n,
+          cy = a.y + ((b.y - a.y) * i) / n;
+        if (gpu) state.engine.paint(cx, cy, radius, wall);
+        else
+          for (
+            let y = Math.floor(cy - radius);
+            y <= Math.ceil(cy + radius);
+            y++
+          )
+            for (
+              let x = Math.floor(cx - radius);
+              x <= Math.ceil(cx + radius);
+              x++
+            ) {
+              if (
+                (x - cx) ** 2 + (y - cy) ** 2 > radius * radius ||
+                x < 0 ||
+                x >= gr.nx
+              )
+                continue;
+              if (!wall && wallOf(gr, x, y)) continue;
+              state.engine.paint(x, y, wall);
+            }
       }
     }
     function use(e) {
-      const c = cellAt(e);
+      const c = cellAt(e),
+        gr = state.gr;
       if (state.tool === "pour") {
-        const x = Math.max(4, Math.min(NX - 5, c.x)),
-          y = Math.max(4, Math.min(NY - 4, c.y));
+        const m = Math.ceil(5 * gr.r);
+        const x = Math.max(m, Math.min(gr.nx - 1 - m, c.x)),
+          y = Math.max(m, Math.min(gr.ny - m, c.y));
         state.tap = {
           x,
           y,
@@ -1495,7 +2546,6 @@
         };
       } else paintLine(lastCell || c, c);
       lastCell = c;
-      if (!state.playing) render();
     }
     fluid.addEventListener("pointerdown", (e) => {
       down = true;
@@ -1510,6 +2560,7 @@
       down = false;
       lastCell = null;
       if (state.tap && !state.tap.fixed) state.tap.on = false;
+      if (gpu && state.engine.dirtySolids) state.data = state.engine.read();
     };
     fluid.addEventListener("pointerup", up);
     fluid.addEventListener("pointercancel", up);
@@ -1519,6 +2570,11 @@
     chips($("tools"), TOOLS, "tool", (id) => {
       state.tool = id;
     });
+    chips($("sizes"), gpu ? SIZES : { 160: "6 mm" }, "size", (id) => {
+      state.size = id;
+      load(state.scene);
+    });
+    if (!gpu) state.size = "160";
     chips($("shows"), SHOWS, "show", (id) => {
       state.show = id;
       try {
@@ -1526,11 +2582,13 @@
       } catch {
         /* optional */
       }
-      render();
+    });
+    chips($("paces"), PACES, "pace", (id) => {
+      state.pace = id;
     });
     chips($("fills"), FILLS, "fill", (id) => {
       state.fill = id;
-      state.sim.fillRate = id === "slow" ? 0.05 : 0;
+      state.engine.fillRate = id === "slow" ? 0.05 : 0;
     });
     $("play").textContent = state.playing ? "Pause" : "Play";
     $("play").addEventListener("click", () => {
@@ -1540,10 +2598,8 @@
     });
     $("restart").addEventListener("click", () => {
       load(state.scene);
-      if (!state.error) {
-        state.playing = true;
-        $("play").textContent = "Pause";
-      }
+      state.playing = true;
+      $("play").textContent = "Pause";
     });
     new ResizeObserver(() => {
       drawPaper();
@@ -1553,5 +2609,22 @@
     readColours();
     load("dam");
     requestAnimationFrame(frame);
+    // For tests: run `seconds` of frames at 60 a second, whether or not the page is on screen.
+    const drive = async (seconds) => {
+      let t = last;
+      for (let i = 0; i < seconds * 60; i++) {
+        t += 1000 / 60;
+        tick(t);
+        await new Promise((r) => setTimeout(r, 16));
+      }
+      last = performance.now();
+    };
+    window.liquidPage = {
+      state,
+      grid,
+      drive,
+      pick: (group, label) =>
+        [...$(group).children].find((b) => b.textContent === label).click(),
+    };
   })();
 </script>
