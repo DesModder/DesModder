@@ -1,0 +1,1557 @@
+<title>Vector Tools Liquid</title>
+<style>
+  /* Layout: the tank as graph paper on the left, the panel that would sit in
+     Vector Tools on the right; they stack below 900px. Desmos's own look is
+     the design system, as in the Fluid tab mock-up. */
+  :root {
+    --ground: #eceef1;
+    --surface: #ffffff;
+    --surface-2: #f5f6f8;
+    --rule: #d8dbe0;
+    --ink: #1f2226;
+    --ink-2: #5f6670;
+    --accent: #2f6fd6;
+    --accent-ink: #ffffff;
+    --chip: #eceef1;
+    --chip-rule: #cdd1d7;
+    --paper: #ffffff;
+    --grid-minor: #eef0f3;
+    --grid-major: #d9dde3;
+    --wall: #3b4450;
+    --water-deep: #1c5fa8;
+    --water-fast: #8fd3f0;
+    --good-bg: #edf6ee;
+    --good-ink: #2d6a35;
+    --warn-bg: #fdf1e2;
+    --warn-ink: #8a5200;
+    --font-ui: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    --font-math: "Times New Roman", Times, "Liberation Serif", serif;
+    --font-num:
+      ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #141619;
+      --surface: #1e2125;
+      --surface-2: #25292e;
+      --rule: #353a41;
+      --ink: #e6e8eb;
+      --ink-2: #a2a9b3;
+      --accent: #5b93ef;
+      --accent-ink: #0d1420;
+      --chip: #2a2f35;
+      --chip-rule: #3e444c;
+      --paper: #1a1c1f;
+      --grid-minor: #212428;
+      --grid-major: #2f3339;
+      --wall: #9aa4b1;
+      --water-deep: #2f74c4;
+      --water-fast: #a9e3ff;
+      --good-bg: #1d3221;
+      --good-ink: #93d39e;
+      --warn-bg: #3a2b16;
+      --warn-ink: #f2c27b;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #141619;
+    --surface: #1e2125;
+    --surface-2: #25292e;
+    --rule: #353a41;
+    --ink: #e6e8eb;
+    --ink-2: #a2a9b3;
+    --accent: #5b93ef;
+    --accent-ink: #0d1420;
+    --chip: #2a2f35;
+    --chip-rule: #3e444c;
+    --paper: #1a1c1f;
+    --grid-minor: #212428;
+    --grid-major: #2f3339;
+    --wall: #9aa4b1;
+    --water-deep: #2f74c4;
+    --water-fast: #a9e3ff;
+    --good-bg: #1d3221;
+    --good-ink: #93d39e;
+    --warn-bg: #3a2b16;
+    --warn-ink: #f2c27b;
+    color-scheme: dark;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font: 14px/1.45 var(--font-ui);
+  }
+  .page {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    padding-block: 18px 28px;
+    display: grid;
+    gap: 14px;
+  }
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 14px;
+  }
+  h1 {
+    font-size: 20px;
+    margin: 0;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+  .badge {
+    font-size: 12px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+    border: 1px solid color-mix(in srgb, var(--warn-ink) 30%, transparent);
+  }
+  .lede {
+    margin: 0;
+    color: var(--ink-2);
+    max-width: 70ch;
+  }
+  .work {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 14px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .work {
+      grid-template-columns: 1fr;
+    }
+  }
+  .tank {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 10px;
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+  .stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 160 / 96;
+    max-width: 100%;
+    touch-action: none;
+  }
+  .stage canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 3px;
+  }
+  #fluid {
+    cursor: crosshair;
+  }
+  .caption {
+    font-size: 12px;
+    color: var(--ink-2);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+  }
+  .caption b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    display: grid;
+    min-width: 0;
+  }
+  .panel > section {
+    padding: 12px 14px;
+    border-top: 1px solid var(--rule);
+    display: grid;
+    gap: 8px;
+  }
+  .panel > section:first-child {
+    border-top: 0;
+  }
+  .label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .chip {
+    font: inherit;
+    font-size: 13px;
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--chip-rule);
+    background: var(--chip);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .chip[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  .chip:focus-visible,
+  .btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .btn {
+    font: inherit;
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--chip-rule);
+    background: var(--surface-2);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  .hint {
+    font-size: 12px;
+    color: var(--ink-2);
+    margin: 0;
+  }
+  dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 12px;
+    align-items: baseline;
+  }
+  dt {
+    color: var(--ink-2);
+    font-size: 12px;
+  }
+  dd {
+    margin: 0;
+    font-family: var(--font-num);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .verdict {
+    font-size: 12px;
+    padding: 6px 9px;
+    border-radius: 4px;
+  }
+  .verdict.good {
+    background: var(--good-bg);
+    color: var(--good-ink);
+  }
+  .verdict.warn {
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+  }
+  .notes {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 12px 16px;
+    display: grid;
+    gap: 8px;
+  }
+  .notes h2 {
+    font-size: 14px;
+    margin: 0;
+  }
+  .notes table {
+    border-collapse: collapse;
+    font-size: 13px;
+    width: 100%;
+  }
+  .notes th,
+  .notes td {
+    text-align: left;
+    padding: 5px 8px;
+    border-top: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  .notes th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-2);
+    border-top: 0;
+  }
+  .wrap {
+    overflow-x: auto;
+  }
+  .math {
+    font-family: var(--font-math);
+    font-style: italic;
+    font-size: 15px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .chip,
+    .btn {
+      transition: none;
+    }
+  }
+</style>
+<div class="page">
+  <header>
+    <h1>Vector Tools Liquid</h1>
+    <span class="badge"
+      >Visual liquid — pressure, discharge and forces are not validated</span
+    >
+    <p class="lede">
+      A mock-up of the Fluid tab's liquid, running GPT's round-4 free-surface
+      solver: a D2Q9 lattice whose cells are liquid, gas or the surface between
+      them, with every bit of mass accounted for. Pour, draw walls and watch it
+      settle. In Desmos the walls would be your inequalities.
+    </p>
+  </header>
+
+  <div class="work">
+    <div class="tank">
+      <div class="stage" id="stage">
+        <canvas id="paper" aria-hidden="true"></canvas>
+        <canvas
+          id="fluid"
+          aria-label="The tank: liquid, walls and air"
+        ></canvas>
+      </div>
+      <div class="caption" id="caption"></div>
+    </div>
+
+    <div class="panel">
+      <section>
+        <span class="label" id="scene-label">Scene</span>
+        <div
+          class="chips"
+          role="group"
+          aria-labelledby="scene-label"
+          id="scenes"
+        ></div>
+        <p class="hint" id="scene-hint"></p>
+      </section>
+      <section>
+        <span class="label" id="tool-label">Drag on the tank to</span>
+        <div
+          class="chips"
+          role="group"
+          aria-labelledby="tool-label"
+          id="tools"
+        ></div>
+      </section>
+      <section>
+        <span class="label" id="show-label">Colour by</span>
+        <div
+          class="chips"
+          role="group"
+          aria-labelledby="show-label"
+          id="shows"
+        ></div>
+      </section>
+      <section>
+        <span class="label" id="fill-label"
+          >Half-full cells inside the liquid</span
+        >
+        <div
+          class="chips"
+          role="group"
+          aria-labelledby="fill-label"
+          id="fills"
+        ></div>
+        <p class="hint">
+          Pressure never fills a surface cell that has liquid all round it, so
+          pools show holes. Filling them slowly closes the holes but puts the
+          dam-break front about one point further from the experiment at every
+          size.
+        </p>
+        <div class="row">
+          <button class="btn primary" id="play" type="button">Pause</button>
+          <button class="btn" id="restart" type="button">Start again</button>
+        </div>
+      </section>
+      <section>
+        <span class="label">Measured</span>
+        <dl id="readout"></dl>
+        <div class="verdict" id="verdict"></div>
+      </section>
+      <section id="chart-section">
+        <span class="label">Front against Martin &amp; Moyce (1952)</span>
+        <canvas
+          id="chart"
+          width="600"
+          height="300"
+          style="width: 100%; height: auto"
+          aria-label="Front position X against time T, simulated and measured"
+        ></canvas>
+        <p class="hint">
+          Circles: the experiment's front, <span class="math">X = x/a</span> at
+          <span class="math">T = t</span>√(2<span class="math">g</span>/<span
+            class="math"
+            >a</span
+          >), a column twice as tall as wide. Line: this lattice.
+        </p>
+      </section>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h2>Where the method stands</h2>
+    <div class="wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Test</th>
+            <th>Result</th>
+            <th>Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Closed tank, 10 000 steps: mass</td>
+            <td>drift 10⁻¹⁵ (GPT, 16 and 32 deep); 10⁻¹³ here</td>
+            <td>passes the 0.1% gate</td>
+          </tr>
+          <tr>
+            <td>Closed tank: pressure at mid-depth against ρgh</td>
+            <td>0.07% off (GPT); 0.2% here</td>
+            <td>passes the 1% gate</td>
+          </tr>
+          <tr>
+            <td>Dam break, GPT's two resolutions</td>
+            <td>5.3% then 8.7% mean error</td>
+            <td>looked unconverged</td>
+          </tr>
+          <tr>
+            <td>
+              Dam break, refined here with speeds held the same (<span
+                class="math"
+                >g</span
+              >
+              ∝ 1/<span class="math">a</span>)
+            </td>
+            <td>
+              <span class="math">a</span> = 15, 30, 45: 9.0%, 4.9%, 3.9% (holes
+              left); 10.6%, 5.9%, 4.5% (holes filled)
+            </td>
+            <td>converges toward the experiment</td>
+          </tr>
+          <tr>
+            <td>Splash after the wave hits the far wall</td>
+            <td>
+              a stranded 1%-full cell reached Mach 0.94; emptied now, peak Mach
+              0.12
+            </td>
+            <td>fixed here, mass still exact</td>
+          </tr>
+          <tr>
+            <td>Tank with a hole: discharge coefficient</td>
+            <td>0.85 then 0.70 when refined (GPT)</td>
+            <td>changes 18%: not validated</td>
+          </tr>
+          <tr>
+            <td>Moving solids, surface tension, Auto's speed change</td>
+            <td>not built</td>
+            <td>separate milestones</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">
+      This page runs on the CPU at 160 × 96 cells. The tab would run the same
+      passes on the GPU, beside the wind tunnel and stirred box.
+    </p>
+  </div>
+</div>
+<script>
+  // Free-surface D2Q9 liquid: GPT's round-4 oracle (free-surface.mjs), ported
+  // for the browser. Same five gather passes and mass ledger; buffers reused
+  // between steps; float64 arithmetic; a pour source with its own ledger.
+  const CX = [0, 1, 0, -1, 0, 1, -1, -1, 1];
+  const CY = [0, 0, 1, 0, -1, 1, 1, -1, -1];
+  const OPP = [0, 3, 4, 1, 2, 7, 8, 5, 6];
+  const W = [4 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 9, 1 / 36, 1 / 36, 1 / 36, 1 / 36];
+  const GAS = 0,
+    INTERFACE = 1,
+    FLUID = 2,
+    SOLID = 3;
+
+  function equilibrium(dr, ux, uy, out) {
+    const rho = 1 + dr,
+      usq = 1.5 * (ux * ux + uy * uy);
+    for (let i = 0; i < 9; i++) {
+      const cu = CX[i] * ux + CY[i] * uy;
+      out[i] = W[i] * (dr + rho * (3 * cu + 4.5 * cu * cu - usq));
+    }
+    return out;
+  }
+
+  const EQ = new Float64Array(9);
+  // BGK with Guo forcing and an optional Smagorinsky closure (collideCell).
+  function collide(g, tau, smag, fx, fy, out) {
+    let omega = 1 / tau;
+    const dr = g[0] + g[1] + g[2] + g[3] + g[4] + g[5] + g[6] + g[7] + g[8];
+    const rho = 1 + dr;
+    const jx = g[1] - g[3] + g[5] - g[6] - g[7] + g[8];
+    const jy = g[2] - g[4] + g[5] + g[6] - g[7] - g[8];
+    const ux = (jx + 0.5 * fx) / rho,
+      uy = (jy + 0.5 * fy) / rho;
+    equilibrium(dr, ux, uy, EQ);
+    if (smag > 0) {
+      let xx = ux * fx,
+        yy = uy * fy,
+        xy = 0.5 * (ux * fy + uy * fx);
+      for (let i = 1; i < 9; i++) {
+        const n = g[i] - EQ[i];
+        xx += CX[i] * CX[i] * n;
+        yy += CY[i] * CY[i] * n;
+        xy += CX[i] * CY[i] * n;
+      }
+      const stress = Math.sqrt(xx * xx + yy * yy + 2 * xy * xy);
+      omega =
+        1 /
+        (0.5 *
+          (tau +
+            Math.sqrt(
+              tau * tau + (18 * Math.SQRT2 * smag * smag * stress) / rho
+            )));
+    }
+    const keep = 1 - omega,
+      source = 1 - 0.5 * omega;
+    for (let i = 0; i < 9; i++) {
+      const cu = CX[i] * ux + CY[i] * uy,
+        cf = CX[i] * fx + CY[i] * fy;
+      const s =
+        W[i] * (3 * ((CX[i] - ux) * fx + (CY[i] - uy) * fy) + 9 * cu * cf);
+      g[i] = keep * g[i] + omega * EQ[i] + source * s;
+    }
+    out[0] = dr;
+    out[1] = ux;
+    out[2] = uy;
+  }
+
+  class Liquid {
+    constructor({
+      nx,
+      ny,
+      tau = 0.53,
+      smagorinsky = 0.1,
+      gravity = 1e-4,
+      fillRate = 0.05,
+      solid = () => false,
+      fill = () => 0,
+    }) {
+      Object.assign(this, { nx, ny, tau, smagorinsky, gravity, fillRate });
+      const N = (this.N = nx * ny);
+      const f64 = () => new Float64Array(N);
+      this.type = new Uint8Array(N);
+      this.mass = f64();
+      this.reservoir = f64();
+      this.rho = f64().fill(1);
+      this.ux = f64();
+      this.uy = f64();
+      this.phi = f64();
+      this.p = new Float64Array(9 * N);
+      this.q = new Float64Array(9 * N);
+      this.nb = new Int32Array(9 * N).fill(-1);
+      // Per-step scratch, reused.
+      this.nMass = f64();
+      this.nRho = f64();
+      this.nUx = f64();
+      this.nUy = f64();
+      this.tent = new Uint8Array(N);
+      this.fixed = new Uint8Array(N);
+      this.fin = new Uint8Array(N);
+      this.excess = f64();
+      this.base = f64();
+      this.reserve = f64();
+      this.recipients = new Uint8Array(N);
+      this.enclosed = new Uint8Array(N);
+      this.steps = 0;
+      this.poured = 0;
+      this.peakSpeed = 0;
+      for (let y = 0; y < ny; y++)
+        for (let x = 0; x < nx; x++) {
+          const k = y * nx + x,
+            f = Math.max(0, Math.min(1, fill(x, y)));
+          this.type[k] = solid(x, y)
+            ? SOLID
+            : f === 0
+              ? GAS
+              : f === 1
+                ? FLUID
+                : INTERFACE;
+          this.phi[k] = this.type[k] === SOLID ? 0 : f;
+          for (let i = 0; i < 9; i++) {
+            const xx = x + CX[i],
+              yy = y + CY[i];
+            if (xx >= 0 && xx < nx && yy >= 0 && yy < ny)
+              this.nb[i * N + k] = yy * nx + xx;
+          }
+        }
+      const t = this.type.slice();
+      for (let k = 0; k < N; k++)
+        if (t[k] === FLUID)
+          for (let i = 1; i < 9; i++) {
+            const j = this.nb[i * N + k];
+            if (j >= 0 && t[j] === GAS) this.type[k] = INTERFACE;
+          }
+      // Hydrostatic start: each column's liquid above sets the pressure.
+      const eq = new Float64Array(9);
+      for (let x = 0; x < nx; x++) {
+        let depth = 0;
+        for (let y = ny - 1; y >= 0; y--) {
+          const k = y * nx + x;
+          if (this.type[k] === SOLID) {
+            depth = 0;
+            continue;
+          }
+          depth += this.phi[k];
+          const dr =
+            this.phi[k] > 0 ? 3 * gravity * Math.max(0, depth - 0.5) : 0;
+          this.rho[k] = 1 + dr;
+          this.mass[k] = this.phi[k] * this.rho[k];
+          equilibrium(dr, 0, 0, eq);
+          for (let i = 0; i < 9; i++) this.p[i * N + k] = eq[i];
+        }
+      }
+    }
+
+    totalMass() {
+      let m = 0;
+      for (let k = 0; k < this.N; k++) m += this.mass[k] + this.reservoir[k];
+      return m;
+    }
+
+    /** Mass `amount` into the gas or interface cells of a disc, moving down at `speed`. */
+    pour(cx, cy, radius, amount, speed) {
+      const { nx, ny, N } = this,
+        cells = [];
+      for (
+        let y = Math.max(0, Math.floor(cy - radius));
+        y <= Math.min(ny - 1, Math.ceil(cy + radius));
+        y++
+      )
+        for (
+          let x = Math.max(0, Math.floor(cx - radius));
+          x <= Math.min(nx - 1, Math.ceil(cx + radius));
+          x++
+        ) {
+          const k = y * nx + x;
+          if ((x - cx) ** 2 + (y - cy) ** 2 > radius * radius) continue;
+          if (this.type[k] === GAS || this.type[k] === INTERFACE) cells.push(k);
+        }
+      if (cells.length === 0) return;
+      const eq = new Float64Array(9),
+        share = amount / cells.length;
+      for (const k of cells) {
+        if (this.type[k] === GAS) {
+          this.type[k] = INTERFACE;
+          this.mass[k] = 0;
+          this.rho[k] = 1;
+        }
+        this.ux[k] = 0;
+        this.uy[k] = -speed;
+        equilibrium(this.rho[k] - 1, 0, -speed, eq);
+        for (let i = 0; i < 9; i++) this.p[i * N + k] = eq[i];
+        this.mass[k] += share;
+        this.phi[k] = Math.max(0, Math.min(1, this.mass[k] / this.rho[k]));
+      }
+      this.poured += amount;
+    }
+
+    /** A cell turned to wall where it was empty, or back to empty. */
+    paint(x, y, wall) {
+      if (x < 0 || y < 0 || x >= this.nx || y >= this.ny) return;
+      const k = y * this.nx + x;
+      if (wall && this.type[k] === GAS) this.type[k] = SOLID;
+      else if (!wall && this.type[k] === SOLID) {
+        this.type[k] = GAS;
+        this.phi[k] = 0;
+        this.mass[k] = 0;
+      }
+    }
+
+    step(count = 1) {
+      for (let n = 0; n < count; n++) this.oneStep();
+    }
+
+    oneStep() {
+      const {
+        N,
+        nx,
+        type: t,
+        mass: m,
+        rho,
+        phi,
+        p,
+        q,
+        nb,
+        tent,
+        fixed,
+        fin,
+      } = this;
+      const nMass = this.nMass,
+        nRho = this.nRho,
+        nUx = this.nUx,
+        nUy = this.nUy;
+      nRho.fill(1);
+      nUx.fill(0);
+      nUy.fill(0);
+      tent.set(t);
+      const g = new Float64Array(9),
+        gas = new Float64Array(9),
+        macro = [0, 0, 0];
+      let peak = this.peakSpeed;
+      // Pass 1: mass exchange, gas-side reconstruction, collision.
+      for (let k = 0; k < N; k++) {
+        nMass[k] = m[k];
+        this.enclosed[k] = 0;
+        if (t[k] === SOLID || t[k] === GAS) continue;
+        equilibrium(0, this.ux[k], this.uy[k], gas);
+        let dm = 0,
+          wet = 0,
+          dry = 0;
+        for (let i = 0; i < 9; i++) {
+          const j = nb[OPP[i] * N + k];
+          if (j < 0 || t[j] === SOLID) g[i] = p[OPP[i] * N + k];
+          else if (t[j] === GAS) {
+            g[i] = gas[i] + gas[OPP[i]] - p[OPP[i] * N + k];
+            dry++;
+          } else {
+            g[i] = p[i * N + j];
+            if (i) {
+              wet++;
+              const factor =
+                t[k] === FLUID || t[j] === FLUID ? 1 : 0.5 * (phi[k] + phi[j]);
+              dm += factor * (p[i * N + j] - p[OPP[i] * N + k]);
+            }
+          }
+        }
+        nMass[k] += dm;
+        collide(
+          g,
+          this.tau,
+          this.smagorinsky,
+          0,
+          -this.gravity * rho[k],
+          macro
+        );
+        nRho[k] = 1 + macro[0];
+        nUx[k] = macro[1];
+        nUy[k] = macro[2];
+        if (!Number.isFinite(nRho[k]) || nRho[k] <= 0)
+          throw new Error(`The liquid went unstable at step ${this.steps}.`);
+        for (let i = 0; i < 9; i++) q[i * N + k] = g[i];
+        // A surface cell with no liquid beside it can pass its mass nowhere, so
+        // gravity would speed it up for ever: empty it, and the reservoir keeps
+        // its mass until liquid comes back. One with no gas beside it is inside
+        // the liquid, where inflow equals outflow and pressure never fills it:
+        // pass 4 fills it a little each step. Filling it at once (Thürey's
+        // rule) takes up to a whole cell from nearly empty spray beside it and
+        // blew up a dam break at Mach 0.28.
+        if (t[k] === INTERFACE) {
+          tent[k] =
+            wet === 0
+              ? GAS
+              : nMass[k] >= nRho[k]
+                ? FLUID
+                : nMass[k] <= 0
+                  ? GAS
+                  : INTERFACE;
+          this.enclosed[k] = wet > 0 && dry === 0 ? 1 : 0;
+        }
+        if (tent[k] !== GAS) {
+          const sp = Math.hypot(macro[1], macro[2]);
+          if (sp > peak) peak = sp;
+        }
+      }
+      this.peakSpeed = peak;
+      // Pass 2: an advancing interface wins over a retreat beside it, and a
+      // one-cell gas pocket closes (2D gas here has no pressure to hold it open).
+      fixed.set(tent);
+      for (let k = 0; k < N; k++) {
+        if (t[k] === SOLID || tent[k] !== GAS) continue;
+        let wet = 0,
+          dry = 0;
+        for (let i = 1; i < 9; i++) {
+          const j = nb[i * N + k];
+          if (j < 0) continue;
+          if (t[j] === INTERFACE && tent[j] === FLUID) {
+            fixed[k] = INTERFACE;
+            break;
+          }
+          if (t[j] === GAS) dry++;
+          else if (t[j] !== SOLID) wet++;
+        }
+        if (t[k] === GAS && wet > 0 && dry === 0) fixed[k] = INTERFACE;
+      }
+      // Pass 3: liquid beside gas stays interface; newly wet cells start at their neighbours' mean.
+      fin.set(fixed);
+      for (let k = 0; k < N; k++)
+        if (fixed[k] === FLUID)
+          for (let i = 1; i < 9; i++) {
+            const j = nb[i * N + k];
+            if (j >= 0 && fixed[j] === GAS) {
+              fin[k] = INTERFACE;
+              break;
+            }
+          }
+      const eq = new Float64Array(9);
+      for (let k = 0; k < N; k++)
+        if (t[k] === GAS && fin[k] === INTERFACE) {
+          let r = 0,
+            u = 0,
+            v = 0,
+            c = 0;
+          for (let i = 1; i < 9; i++) {
+            const j = nb[i * N + k];
+            if (j >= 0 && (t[j] === FLUID || t[j] === INTERFACE)) {
+              r += nRho[j];
+              u += nUx[j];
+              v += nUy[j];
+              c++;
+            }
+          }
+          nRho[k] = c ? r / c : 1;
+          nUx[k] = c ? u / c : 0;
+          nUy[k] = c ? v / c : 0;
+          equilibrium(nRho[k] - 1, nUx[k], nUy[k], eq);
+          for (let i = 0; i < 9; i++) q[i * N + k] = eq[i];
+        }
+      // Pass 4: each cell's own mass, and the excess it gives away.
+      const { excess, base, reserve, recipients } = this;
+      for (let k = 0; k < N; k++) {
+        excess[k] = 0;
+        base[k] = 0;
+        reserve[k] = 0;
+        recipients[k] = 0;
+        if (fin[k] === SOLID) {
+          reserve[k] = this.reservoir[k];
+          continue;
+        }
+        base[k] =
+          fin[k] === FLUID
+            ? nRho[k]
+            : fin[k] === GAS
+              ? 0
+              : Math.max(0, Math.min(nRho[k], nMass[k]));
+        // An enclosed surface cell keeps up to fillRate of a cell more than it has;
+        // the debt goes out as negative excess, so the ledger still balances.
+        if (this.fillRate > 0 && fin[k] === INTERFACE && this.enclosed[k])
+          base[k] = Math.min(nRho[k], base[k] + this.fillRate * nRho[k]);
+        excess[k] = nMass[k] - base[k] + this.reservoir[k];
+        for (let i = 1; i < 9; i++) {
+          const j = nb[i * N + k];
+          if (j >= 0 && (fin[j] === FLUID || fin[j] === INTERFACE))
+            recipients[k]++;
+        }
+        if (!recipients[k]) {
+          reserve[k] = excess[k];
+          excess[k] = 0;
+        }
+      }
+      // Pass 5: every liquid cell gathers its neighbours' shares.
+      for (let k = 0; k < N; k++) {
+        if (fin[k] === FLUID || fin[k] === INTERFACE)
+          for (let i = 1; i < 9; i++) {
+            const j = nb[i * N + k];
+            if (j >= 0 && recipients[j]) base[k] += excess[j] / recipients[j];
+          }
+        phi[k] =
+          fin[k] === FLUID
+            ? 1
+            : fin[k] === INTERFACE
+              ? Math.max(0, Math.min(1, base[k] / nRho[k]))
+              : 0;
+      }
+      // Swap state.
+      [this.mass, this.base] = [base, m];
+      [this.reservoir, this.reserve] = [reserve, this.reservoir];
+      this.type.set(fin);
+      [this.rho, this.nRho] = [nRho, rho];
+      [this.ux, this.nUx] = [nUx, this.ux];
+      [this.uy, this.nUy] = [nUy, this.uy];
+      [this.p, this.q] = [q, p];
+      this.steps++;
+      void nx;
+    }
+  }
+
+  // The mock-up's page: scenes, tools, rendering and live checks around Liquid.
+  (() => {
+    const NX = 160,
+      NY = 96,
+      G = 3e-5,
+      A = 30;
+    const RT3 = Math.sqrt(3);
+    // Martin & Moyce (1952), square-ish column n² = 2: [T, X].
+    const MM = [
+      [0.41, 1.11],
+      [0.84, 1.22],
+      [1.19, 1.44],
+      [1.43, 1.67],
+      [1.63, 1.89],
+      [1.83, 2.11],
+      [1.98, 2.33],
+      [2.2, 2.56],
+      [2.32, 2.78],
+      [2.51, 3],
+      [2.65, 3.22],
+      [2.83, 3.44],
+      [2.97, 3.67],
+      [3.11, 3.89],
+      [3.33, 4.11],
+    ];
+    const border = (x, y) => x === 0 || x === NX - 1 || y === 0;
+    const HOLE = { wall: 50, low: 6, high: 14 };
+
+    const SCENES = {
+      dam: {
+        name: "Dam break",
+        hint: "A column 30 cells wide and 60 tall let go at once: the classic check of a free-surface solver against Martin & Moyce's experiment.",
+        make: () =>
+          new Liquid({
+            nx: NX,
+            ny: NY,
+            gravity: G,
+            solid: border,
+            fill: (x, y) => (x >= 1 && x <= A && y >= 1 && y <= 2 * A ? 1 : 0),
+          }),
+      },
+      pour: {
+        name: "Pour",
+        hint: "A tap pours onto a shelf. With the Pour tool, press anywhere to move the tap there.",
+        tap: { x: 60, y: 85 },
+        make: () =>
+          new Liquid({
+            nx: NX,
+            ny: NY,
+            gravity: G,
+            solid: (x, y) => border(x, y) || (y === 40 && x > 30 && x < 90),
+            fill: () => 0,
+          }),
+      },
+      hole: {
+        name: "Tank with a hole",
+        hint: "Liquid drains through an 8-cell gap low in a wall. The discharge coefficient compares the flow with Torricelli's √(2gh).",
+        make: () =>
+          new Liquid({
+            nx: NX,
+            ny: NY,
+            gravity: G,
+            solid: (x, y) =>
+              border(x, y) ||
+              (x >= HOLE.wall &&
+                x < HOLE.wall + 3 &&
+                !(y >= HOLE.low && y < HOLE.high)),
+            fill: (x, y) => (x < HOLE.wall && y >= 1 && y < 80 ? 1 : 0),
+          }),
+      },
+      still: {
+        name: "Still tank",
+        hint: "Liquid at rest. Halfway down, the pressure should be ρgh and the mass should never change.",
+        make: () =>
+          new Liquid({
+            nx: NX,
+            ny: NY,
+            gravity: G,
+            solid: border,
+            fill: (x, y) => (y >= 1 && y <= 60 ? 1 : 0),
+          }),
+      },
+    };
+    const TOOLS = { pour: "Pour", wall: "Draw walls", erase: "Erase walls" };
+    const SHOWS = { speed: "Speed", pressure: "Pressure", cells: "Cell types" };
+    const FILLS = { slow: "Fill slowly", leave: "Leave them" };
+
+    const $ = (id) => document.getElementById(id);
+    const state = {
+      scene: "dam",
+      tool: "pour",
+      show: "speed",
+      fill: "slow",
+      playing: true,
+      sim: null,
+      start: 0,
+      error: null,
+      front: [],
+      cd: null,
+      history: [],
+      tap: null,
+      rate: 0,
+    };
+    try {
+      const saved = localStorage.getItem("liquid-show");
+      if (saved && SHOWS[saved]) state.show = saved;
+    } catch {
+      /* storage is optional */
+    }
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches)
+      state.playing = false;
+
+    function chips(host, options, key, onPick) {
+      host.replaceChildren(
+        ...Object.entries(options).map(([id, label]) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "chip";
+          b.textContent = typeof label === "string" ? label : label.name;
+          b.setAttribute("aria-pressed", String(state[key] === id));
+          b.addEventListener("click", () => {
+            onPick(id);
+            for (const c of host.children)
+              c.setAttribute("aria-pressed", String(c === b));
+          });
+          return b;
+        })
+      );
+    }
+
+    function load(scene) {
+      state.scene = scene;
+      state.sim = SCENES[scene].make();
+      state.sim.fillRate = state.fill === "slow" ? 0.05 : 0;
+      state.start = state.sim.totalMass();
+      state.error = null;
+      state.front = [];
+      state.cd = null;
+      state.history = [];
+      state.tap = SCENES[scene].tap
+        ? { ...SCENES[scene].tap, on: true, fixed: true }
+        : null;
+      $("scene-hint").textContent = SCENES[scene].hint;
+      $("chart-section").hidden = scene !== "dam";
+      drawPaper();
+      render();
+      readout();
+    }
+
+    // ---- Stepping: as many steps as fit in about 9 ms a frame.
+    let last = performance.now(),
+      stepsThisSecond = 0,
+      secondStart = last;
+    function frame(now) {
+      if (state.playing && !state.error) {
+        const t0 = performance.now();
+        let n = 0;
+        try {
+          do {
+            advance();
+            n++;
+          } while (performance.now() - t0 < 9 && n < 40);
+        } catch (e) {
+          state.error = e.message;
+          state.playing = false;
+          $("play").textContent = "Play";
+        }
+        stepsThisSecond += n;
+        render();
+      }
+      if (now - secondStart > 500) {
+        state.rate = (stepsThisSecond * 1000) / (now - secondStart);
+        stepsThisSecond = 0;
+        secondStart = now;
+        readout();
+      }
+      last = now;
+      requestAnimationFrame(frame);
+    }
+
+    const TAP_LIMIT = 0.4 * (NX - 2) * (NY - 1);
+    function advance() {
+      const s = state.sim;
+      if (state.tap && state.tap.on && s.poured < TAP_LIMIT)
+        s.pour(state.tap.x, state.tap.y, 3, 0.6, 0.03);
+      s.oneStep();
+      measure(s);
+    }
+
+    function measure(s) {
+      if (state.scene === "dam") {
+        const T = s.steps * Math.sqrt((2 * G) / A);
+        const i = state.front.length;
+        if (i < MM.length && T >= MM[i][0]) {
+          let front = 0;
+          for (let x = 1; x < NX - 1; x++)
+            for (let y = 1; y <= 3; y++)
+              if (s.phi[y * NX + x] >= 0.5) front = Math.max(front, x);
+          state.front.push([T, front / A]);
+        }
+      } else if (state.scene === "hole" && s.steps % 50 === 0) {
+        let left = 0,
+          column = 0;
+        for (let y = 1; y < NY; y++) {
+          for (let x = 1; x < HOLE.wall; x++)
+            left += s.mass[y * NX + x] + s.reservoir[y * NX + x];
+          column += s.phi[y * NX + 20];
+        }
+        state.history.push([s.steps, left]);
+        if (state.history.length > 5) state.history.shift();
+        const h = column - (HOLE.low + HOLE.high - 1) / 2 + 0.5;
+        if (state.history.length === 5 && s.steps > 400 && h > 4) {
+          const [s0, m0] = state.history[0];
+          const q = (m0 - left) / (s.steps - s0);
+          state.cd = {
+            value: q / ((HOLE.high - HOLE.low) * Math.sqrt(2 * G * h)),
+            h,
+          };
+        }
+      }
+    }
+
+    // ---- Readouts and the verdict.
+    function readout() {
+      const s = state.sim;
+      const total = s.totalMass(),
+        ref = state.start + s.poured;
+      const drift = (total - ref) / Math.max(ref, 1);
+      const mach = s.peakSpeed * RT3;
+      const rows = [
+        ["Steps", s.steps.toLocaleString()],
+        ["Steps a second", Math.round(state.rate).toLocaleString()],
+        [
+          "Mass kept",
+          `${drift >= 0 ? "+" : "−"}${Math.abs(drift).toExponential(1)}`,
+        ],
+        ["Fastest so far", `Mach ${mach.toFixed(2)}`],
+      ];
+      let verdict = null;
+      if (state.scene === "dam") {
+        const T = s.steps * Math.sqrt((2 * G) / A);
+        const f = state.front.at(-1);
+        rows.push(["Time T", T.toFixed(2)]);
+        rows.push([
+          "Front X",
+          f
+            ? `${f[1].toFixed(2)} vs ${MM[state.front.length - 1][1].toFixed(2)}`
+            : "—",
+        ]);
+        if (state.front.length) {
+          const err =
+            state.front.reduce(
+              (acc, [, x], i) => acc + Math.abs(x - MM[i][1]) / MM[i][1],
+              0
+            ) / state.front.length;
+          verdict = [
+            err < 0.1 ? "good" : "warn",
+            `Front within ${(err * 100).toFixed(1)}% of the experiment on average so far. Refined with speeds held the same, this front converges toward the experiment.`,
+          ];
+        }
+        drawChart();
+      } else if (state.scene === "still") {
+        const y = 30,
+          k = y * NX + 80;
+        const ratio = (s.rho[k] - 1) / 3 / (G * (60 - y + 0.5));
+        rows.push(["Pressure ÷ ρgh", ratio.toFixed(4)]);
+        verdict =
+          Math.abs(ratio - 1) < 0.01
+            ? [
+                "good",
+                `Pressure halfway down is ${(Math.abs(ratio - 1) * 100).toFixed(2)}% from ρgh: inside the 1% gate.`,
+              ]
+            : [
+                "warn",
+                `Pressure halfway down is ${(Math.abs(ratio - 1) * 100).toFixed(1)}% from ρgh.`,
+              ];
+      } else if (state.scene === "hole") {
+        rows.push([
+          "Head h",
+          state.cd ? `${state.cd.h.toFixed(1)} cells` : "—",
+        ]);
+        rows.push([
+          "Discharge Cd",
+          state.cd ? state.cd.value.toFixed(2) : "settling…",
+        ]);
+        if (state.cd)
+          verdict = [
+            "warn",
+            "Not validated: GPT's Cd went 0.85 → 0.70 when refined. A real sharp-edged orifice is near 0.61.",
+          ];
+      } else if (state.scene === "pour") {
+        rows.push(["Poured", `${Math.round(s.poured).toLocaleString()} cells`]);
+        verdict = [
+          "good",
+          s.poured >= TAP_LIMIT
+            ? "The tap has stopped at 40% full. Every cell poured is still in the tank."
+            : "Every cell poured is still in the tank.",
+        ];
+      }
+      if (Math.abs(drift) > 1e-3)
+        verdict = [
+          "warn",
+          `Mass has drifted ${(drift * 100).toFixed(2)}%: past the 0.1% gate.`,
+        ];
+      if (mach > 0.3)
+        verdict = [
+          "warn",
+          `The fastest liquid reached Mach ${mach.toFixed(2)}. Above 0.3 a lattice liquid is compressible and the numbers stop meaning much.`,
+        ];
+      if (state.error)
+        verdict = ["warn", `${state.error} Start again to reset it.`];
+      $("readout").replaceChildren(
+        ...rows.flatMap(([t, d]) => {
+          const dt = document.createElement("dt"),
+            dd = document.createElement("dd");
+          dt.textContent = t;
+          dd.textContent = d;
+          return [dt, dd];
+        })
+      );
+      const v = $("verdict");
+      v.hidden = !verdict;
+      if (verdict) {
+        v.className = `verdict ${verdict[0]}`;
+        v.textContent = verdict[1];
+      }
+      $("caption").innerHTML =
+        `<span><b>${NX} × ${NY}</b> cells</span><span><i>g</i> = 3×10⁻⁵ cells/step²</span><span>τ = 0.53, Smagorinsky 0.1</span><span>CPU, float64</span>`;
+    }
+
+    // ---- Colours come from the page's tokens, so both themes work.
+    let colours = null;
+    function hex(v) {
+      const h = v.trim().replace("#", "");
+      return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+    }
+    function readColours() {
+      const cs = getComputedStyle(document.documentElement);
+      colours = Object.fromEntries(
+        [
+          "--water-deep",
+          "--water-fast",
+          "--wall",
+          "--paper",
+          "--grid-minor",
+          "--grid-major",
+          "--ink",
+          "--ink-2",
+          "--accent",
+          "--rule",
+        ].map((k) => [k, cs.getPropertyValue(k).trim()])
+      );
+      colours.deep = hex(colours["--water-deep"]);
+      colours.fast = hex(colours["--water-fast"]);
+      colours.wallRgb = hex(colours["--wall"]);
+      colours.accentRgb = hex(colours["--accent"]);
+    }
+    matchMedia("(prefers-color-scheme: dark)").addEventListener(
+      "change",
+      () => {
+        readColours();
+        drawPaper();
+        render();
+        drawChart();
+      }
+    );
+    new MutationObserver(() => {
+      readColours();
+      drawPaper();
+      render();
+      drawChart();
+    }).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
+    const paper = $("paper"),
+      fluid = $("fluid"),
+      stage = $("stage");
+    const fctx = fluid.getContext("2d"),
+      pctx = paper.getContext("2d");
+    const SUB = 2,
+      OW = NX * SUB,
+      OH = NY * SUB;
+    const off = document.createElement("canvas");
+    off.width = OW;
+    off.height = OH;
+    const octx = off.getContext("2d"),
+      image = octx.createImageData(OW, OH);
+
+    function fit() {
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const w = Math.round(stage.clientWidth * dpr),
+        h = Math.round(stage.clientHeight * dpr);
+      for (const c of [paper, fluid])
+        if (c.width !== w || c.height !== h) {
+          c.width = w;
+          c.height = h;
+        }
+    }
+    function drawPaper() {
+      fit();
+      const w = paper.width,
+        h = paper.height,
+        cell = w / NX;
+      pctx.fillStyle = colours["--paper"];
+      pctx.fillRect(0, 0, w, h);
+      for (const [step, colour] of [
+        [4, colours["--grid-minor"]],
+        [20, colours["--grid-major"]],
+      ]) {
+        pctx.strokeStyle = colour;
+        pctx.lineWidth = 1;
+        pctx.beginPath();
+        for (let x = step; x < NX; x += step) {
+          const X = Math.round(x * cell) + 0.5;
+          pctx.moveTo(X, 0);
+          pctx.lineTo(X, h);
+        }
+        for (let y = step; y < NY; y += step) {
+          const Y = Math.round(h - y * cell) + 0.5;
+          pctx.moveTo(0, Y);
+          pctx.lineTo(w, Y);
+        }
+        pctx.stroke();
+      }
+    }
+
+    // Liquid where the smoothed fill is at least one half, sampled at twice the grid.
+    function render() {
+      const s = state.sim,
+        d = image.data,
+        { deep, fast, wallRgb, accentRgb } = colours;
+      const { phi, type, ux, uy, rho } = s;
+      const scale = state.show === "pressure" ? 1 / (3 * G * NY) : 1 / 0.06;
+      for (let py = 0; py < OH; py++) {
+        const gy = NY - 1 - ((py + 0.5) / SUB - 0.5);
+        const y0 = Math.max(0, Math.min(NY - 2, Math.floor(gy))),
+          fy = Math.max(0, Math.min(1, gy - y0));
+        for (let px = 0; px < OW; px++) {
+          const gx = (px + 0.5) / SUB - 0.5;
+          const x0 = Math.max(0, Math.min(NX - 2, Math.floor(gx))),
+            fx = Math.max(0, Math.min(1, gx - x0));
+          const o = 4 * (py * OW + px);
+          const nearK =
+            Math.max(0, Math.min(NY - 1, Math.round(gy))) * NX +
+            Math.max(0, Math.min(NX - 1, Math.round(gx)));
+          if (type[nearK] === 3) {
+            d[o] = wallRgb[0];
+            d[o + 1] = wallRgb[1];
+            d[o + 2] = wallRgb[2];
+            d[o + 3] = 255;
+            continue;
+          }
+          if (state.show === "cells") {
+            const t = type[nearK];
+            if (t === 0) {
+              d[o + 3] = 0;
+              continue;
+            }
+            const c = t === 1 ? accentRgb : deep;
+            d[o] = c[0];
+            d[o + 1] = c[1];
+            d[o + 2] = c[2];
+            d[o + 3] = t === 1 ? 255 : 200;
+            continue;
+          }
+          let f = 0,
+            v = 0,
+            wsum = 0;
+          for (let j = 0; j < 4; j++) {
+            const k = (y0 + (j >> 1)) * NX + x0 + (j & 1);
+            if (type[k] === 3) continue;
+            const w = (j & 1 ? fx : 1 - fx) * (j >> 1 ? fy : 1 - fy);
+            wsum += w;
+            f += w * phi[k];
+            v +=
+              w *
+              (state.show === "pressure"
+                ? Math.max(0, rho[k] - 1)
+                : Math.hypot(ux[k], uy[k]));
+          }
+          // Opaque from two-thirds full, fading out by one-third: froth reads as froth, not holes.
+          const fill = wsum > 0 ? f / wsum : 0;
+          if (fill < 1 / 3) {
+            d[o + 3] = 0;
+            continue;
+          }
+          const t = Math.min(1, (v / wsum) * scale);
+          const a = state.show === "pressure" ? 1 - t : t;
+          d[o] = deep[0] + (fast[0] - deep[0]) * a;
+          d[o + 1] = deep[1] + (fast[1] - deep[1]) * a;
+          d[o + 2] = deep[2] + (fast[2] - deep[2]) * a;
+          d[o + 3] = 235 * Math.min(1, (fill - 1 / 3) * 3);
+        }
+      }
+      octx.putImageData(image, 0, 0);
+      fit();
+      fctx.clearRect(0, 0, fluid.width, fluid.height);
+      fctx.imageSmoothingEnabled = true;
+      fctx.drawImage(off, 0, 0, fluid.width, fluid.height);
+      if (state.tap && (state.tap.on || state.tap.fixed)) {
+        const cell = fluid.width / NX,
+          X = (state.tap.x + 0.5) * cell,
+          Y = fluid.height - (state.tap.y + 0.5) * cell;
+        fctx.fillStyle = colours["--wall"];
+        fctx.fillRect(X - 3 * cell, Y - 6 * cell, 6 * cell, 3 * cell);
+        fctx.fillRect(X - 1.5 * cell, Y - 3 * cell, 3 * cell, 2 * cell);
+      }
+    }
+
+    // ---- The dam-break chart: the experiment's circles and this lattice's line.
+    function drawChart() {
+      const c = $("chart");
+      if (!c || $("chart-section").hidden) return;
+      const ctx = c.getContext("2d"),
+        w = c.width,
+        h = c.height,
+        L = 52,
+        R = 14,
+        T = 14,
+        B = 40;
+      const xs = (t) => L + (t / 3.5) * (w - L - R),
+        ys = (x) => h - B - ((x - 1) / 3.5) * (h - T - B);
+      ctx.clearRect(0, 0, w, h);
+      ctx.font = "20px Arial, sans-serif";
+      ctx.fillStyle = colours["--ink-2"];
+      ctx.strokeStyle = colours["--rule"];
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(L, T);
+      ctx.lineTo(L, h - B);
+      ctx.lineTo(w - R, h - B);
+      ctx.stroke();
+      ctx.textAlign = "center";
+      for (const t of [0, 1, 2, 3]) ctx.fillText(String(t), xs(t), h - B + 24);
+      ctx.textAlign = "right";
+      for (const x of [1, 2, 3, 4]) ctx.fillText(String(x), L - 10, ys(x) + 7);
+      ctx.textAlign = "left";
+      ctx.fillText("T", w - R - 14, h - B - 10);
+      ctx.fillText("X", L + 8, T + 16);
+      ctx.strokeStyle = colours["--ink"];
+      ctx.lineWidth = 2;
+      for (const [t, x] of MM) {
+        ctx.beginPath();
+        ctx.arc(xs(t), ys(x), 6, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
+      if (state.front.length) {
+        ctx.strokeStyle = colours["--accent"];
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(xs(0), ys(1));
+        for (const [t, x] of state.front) ctx.lineTo(xs(t), ys(x));
+        ctx.stroke();
+      }
+    }
+
+    // ---- Pointer tools.
+    let down = false,
+      lastCell = null;
+    function cellAt(e) {
+      const r = fluid.getBoundingClientRect();
+      return {
+        x: Math.floor(((e.clientX - r.left) / r.width) * NX),
+        y: NY - 1 - Math.floor(((e.clientY - r.top) / r.height) * NY),
+      };
+    }
+    function paintLine(a, b) {
+      const wall = state.tool === "wall",
+        n = Math.max(1, Math.abs(b.x - a.x), Math.abs(b.y - a.y));
+      for (let i = 0; i <= n; i++) {
+        const cx = Math.round(a.x + ((b.x - a.x) * i) / n),
+          cy = Math.round(a.y + ((b.y - a.y) * i) / n);
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++) {
+            const x = cx + dx,
+              y = cy + dy;
+            if (!wall && (border(x, y) || x < 0 || x >= NX)) continue;
+            state.sim.paint(x, y, wall);
+          }
+      }
+    }
+    function use(e) {
+      const c = cellAt(e);
+      if (state.tool === "pour") {
+        const x = Math.max(4, Math.min(NX - 5, c.x)),
+          y = Math.max(4, Math.min(NY - 4, c.y));
+        state.tap = {
+          x,
+          y,
+          on: true,
+          fixed: SCENES[state.scene].tap !== undefined,
+        };
+      } else paintLine(lastCell || c, c);
+      lastCell = c;
+      if (!state.playing) render();
+    }
+    fluid.addEventListener("pointerdown", (e) => {
+      down = true;
+      lastCell = null;
+      fluid.setPointerCapture(e.pointerId);
+      use(e);
+    });
+    fluid.addEventListener("pointermove", (e) => {
+      if (down) use(e);
+    });
+    const up = () => {
+      down = false;
+      lastCell = null;
+      if (state.tap && !state.tap.fixed) state.tap.on = false;
+    };
+    fluid.addEventListener("pointerup", up);
+    fluid.addEventListener("pointercancel", up);
+
+    // ---- Controls.
+    chips($("scenes"), SCENES, "scene", (id) => load(id));
+    chips($("tools"), TOOLS, "tool", (id) => {
+      state.tool = id;
+    });
+    chips($("shows"), SHOWS, "show", (id) => {
+      state.show = id;
+      try {
+        localStorage.setItem("liquid-show", id);
+      } catch {
+        /* optional */
+      }
+      render();
+    });
+    chips($("fills"), FILLS, "fill", (id) => {
+      state.fill = id;
+      state.sim.fillRate = id === "slow" ? 0.05 : 0;
+    });
+    $("play").textContent = state.playing ? "Pause" : "Play";
+    $("play").addEventListener("click", () => {
+      if (state.error) return;
+      state.playing = !state.playing;
+      $("play").textContent = state.playing ? "Pause" : "Play";
+    });
+    $("restart").addEventListener("click", () => {
+      load(state.scene);
+      if (!state.error) {
+        state.playing = true;
+        $("play").textContent = "Pause";
+      }
+    });
+    new ResizeObserver(() => {
+      drawPaper();
+      render();
+    }).observe(stage);
+
+    readColours();
+    load("dam");
+    requestAnimationFrame(frame);
+  })();
+</script>

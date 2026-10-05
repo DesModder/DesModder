@@ -200,7 +200,30 @@ Evidence pictures: `assets/fluid-gate1-taylor-green.png`,
 
 ## Next
 
-- **The liquid** (brief §8.0): method and oracle asked of GPT in round 4
-  (`VECTOR_TOOLS_FLUID_RESEARCH_FOLLOWUP_3.md`), then a mock-up.
+- **The liquid** (brief §8.0): GPT's round-4 free-surface solver, ported to
+  the browser, runs in `docs/mockups/liquid-mockup.html` (dam break, pour,
+  tank with a hole, still tank; pour and draw walls by hand). The tab waits
+  on Rafael's verdict on that mock-up. What the port found beyond GPT:
+  - **A stranded surface cell ran away.** A 1%-full cell left behind when
+    the dam column fell had no liquid beside it, so it could pass its mass
+    nowhere and gravity sped it up for ever: Mach 0.94 by step 9700 while
+    the liquid itself never passed 0.12. Such a cell is now emptied and the
+    ledger's reservoir keeps its mass. The front is unchanged to two
+    decimals.
+  - **Pools had holes.** A surface cell with liquid all round has inflow
+    equal to outflow, so pressure never fills it: 336 of them sat inside
+    the poured pool, and the row along the floor stayed a third to half
+    full. Filling them at once (Thürey's rule) blew up a dam break at Mach
+    0.28, because it takes a whole cell from nearly empty spray. Filling
+    5% of a cell a step, as negative excess through the ledger, is stable
+    everywhere and keeps mass to 1e-13. It costs the dam-break front about
+    one point at every size, so it is a switch in the mock-up, for Rafael.
+  - **The dam break converges.** GPT refined at fixed gravity and saw 5.3%
+    then 8.7%. Held at the same speeds (g ∝ 1/a, front read in a/10 rows),
+    the mean error against Martin & Moyce is 9.0%, 4.9%, 3.9% at a = 15,
+    30, 45 with holes left, and 10.6%, 5.9%, 4.5% with them filled.
+  - **Discharge is still not validated**: Cd 0.71 at this size against
+    about 0.61 for a sharp-edged orifice, and GPT's 0.85 → 0.70 under
+    refinement.
 - **Gate 7 onward:** 3D FieldPlay on the camera match in
   `DESMOS_3D_CAMERA.md`.
