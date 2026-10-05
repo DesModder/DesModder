@@ -45,7 +45,19 @@ export interface GpuLatticeOptions {
   ny: number;
   tau: number;
   force?: readonly [number, number];
+  /**
+   * How populations g0..g7 are stored: float32, or `fp16s`, IEEE half of
+   * 32768·g in RGBA16F (Lehmann et al. 2022; GPT's round 4, §A). g8, the
+   * macroscopic fields and the force target stay float32 either way, and the
+   * arithmetic is float32 throughout.
+   */
+  storage?: PopulationStorage;
 }
+
+export type PopulationStorage = "fp32" | "fp16s";
+
+/** FP16S's scale: half(32768·g) is stored, and read back over 32768. */
+export const FP16S_SCALE = 32768;
 
 const KIND_CODE: Record<BoundaryKind, number> = {
   periodic: 0,
@@ -89,6 +101,23 @@ const STEP = `#version 300 es
 precision highp float;
 precision highp int;
 precision highp sampler2D;
+#define POP_SCALE __POP_SCALE__
+
+// Rounds to the nearest IEEE half (FP16S storage), so writing the result to
+// an RGBA16F target is exact whatever rounding the hardware's conversion
+// uses: on Direct3D it may truncate toward zero, which took energy from every
+// population every step and decayed a Taylor-Green vortex 84% too fast.
+vec4 halfGrid(vec4 x) {
+  if (POP_SCALE == 1.0) return x;
+  vec4 r;
+  for (int c = 0; c < 4; c++) {
+    int e = ((floatBitsToInt(x[c]) >> 23) & 0xff) - 127;
+    e = max(e, -14);
+    float ulp = intBitsToFloat((e - 10 + 127) << 23);
+    r[c] = floor(x[c] / ulp + 0.5) * ulp;
+  }
+  return r;
+}
 uniform sampler2D u_g0;
 uniform sampler2D u_g1;
 uniform sampler2D u_g2;
@@ -141,8 +170,8 @@ ${intArray("FRAME", FRAMES)}
 ${floatArray("FRAME_VECTOR", FRAME_VECTORS)}
 
 float post(int i, ivec2 p) {
-  if (i < 4) return texelFetch(u_g0, p, 0)[i];
-  if (i < 8) return texelFetch(u_g1, p, 0)[i - 4];
+  if (i < 4) return texelFetch(u_g0, p, 0)[i] / POP_SCALE;
+  if (i < 8) return texelFetch(u_g1, p, 0)[i - 4] / POP_SCALE;
   return texelFetch(u_g2, p, 0).x;
 }
 
@@ -419,8 +448,8 @@ void main() {
     }
   }
 
-  o0 = vec4(g[0], g[1], g[2], g[3]);
-  o1 = vec4(g[4], g[5], g[6], g[7]);
+  o0 = halfGrid(vec4(g[0], g[1], g[2], g[3]) * POP_SCALE);
+  o1 = halfGrid(vec4(g[4], g[5], g[6], g[7]) * POP_SCALE);
   o2 = vec4(g[8], dr, ux, uy);
   o3 = vec4(linkFx, linkFy, float(linkBody), inletMean);
 }`;
@@ -430,6 +459,23 @@ const RESCALE = `#version 300 es
 precision highp float;
 precision highp int;
 precision highp sampler2D;
+#define POP_SCALE __POP_SCALE__
+
+// Rounds to the nearest IEEE half (FP16S storage), so writing the result to
+// an RGBA16F target is exact whatever rounding the hardware's conversion
+// uses: on Direct3D it may truncate toward zero, which took energy from every
+// population every step and decayed a Taylor-Green vortex 84% too fast.
+vec4 halfGrid(vec4 x) {
+  if (POP_SCALE == 1.0) return x;
+  vec4 r;
+  for (int c = 0; c < 4; c++) {
+    int e = ((floatBitsToInt(x[c]) >> 23) & 0xff) - 127;
+    e = max(e, -14);
+    float ulp = intBitsToFloat((e - 10 + 127) << 23);
+    r[c] = floor(x[c] / ulp + 0.5) * ulp;
+  }
+  return r;
+}
 uniform sampler2D u_g0;
 uniform sampler2D u_g1;
 uniform sampler2D u_g2;
@@ -460,6 +506,8 @@ void main() {
     o2 = m;
     return;
   }
+  a = a / POP_SCALE;
+  b = b / POP_SCALE;
   float g[9] = float[9](a.x, a.y, a.z, a.w, b.x, b.y, b.z, b.w, m.x);
   float dr = (((((((g[0] + g[1]) + g[2]) + g[3]) + g[4]) + g[5]) + g[6]) + g[7]) + g[8];
   float rho = 1.0 + dr;
@@ -482,8 +530,8 @@ void main() {
     float eq2 = WS[i] * (dr2 + rho2 * ((3.0 * cu2 + (4.5 * cu2) * cu2) - usq2));
     h[i] = eq2 + u_neqScale * (g[i] - eq);
   }
-  o0 = vec4(h[0], h[1], h[2], h[3]);
-  o1 = vec4(h[4], h[5], h[6], h[7]);
+  o0 = halfGrid(vec4(h[0], h[1], h[2], h[3]) * POP_SCALE);
+  o1 = halfGrid(vec4(h[4], h[5], h[6], h[7]) * POP_SCALE);
   o2 = vec4(h[8], dr2, ux2, uy2);
 }`;
 
@@ -585,7 +633,8 @@ export class GpuD2Q9 {
     this.ny = options.ny;
     this.tau = options.tau;
     this.force = options.force ?? [0, 0];
-    this.program = link(gl, VERTEX, STEP);
+    this.storage = options.storage ?? "fp32";
+    this.program = link(gl, VERTEX, this.withScale(STEP));
     const cache = new Map<string, WebGLUniformLocation | null>();
     this.location = (name) => {
       if (!cache.has(name))
@@ -613,10 +662,30 @@ export class GpuD2Q9 {
     return texture;
   }
 
+  /** g0..g7's storage; see `GpuLatticeOptions.storage`. */
+  readonly storage: PopulationStorage;
+
+  /** What populations are multiplied by in their textures. */
+  private get populationScale() {
+    return this.storage === "fp16s" ? FP16S_SCALE : 1;
+  }
+
+  private withScale(source: string) {
+    return source.replace(
+      "__POP_SCALE__",
+      this.storage === "fp16s" ? `${FP16S_SCALE}.0` : "1.0"
+    );
+  }
+
   private createSet(): TextureSet {
     const { gl } = this;
-    const textures = [0, 1, 2, 3].map(() =>
-      this.createTexture(gl.RGBA32F, this.nx, this.ny)
+    const half = this.storage === "fp16s";
+    const textures = [0, 1, 2, 3].map((t) =>
+      this.createTexture(
+        half && t < 2 ? gl.RGBA16F : gl.RGBA32F,
+        this.nx,
+        this.ny
+      )
     );
     const framebuffer = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
@@ -809,7 +878,10 @@ export class GpuD2Q9 {
       for (let k = 0; k < cells; k++) {
         for (let c = 0; c < 4; c++) {
           const i = t * 4 + c;
-          texel[k * 4 + c] = i < Q ? populations[i * cells + k] : 0;
+          texel[k * 4 + c] =
+            i < Q
+              ? populations[i * cells + k] * (i < 8 ? this.populationScale : 1)
+              : 0;
         }
         if (t === 2) {
           let sum = 0;
@@ -910,7 +982,7 @@ export class GpuD2Q9 {
    */
   rescale(scale: number, tau: number) {
     const { gl } = this;
-    this.rescaleProgram ??= link(gl, VERTEX, RESCALE);
+    this.rescaleProgram ??= link(gl, VERTEX, this.withScale(RESCALE));
     const program = this.rescaleProgram;
     gl.useProgram(program);
     gl.viewport(0, 0, this.nx, this.ny);
@@ -1097,7 +1169,9 @@ export class GpuD2Q9 {
       for (let k = 0; k < cells; k++) {
         for (let c = 0; c < 4; c++) {
           const i = t * 4 + c;
-          if (i < Q) populations[i * cells + k] = texel[k * 4 + c];
+          if (i < Q)
+            populations[i * cells + k] =
+              texel[k * 4 + c] / (i < 8 ? this.populationScale : 1);
         }
         if (t === 2) {
           deltaRho[k] = texel[k * 4 + 1];

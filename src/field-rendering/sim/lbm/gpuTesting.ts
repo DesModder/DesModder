@@ -6,6 +6,7 @@
 
 import type { Driver } from "#tests";
 import type { Boundaries, InletLayer } from "./boundaries";
+import type { PopulationStorage } from "./GpuD2Q9";
 
 declare let DSM: Window["DSM"];
 
@@ -42,7 +43,13 @@ export interface GpuSetup {
 
 export async function runOnGpu(
   driver: Driver,
-  options: { nx: number; ny: number; tau: number; force?: [number, number] },
+  options: {
+    nx: number;
+    ny: number;
+    tau: number;
+    force?: [number, number];
+    storage?: PopulationStorage;
+  },
   populations: Float32Array | Float64Array,
   checkpoints: number[],
   setup: GpuSetup = {}
@@ -111,7 +118,7 @@ export interface SteadyRun {
  */
 export async function runToSteady(
   driver: Driver,
-  options: { nx: number; ny: number; tau: number },
+  options: { nx: number; ny: number; tau: number; storage?: PopulationStorage },
   populations: Float32Array,
   setup: GpuSetup,
   plan: {
@@ -193,7 +200,7 @@ export interface SeriesRun {
  */
 export async function runSeries(
   driver: Driver,
-  options: { nx: number; ny: number; tau: number },
+  options: { nx: number; ny: number; tau: number; storage?: PopulationStorage },
   populations: Float32Array,
   setup: GpuSetup,
   plan: {

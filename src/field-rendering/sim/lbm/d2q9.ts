@@ -246,6 +246,21 @@ export function rescaleFactors(tau: number, tauNew: number, scale: number) {
   return { neqScale };
 }
 
+/**
+ * A population as FP16S storage holds it: 32768·g rounded to the nearest
+ * IEEE half, ties up, and read back over 32768, in the shader's operation
+ * order (`halfGrid` in GpuD2Q9).
+ */
+export function fp16sStored(g: number): number {
+  const x = Math.fround(g * 32768);
+  bits[0] = x;
+  const e = Math.max(((bitsInt[0] >> 23) & 0xff) - 127, -14);
+  const ulp = 2 ** (e - 10);
+  return Math.fround(Math.fround(Math.floor(x / ulp + 0.5) * ulp) / 32768);
+}
+const bits = new Float32Array(1);
+const bitsInt = new Int32Array(bits.buffer);
+
 export interface LatticeOptions {
   nx: number;
   ny: number;
@@ -253,6 +268,12 @@ export interface LatticeOptions {
   /** A uniform body force density, lattice units. */
   force?: readonly [number, number];
   arithmetic?: Arithmetic;
+  /**
+   * `GpuLatticeOptions.storage`: "fp16s" rounds g0..g7 to the half grid of
+   * 32768·g after every write, as the GPU's RGBA16F textures hold them.
+   * Meaningful with float32 arithmetic.
+   */
+  storage?: "fp32" | "fp16s";
 }
 
 /**
@@ -271,6 +292,8 @@ export class CpuD2Q9 {
   readonly ux: Float64Array;
   readonly uy: Float64Array;
   readonly arithmetic: Arithmetic;
+  /** Whether g0..g7 are held as FP16S (`LatticeOptions.storage`). */
+  readonly half: boolean;
   tau: number;
   force: readonly [number, number];
   steps = 0;
@@ -282,6 +305,7 @@ export class CpuD2Q9 {
     this.tau = options.tau;
     this.force = options.force ?? [0, 0];
     this.arithmetic = options.arithmetic ?? "float64";
+    this.half = options.storage === "fp16s";
     const Storage = this.arithmetic === "float32" ? Float32Array : Float64Array;
     this.populations = new Storage(Q * this.cells);
     this.next = new Storage(Q * this.cells);
@@ -304,7 +328,8 @@ export class CpuD2Q9 {
         const { deltaRho = 0, ux, uy } = at(x, y);
         shiftedEquilibrium(deltaRho, ux, uy, eq);
         for (let i = 0; i < Q; i++)
-          this.populations[i * this.cells + k] = eq[i];
+          this.populations[i * this.cells + k] =
+            this.half && i < 8 ? fp16sStored(eq[i]) : eq[i];
         this.deltaRho[k] = deltaRho;
         this.ux[k] = ux;
         this.uy[k] = uy;
@@ -590,7 +615,8 @@ export class CpuD2Q9 {
                 g[i] = r(r(r(1 - s) * g[i]) + r(s * spongeEq[i]));
             }
           }
-          for (let i = 0; i < Q; i++) to[i * cells + k] = g[i];
+          for (let i = 0; i < Q; i++)
+            to[i * cells + k] = this.half && i < 8 ? fp16sStored(g[i]) : g[i];
           [this.deltaRho[k], this.ux[k], this.uy[k]] = macro;
         }
       }
@@ -649,7 +675,8 @@ export class CpuD2Q9 {
           r(W[i]) *
             r(dr2 + r(rho2 * r(r(r(3 * cu2) + r(r(4.5 * cu2) * cu2)) - usq2)))
         );
-        pops[i * cells + k] = r(eq2 + r(neqScale * r(g[i] - eq)));
+        const value = r(eq2 + r(neqScale * r(g[i] - eq)));
+        pops[i * cells + k] = this.half && i < 8 ? fp16sStored(value) : value;
       }
       this.deltaRho[k] = dr2;
       this.ux[k] = ux2;

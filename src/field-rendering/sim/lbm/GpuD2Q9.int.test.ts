@@ -278,3 +278,41 @@ testWithPage(
   },
   90000
 );
+
+/**
+ * FP16S storage (GPT's round 4 §A) on the GPU against the CPU reference's
+ * mirror of it (`fp16sStored`). The shader rounds to the half grid itself,
+ * since Direct3D may truncate when writing an RGBA16F target, which decayed a
+ * Taylor–Green vortex 84% too fast before. The two processors can order an
+ * operation differently and land a value one half-step apart, so each
+ * population is held to one step of its own half grid.
+ */
+testWithPage(
+  "Fluid: FP16S storage steps on the GPU as on the CPU",
+  async (driver) => {
+    await driver.enablePlugin("vector-tools");
+    const n = 32;
+    const options = { nx: n, ny: n, tau: 0.6, storage: "fp16s" as const };
+    const cpu = new CpuD2Q9({ ...options, arithmetic: "float32" });
+    cpu.initialize(taylorGreen(n, 0.02));
+    const start = Float32Array.from(cpu.populations);
+    const [one, hundred] = await runOnGpu(driver, options, start, [1, 100]);
+    /** Steps of the half grid, at the populations' largest size. */
+    const halfSteps = (a: ArrayLike<number>, b: ArrayLike<number>) => {
+      let largest = 0;
+      for (const value of Array.from(b))
+        largest = Math.max(largest, Math.abs(value));
+      const ulp = 2 ** (Math.floor(Math.log2(largest * 32768)) - 10) / 32768;
+      return maxDifference(a, b) / ulp;
+    };
+    cpu.step(1);
+    expect(halfSteps(one.populations, cpu.populations)).toBeLessThanOrEqual(1);
+    cpu.step(99);
+    const later = halfSteps(hundred.populations, cpu.populations);
+    // Measured 2.1 steps, and 1.1e-5 in velocity: 0.05% of the vortex's 0.02.
+    expect(later).toBeLessThan(4);
+    expect(maxDifference(hundred.ux, cpu.ux)).toBeLessThan(2e-5);
+    await driver.disablePlugin("vector-tools");
+  },
+  90000
+);
