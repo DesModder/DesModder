@@ -2,6 +2,7 @@ import glesmos from "#plugins/GLesmos/glesmos.replacements";
 import betterEvaluationView from "#plugins/better-evaluation-view/better-evaluation-view.replacements";
 import codeGolf from "#plugins/code-golf/code-golf.replacements";
 import extraExpressionButtons from "#plugins/../core-plugins/expr-action-buttons/expr-action-buttons.replacements";
+import colorInput from "#plugins/color-input/color-input.replacements";
 import findReplace from "#plugins/find-replace/find-replace.replacements";
 import hideErrors from "#plugins/hide-errors/hide-errors.replacements";
 import metadata from "#plugins/../core-plugins/manage-metadata/manage-metadata.replacements";
@@ -20,6 +21,7 @@ export default [
   overrideKeystroke,
   pillbox,
   betterEvaluationView,
+  colorInput,
   findReplace,
   glesmos,
   hideErrors,

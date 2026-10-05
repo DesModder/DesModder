@@ -1,0 +1,23 @@
+# Replacements for Edit-Color
+
+*plugin* `color-input`
+
+## Insert the expression bar after the color picker
+
+*Description* `Insert the expression bar after the color picker`
+
+*Find* => `colorBar`
+```js
+$createElement("div", {
+  class: "dcg-color-picker-container",
+  ____
+  })
+```
+
+*Replace* `colorBar` with
+```js
+DesModder.replaceElement(
+  () => __colorBar__,
+  () => DSM.colorInput?.replaceColorView
+)
+```

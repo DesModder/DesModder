@@ -12,6 +12,8 @@ export function makeControllerHooks(dsm: DSM): DesModderHooks {
         case "code-golf":
           // only focus location is the `dummy-mq` one.
           return false;
+        case "color-input":
+          return true;
         default:
           location satisfies never;
           return false;
@@ -34,6 +36,8 @@ export function makeControllerHooks(dsm: DSM): DesModderHooks {
         case "code-golf":
           // only focus location is the `dummy-mq` one.
           return false;
+        case "color-input":
+          return true;
         default:
           location satisfies never;
           return false;
