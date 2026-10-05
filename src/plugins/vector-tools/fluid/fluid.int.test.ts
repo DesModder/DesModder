@@ -547,46 +547,54 @@ fluidTest(
       };
       frame();
     });
-    await driver.waitForFunction(
-      () =>
-        (DSM.enabledPlugins["vector-tools"] as any).fluid.readout
-          .simulatedSeconds >= 8,
-      { timeout: 90000, polling: 250 }
-    );
-    const result = await driver.evaluate(() => {
-      cancelAnimationFrame((window as any).cupFrame);
-      const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
-      const { coverage } = fluid.moving.solids;
-      const { deltaRho, ux } = fluid.overlay.current.readMacro();
-      let inside = 0;
-      let insideRho = 0;
-      let outsidePeak = 0;
-      for (let k = 0; k < coverage.length; k++) {
-        if (coverage[k] >= 1) {
-          inside++;
-          insideRho = Math.max(insideRho, Math.abs(deltaRho[k]));
-        } else if (coverage[k] === 0) {
-          outsidePeak = Math.max(outsidePeak, Math.abs(deltaRho[k]));
+    /** The cup's inside, and the fluid's, at a moment of flow. */
+    const sample = async (seconds: number) => {
+      await driver.waitForFunction(
+        (at: number) =>
+          (DSM.enabledPlugins["vector-tools"] as any).fluid.readout
+            .simulatedSeconds >= at,
+        { timeout: 90000, polling: 250 },
+        seconds
+      );
+      return await driver.evaluate(() => {
+        const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
+        const { coverage } = fluid.moving.solids;
+        const { deltaRho, ux } = fluid.overlay.current.readMacro();
+        let inside = 0;
+        let insideMean = 0;
+        let outsidePeak = 0;
+        for (let k = 0; k < coverage.length; k++) {
+          if (coverage[k] >= 1) {
+            inside++;
+            insideMean += deltaRho[k];
+          } else if (coverage[k] === 0) {
+            outsidePeak = Math.max(outsidePeak, Math.abs(deltaRho[k]));
+          }
         }
-      }
-      return {
-        inside,
-        insideRho,
-        outsidePeak,
-        fluidSpeed: Math.max(...ux.map(Math.abs)),
-        notice: fluid.notice,
-        simulating: fluid.isSimulating,
-      };
-    });
+        return {
+          inside,
+          insideMean: insideMean / inside,
+          outsidePeak,
+          fluidSpeed: Math.max(...ux.map(Math.abs)),
+          notice: fluid.notice,
+          simulating: fluid.isSimulating,
+        };
+      });
+    };
+    const early = await sample(5);
+    const result = await sample(9);
+    await driver.evaluate(() => cancelAnimationFrame((window as any).cupFrame));
     // Before the fix the lattice had blown up and stopped by now.
     expect(result.simulating).toBe(true);
     // The gap runs near Mach 0.3, and Auto may slow it where it is; it must
     // not have gone unstable, or restarted.
     expect(result.notice).not.toMatch(/unstable|restarted|stopped/);
     expect(result.inside).toBeGreaterThan(5000);
-    // The gap past the cup is a fifth of the inlet, so the fluid is pushed
-    // hard there; the inside holds no more pressure than the fluid around it.
-    expect(result.insideRho).toBeLessThan(1.1 * result.outsidePeak);
+    // Filling up is what blew it up: the inside gained pressure every step.
+    // Now it sits below the fluid around it, sharing the fast gap's low
+    // pressure, and gains none (measured −0.021 at 5 s, −0.038 at 9 s).
+    expect(result.insideMean).toBeLessThanOrEqual(early.insideMean + 0.005);
+    expect(result.insideMean).toBeLessThan(result.outsidePeak);
     expect(result.fluidSpeed).toBeLessThan(0.3 / Math.sqrt(3));
   },
   150000
@@ -1025,4 +1033,68 @@ fluidTest(
     expect(result.ux).toBeLessThan(0.012);
   },
   180000
+);
+
+/**
+ * Precision, Rafael's Auto with an override: half precision unless Full is
+ * chosen, or Auto sees measurements written into the graph or Accurate speed;
+ * the running lattice is rebuilt with the storage chosen, with its flow.
+ */
+fluidTest(
+  "Fluid tab: precision is half by default, full where Auto or the user says",
+  async (driver) => {
+    await driver.enablePlugin("vector-tools");
+    await driver.assertSelectorEventually(BUTTON);
+    await driver.evaluate(() => {
+      Calc.setExpressions([
+        { id: "disc", latex: String.raw`\left(x+5\right)^{2}+y^{2}\le1` },
+      ]);
+      const plugin = DSM.enabledPlugins["vector-tools"] as any;
+      plugin.setArrowMode("off");
+      plugin.setFluid("mode", "windTunnel");
+    });
+    const storage = async () => {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      return await driver.evaluate(() => {
+        const { fluid } = DSM.enabledPlugins["vector-tools"] as any;
+        return [fluid.storage, fluid.overlay.current?.storage];
+      });
+    };
+    const set = async (key: string, value: unknown) =>
+      await driver.evaluate(
+        (k: string, v: unknown) =>
+          (DSM.enabledPlugins["vector-tools"] as any).setFluid(k, v),
+        key,
+        value
+      );
+    await driver.waitForFunction(
+      () => (DSM.enabledPlugins["vector-tools"] as any).fluid.isSimulating,
+      { timeout: 20000 }
+    );
+    expect(await storage()).toEqual(["fp16s", "fp16s"]);
+    // Switching carries the flow over: the step count and the stream go on.
+    const flow = async () =>
+      await driver.evaluate(() => {
+        const lattice = (DSM.enabledPlugins["vector-tools"] as any).fluid
+          .overlay.current;
+        const { ux } = lattice.readMacro();
+        return { steps: lattice.steps, fastest: Math.max(...ux) };
+      });
+    const before = await flow();
+    await set("writeback", true);
+    expect(await storage()).toEqual(["fp32", "fp32"]);
+    const after = await flow();
+    expect(after.steps).toBeGreaterThan(before.steps);
+    expect(after.fastest).toBeGreaterThan(0.5 * before.fastest);
+    await set("writeback", false);
+    await set("speedMode", "accurate");
+    expect(await storage()).toEqual(["fp32", "fp32"]);
+    await set("precision", "fast");
+    expect(await storage()).toEqual(["fp16s", "fp16s"]);
+    await set("speedMode", "auto");
+    await set("precision", "full");
+    expect(await storage()).toEqual(["fp32", "fp32"]);
+    await set("precision", "auto");
+  },
+  60000
 );

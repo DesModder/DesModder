@@ -16,7 +16,7 @@
 
 import type { Calc } from "#globals";
 import type { Boundaries, InletLayer } from "./lbm/boundaries";
-import { GpuD2Q9, type Sponge } from "./lbm/GpuD2Q9";
+import { GpuD2Q9, type PopulationStorage, type Sponge } from "./lbm/GpuD2Q9";
 import { ObstacleSampler } from "./obstacleSampler";
 
 const GRAPH_CANVAS_SELECTOR = "canvas.dcg-graph-inner";
@@ -36,6 +36,8 @@ export interface LatticeSpec {
   inletUx: number[];
   inletUy: number[];
   sponge: Sponge | undefined;
+  /** How populations are stored; float32 if absent. */
+  storage?: PopulationStorage;
   /** An absorbing layer beside the inlet (`InletLayer`), absent for none. */
   inletLayer?: InletLayer;
   /** The velocity the tank starts at, everywhere outside the solids. */
@@ -187,6 +189,31 @@ export class FluidOverlay {
     return this.obstacleSampler;
   }
 
+  /**
+   * The running flow in a lattice built from `spec`, which differs from the
+   * running one only in how it stores populations: read back, rebuilt and
+   * written in, with its step count, its eased start and the inlet layer's
+   * means, so changing precision does not throw the flow away.
+   */
+  restore(spec: LatticeSpec) {
+    const old = this.lattice;
+    if (old === undefined) {
+      this.start(spec);
+      return;
+    }
+    const { populations } = old.read();
+    const means = old.readInletMeans();
+    const { steps, inletScale, forceScale } = old;
+    this.start(spec);
+    const { lattice } = this;
+    if (lattice === undefined) return;
+    lattice.setPopulations(populations);
+    lattice.writeInletMeans(means);
+    lattice.steps = steps;
+    lattice.inletScale = inletScale;
+    lattice.forceScale = forceScale;
+  }
+
   /** Builds a lattice from `spec`, at rest, replacing any there was. */
   start(spec: LatticeSpec) {
     try {
@@ -197,6 +224,7 @@ export class FluidOverlay {
         nx: spec.nx,
         ny: spec.ny,
         tau: spec.tau,
+        storage: spec.storage,
       });
       lattice.smagorinsky = spec.smagorinsky;
       lattice.setBoundaries(spec.boundaries);

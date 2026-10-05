@@ -1112,6 +1112,39 @@ export class GpuD2Q9 {
     this.gl.deleteBuffer(read.buffer);
   }
 
+  /**
+   * The inlet layer's row means, from the force target's last channel at the
+   * two open columns (`[left rows…, right rows…]`), and back: for carrying a
+   * running flow into a lattice stored another way.
+   */
+  readInletMeans(): Float32Array {
+    const { nx, ny } = this;
+    const out = new Float32Array(2 * ny);
+    for (const [side, x] of [
+      [0, 0],
+      [1, nx - 1],
+    ] as const) {
+      const texel = this.readForceTexels(x, 0, 1, ny);
+      for (let y = 0; y < ny; y++) out[side * ny + y] = texel[4 * y + 3];
+    }
+    return out;
+  }
+
+  writeInletMeans(means: Float32Array) {
+    const { gl, nx, ny } = this;
+    const set = this.sets[this.current];
+    gl.bindTexture(gl.TEXTURE_2D, set.textures[3]);
+    for (const [side, x] of [
+      [0, 0],
+      [1, nx - 1],
+    ] as const) {
+      const texel = new Float32Array(4 * ny);
+      for (let y = 0; y < ny; y++) texel[4 * y + 3] = means[side * ny + y];
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, x, 0, 1, ny, gl.RGBA, gl.FLOAT, texel);
+    }
+    gl.bindTexture(gl.TEXTURE_2D, null);
+  }
+
   private readForceTexels(x: number, y: number, width: number, height: number) {
     const { gl } = this;
     const texel = new Float32Array(4 * width * height);

@@ -35,6 +35,7 @@ import {
   type FluidGuardMode,
   type FluidMode,
   type FluidShow,
+  type FluidPrecision,
   type FluidSpeedMode,
   type ArrowMode,
   type ColorPalette,
@@ -1139,6 +1140,12 @@ const FLUID_SPEED_MODES: readonly Choice<FluidSpeedMode>[] = [
   { value: "lively", label: "Lively" },
 ];
 
+const FLUID_PRECISIONS: readonly Choice<FluidPrecision>[] = [
+  { value: "auto", label: "Auto" },
+  { value: "full", label: "Full" },
+  { value: "fast", label: "Fast" },
+];
+
 const FLUID_GUARD_MODES: readonly Choice<FluidGuardMode>[] = [
   { value: "auto", label: "Auto" },
   { value: "strict", label: "Strict" },
@@ -1332,6 +1339,16 @@ function fluidTab(vectorTools: VectorTools, config: ConfigGetter) {
           {() => fluidUnitsText(session.units, fluid())}
         </div>
         {chipGroup(
+          "Precision",
+          () => fluid().precision,
+          FLUID_PRECISIONS,
+          (value) => vectorTools.setFluid("precision", value),
+          "dsm-vector-tools-fluid-precision"
+        )}
+        <div class="dsm-vector-tools-hint">
+          {() => fluidPrecisionText(session.storage, fluid())}
+        </div>
+        {chipGroup(
           "Resizing a solid",
           () => fluid().resizeMode,
           FLUID_GUARD_MODES,
@@ -1505,6 +1522,25 @@ function fluidReynoldsControl(
       />
     </div>
   );
+}
+
+function fluidPrecisionText(
+  storage: "fp32" | "fp16s",
+  fluid: VectorFieldConfig["fluid"]
+) {
+  const now =
+    storage === "fp16s"
+      ? "Half precision: about twice as fast, within 0.5% of full precision on the benchmarks."
+      : "Full precision.";
+  const why =
+    fluid.precision !== "auto"
+      ? ""
+      : storage === "fp32"
+        ? fluid.writeback
+          ? " Auto uses it while measurements are written into the graph."
+          : " Auto uses it with Accurate speed."
+        : " Auto switches to full precision for Accurate speed or for writing measurements into the graph.";
+  return now + why;
 }
 
 function fluidUnitsText(

@@ -53,6 +53,7 @@ import {
   sumForceTexels,
   type GpuD2Q9,
   type GpuLatticeOptions,
+  type PopulationStorage,
   type PendingRead,
 } from "../../../field-rendering/sim/lbm/GpuD2Q9";
 import {
@@ -723,6 +724,21 @@ export class FluidSession {
     const { units } = this;
     const { nx, ny } = fluidLatticeSize(config);
     const latticeKey = this.latticeKeyFor(nx, ny);
+    // Only the storage changed: carried over, not restarted.
+    if (
+      this.overlay.isRunning &&
+      this.spec !== undefined &&
+      latticeKey !== this.latticeKey &&
+      this.storageless(latticeKey) === this.storageless(this.latticeKey)
+    ) {
+      this.latticeKey = latticeKey;
+      this.spec = { ...this.spec, storage: this.storage };
+      this.overlay.restore(this.spec);
+      this.gusting = false;
+      this.releaseReads();
+      this.uploadForce();
+      return;
+    }
     const restart = latticeKey !== this.latticeKey || !this.overlay.isRunning;
     // A fresh lattice starts with every solid at rest, so every one sliders
     // move is parked; otherwise rows typed or deleted since are reconciled.
@@ -759,6 +775,7 @@ export class FluidSession {
       this.spec = {
         ...this.buildSpec(nx, ny, units, solids, undefined),
         psm: moving?.psm,
+        storage: this.storage,
       };
       const wasRunning = this.overlay.isRunning;
       this.overlay.start(this.spec);
@@ -813,7 +830,28 @@ export class FluidSession {
       units.tau,
       units.closure,
       this.latticeSpeed,
+      this.storage,
     ]);
+  }
+
+  /** A lattice key without its storage, the last element. */
+  private storageless(key: string) {
+    if (key === "") return "";
+    return JSON.stringify((JSON.parse(key) as unknown[]).slice(0, -1));
+  }
+
+  /**
+   * How the populations are stored (`FluidPrecision`): half precision unless
+   * Full is chosen, or Auto sees measurements being written into the graph
+   * or Accurate speed chosen. Changing it restarts the lattice.
+   */
+  get storage(): PopulationStorage {
+    const config = this.host.config();
+    if (config.precision === "full") return "fp32";
+    if (config.precision === "fast") return "fp16s";
+    return config.writeback || config.speedMode === "accurate"
+      ? "fp32"
+      : "fp16s";
   }
 
   /**
@@ -841,6 +879,7 @@ export class FluidSession {
     const spec: LatticeSpec = {
       ...this.buildSpec(nx, ny, units, this.spec, undefined),
       psm,
+      storage: this.spec.storage,
     };
     this.overlay.rescale(scale, spec);
     this.spec = spec;

@@ -299,6 +299,15 @@ export type FluidMode = "off" | "windTunnel" | "stirredBox";
 export type FluidSpeedMode = "auto" | "accurate" | "lively";
 
 /**
+ * How the lattice stores its populations (GPT's round 4 §A, Rafael's choice
+ * of Auto with an override). Fast keeps them in half precision, about twice
+ * as fast on an integrated GPU and within 0.5% of full precision on the DFG
+ * benchmarks, peak drag nearest that (0.48%). Auto is Fast, and Full while
+ * measurements are being written into the graph or Accurate speed is chosen.
+ */
+export type FluidPrecision = "auto" | "full" | "fast";
+
+/**
  * Whether the tab allows something it cannot yet do accurately, labelled, or
  * refuses it. Used for resizing an obstacle and for dragging one above Re 200
  * (brief §8.1).
@@ -327,6 +336,7 @@ export interface FluidConfig {
   /** The length the Reynolds number is measured against, in graph units. */
   referenceLength: number;
   speedMode: FluidSpeedMode;
+  precision: FluidPrecision;
   resizeMode: FluidGuardMode;
   dragMode: FluidGuardMode;
   show: FluidShow;
@@ -782,6 +792,7 @@ export const DEFAULT_VECTOR_FIELD_CONFIG: VectorFieldConfig = {
     inflowSpeed: 2,
     referenceLength: 1,
     speedMode: "auto",
+    precision: "auto",
     resizeMode: "auto",
     dragMode: "auto",
     // Vorticity, because it is what shedding looks like: the wake's
@@ -1367,6 +1378,10 @@ function normalizeFluid(value: unknown, fallback: FluidConfig): FluidConfig {
     speedMode:
       fluid?.speedMode === "accurate" || fluid?.speedMode === "lively"
         ? fluid.speedMode
+        : "auto",
+    precision:
+      fluid?.precision === "full" || fluid?.precision === "fast"
+        ? fluid.precision
         : "auto",
     resizeMode: isGuard(fluid?.resizeMode) ? fluid.resizeMode : "auto",
     dragMode: isGuard(fluid?.dragMode) ? fluid.dragMode : "auto",
