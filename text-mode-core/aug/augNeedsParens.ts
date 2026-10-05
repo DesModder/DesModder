@@ -34,6 +34,7 @@ export default function augNeedsParens(
     case "BinaryOperator":
       return binopNeedsParens(node, parent.name, path!);
     case "Negative":
+    case "Positive":
       if (node.type === "Constant" && node.value > 0) return false;
       return power(node) <= POWERS.prefix;
     case "Factorial":
@@ -169,6 +170,7 @@ function power(node: Aug.Latex.AnyChild): number {
     case "OrderedPairAccess":
       return POWERS.index;
     case "Negative":
+    case "Positive":
       return POWERS.prefix;
     case "BinaryOperator":
       return binopPower(node.name);

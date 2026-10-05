@@ -48,7 +48,7 @@ statements {
 
 expressionMaybeSeq[@isGroup=Expression] {
   expression |
-  SequenceExpression { expression "," expressionMaybeSeq }   
+  SequenceExpression { expression "," expressionMaybeSeq }
 }
 
 expression {
@@ -59,7 +59,7 @@ expression {
   ListComprehension { "[" expression KeywordOp<"for"> commaSep1<AssignmentExpression> "]" } |
   Piecewise { "{" commaSep<PiecewiseBranch> "}" } |
   UpdateRule { expression !updateRule "->" expression } |
-  PrefixExpression { !prefix ArithOp<"-"> expression } |
+  PrefixExpression { !prefix ArithOp<"-" | "+"> expression } |
   DerivativeExpression { !derivative "(" DD { "d/d" } Identifier ")" expression } |
   ParenthesizedExpression { "(" expressionMaybeSeq ")" } |
   MemberExpression { expression !member DotAccessIdentifier } |
@@ -137,7 +137,7 @@ kw<term> { @specialize[@name={term}]<Identifier, term> }
 
   Number {
     (std.digit+ ("." std.digit+)? | "." std.digit+)
-      (("e" | "E") ("+" | "-")? std.digit+)? 
+      (("e" | "E") ("+" | "-")? std.digit+)?
   }
 
   Prime { "'"+ }

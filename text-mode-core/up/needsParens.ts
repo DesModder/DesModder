@@ -86,7 +86,7 @@ export default function needsParens(path: NodePath): boolean {
       if (node.value >= 0) return false;
     // fall through since "-1" parses like a prefix
     case "PrefixExpression":
-      // Currently the only prefix expression is unary minus
+      // Currently the only prefix expression is unary minus and unary plus
       switch (parent.type) {
         case "PrefixExpression":
         case "ListAccessExpression":

@@ -13,6 +13,7 @@ import {
   listAccess,
   negative,
   number,
+  positive,
   substitution,
   updateRule,
   wrappedSeq,
@@ -442,6 +443,8 @@ describe("Basic exprs", () => {
   describe("PrefixExpression", () => {
     testExpr("negative number", "-5.0", negative(number(5)));
     testExpr("negated identifier", "-x", negative(id("x")));
+    testExpr("positive number", "+5.0", positive(number(5)));
+    testExpr("positive identifier", "+x", positive(id("x")));
   });
   describe("ParenthesizedExpression", () => {
     testExpr("parenthesized number", "(5)", number(5));
