@@ -50,7 +50,6 @@ import {
 import type { FieldEnvironment } from "../../../field-rendering/latexToGLSL";
 import {
   createStandaloneLattice,
-  macroFromTexels,
   sumForceTexels,
   type GpuD2Q9,
   type GpuLatticeOptions,
@@ -61,7 +60,7 @@ import {
   type LatticeSpec,
 } from "../../../field-rendering/sim/FluidOverlay";
 import {
-  bodyForce,
+  restShare,
   computeLinks,
 } from "../../../field-rendering/sim/lbm/links";
 import {
@@ -195,8 +194,8 @@ export interface FluidHost {
 
 /** The name the flow's velocity is published under, for the renderers. */
 export const FLUID_SAMPLE_SOURCE = "vector-tools-fluid";
-/** How often the flow's velocity is handed to the particles and arrows. */
-const SAMPLE_INTERVAL_MS = 100;
+/** How often the flow is checked for its Mach number and validity. */
+const CHECK_INTERVAL_MS = 100;
 
 /** How often the panel's readouts redraw, in milliseconds. */
 const READOUT_INTERVAL_MS = 250;
@@ -235,9 +234,6 @@ const DEFINED_NAME =
   /^([A-Za-z](?:_(?:\{[A-Za-z0-9]*\}|[A-Za-z0-9]))?)(?:\\left\(|\(|=)/;
 const DEFINITION =
   /^[A-Za-z](?:_(?:\{[A-Za-z0-9]*\}|[A-Za-z0-9]))?(?:\\left\([^)]*\\right\)|\([^)]*\))?=/;
-
-/** δρ, ux and uy per cell, as the lattice reads them back. */
-type MacroFields = ReturnType<GpuD2Q9["readMacro"]>;
 
 interface BodyRecord {
   rowId: string;
@@ -924,6 +920,7 @@ export class FluidSession {
       for (const [name, value] of at) merged.set(name, value);
       return { time, params: merged };
     });
+    const points = scopes.map((at) => ({ ...at, x: 0, y: 0 }));
     const solid = new Uint8Array(nx * ny);
     const boxes = rows.map(() => [Infinity, Infinity, -Infinity, -Infinity]);
     for (let j = 0; j < ny; j++) {
@@ -931,7 +928,10 @@ export class FluidSession {
         const [x, y] = centre(i, j);
         for (let b = 0; b < rows.length; b++) {
           if (!fixed[b]) continue;
-          if (!rows[b].obstacle!.contains({ ...scopes[b], x, y })) continue;
+          const point = points[b];
+          point.x = x;
+          point.y = y;
+          if (!rows[b].obstacle!.contains(point)) continue;
           solid[j * nx + i] = b + 1;
           const box = boxes[b];
           box[0] = Math.min(box[0], i);
@@ -942,12 +942,16 @@ export class FluidSession {
         }
       }
     }
-    const links = computeLinks(
-      { nx, ny, centre },
-      solid,
-      (body) => (x, y) =>
-        rows[body - 1].obstacle!.signed({ ...scopes[body - 1], x, y })
-    );
+    const links = computeLinks({ nx, ny, centre }, solid, (body) => {
+      // One point, reused: a spread per evaluation was most of the cost.
+      const point = { ...scopes[body - 1], x: 0, y: 0 };
+      const { obstacle } = rows[body - 1];
+      return (x, y) => {
+        point.x = x;
+        point.y = y;
+        return obstacle!.signed(point);
+      };
+    });
     const regions = new Map<number, { rowId: string; box: number[] }>();
     rows.forEach((row, b) => {
       if (boxes[b][0] <= boxes[b][2]) {
@@ -1744,13 +1748,7 @@ export class FluidSession {
       const y0 = Math.max(0, box[1] - margin);
       const x1 = Math.min(nx - 1, box[2] + margin);
       const y1 = Math.min(ny - 1, box[3] + margin);
-      const rest = bodyForce(
-        body,
-        new Float64Array(2 * nx * ny),
-        new Uint8Array(nx * ny),
-        solid,
-        { nx, ny }
-      );
+      const rest = restShare(body, solid, { nx, ny }, box);
       this.bodies.set(body, {
         rowId,
         region: [x0, y0, x1 - x0 + 1, y1 - y0 + 1],
@@ -1903,7 +1901,8 @@ export class FluidSession {
     }
   }
 
-  private lastPublished = 0;
+  /** When the flow was last checked (`check`). */
+  private lastChecked = 0;
 
   /** Readbacks in flight, and the lattice they were asked of. */
   private reads:
@@ -1947,21 +1946,19 @@ export class FluidSession {
       const texel = lattice.finishRead(reads.macro);
       if (texel !== undefined) {
         reads.macro = undefined;
-        const macro = macroFromTexels(texel);
-        this.publishVelocity(macro);
-        // Mach, validity and the stirring strength, every time the flow is
-        // read. This may restart or stop the lattice.
-        this.check(macro);
+        this.publishVelocity(texel);
+        // Mach, validity and the stirring strength, ten times a second. This
+        // may restart or stop the lattice.
+        if (now - this.lastChecked >= CHECK_INTERVAL_MS) {
+          this.lastChecked = now;
+          this.check(texel);
+        }
       }
     }
-    if (
-      this.overlay.current === lattice &&
-      reads.macro === undefined &&
-      now - this.lastPublished >= SAMPLE_INTERVAL_MS
-    ) {
-      this.lastPublished = now;
+    // The next read as soon as the last has landed: the particles and arrows
+    // follow the flow at the frame rate, not in steps.
+    if (this.overlay.current === lattice && reads.macro === undefined)
       reads.macro = lattice.beginRead("macro", 0, 0, lattice.nx, lattice.ny);
-    }
   }
 
   /** Lets go of every read in flight, as a new lattice or new bodies do. */
@@ -1990,26 +1987,33 @@ export class FluidSession {
 
   /**
    * Hands the flow's velocity to the particles and arrows, in graph units per
-   * second, ten times a second. They live in other WebGL contexts, which
-   * cannot read this one's textures, so the velocity crosses as numbers.
+   * second, from the macroscopic target's texels (`g8 δρ ux uy`). They live
+   * in other WebGL contexts, which cannot read this one's textures, so the
+   * velocity crosses as numbers.
+   *
+   * Every frame the GPU has a read ready, which is most of them. At ten
+   * times a second, as it was, the particles followed a picture of the flow
+   * that jumped about ten cells between updates, and the flow looked as if it
+   * lagged.
    */
-  private publishVelocity({ ux, uy }: MacroFields) {
+  private publishVelocity(texel: Float32Array) {
     const lattice = this.overlay.current;
     if (!lattice || !this.spec) return;
     const config = this.host.config();
     // A lattice velocity of 1 is a cell per step: dx/dt graph units per
     // second, which is the inflow speed over the lattice speed.
     const scale = config.inflowSpeed / this.latticeSpeed;
-    const data = new Float32Array(2 * ux.length);
+    const cells = texel.length / 4;
+    const data = new Float32Array(2 * cells);
     // A moving solid is fluid to the lattice, moving with the solid. Its
     // inside reads as no flow too, so particles there respawn rather than
     // drift through it.
+    const { solid } = this.spec;
     const coverage = this.spec.psm?.coverage;
-    for (let k = 0; k < ux.length; k++) {
-      if (this.spec.solid[k] || (coverage !== undefined && coverage[k] >= 0.5))
-        continue;
-      data[2 * k] = ux[k] * scale;
-      data[2 * k + 1] = uy[k] * scale;
+    for (let k = 0; k < cells; k++) {
+      if (solid[k] || (coverage !== undefined && coverage[k] >= 0.5)) continue;
+      data[2 * k] = texel[4 * k + 2] * scale;
+      data[2 * k + 1] = texel[4 * k + 3] * scale;
     }
     publishVelocitySample(FLUID_SAMPLE_SOURCE, {
       width: lattice.nx,
@@ -2024,19 +2028,25 @@ export class FluidSession {
    * lattice has gone unstable: it is stopped, and Auto restarts it slower.
    * Auto also slows down a flow that is merely too fast to be accurate.
    */
-  private check({ ux, uy, deltaRho }: MacroFields) {
+  private check(texel: Float32Array) {
     const lattice = this.overlay.current;
     if (!lattice || !this.spec) return;
-    let peak = 0;
+    const { solid } = this.spec;
+    let peakSquared = 0;
     let valid = true;
-    for (let k = 0; k < ux.length; k++) {
-      if (this.spec.solid[k]) continue;
-      if (!Number.isFinite(deltaRho[k]) || !(1 + deltaRho[k] > 0)) {
+    for (let k = 0; k < texel.length / 4; k++) {
+      if (solid[k]) continue;
+      const deltaRho = texel[4 * k + 1];
+      if (!Number.isFinite(deltaRho) || !(1 + deltaRho > 0)) {
         valid = false;
         break;
       }
-      peak = Math.max(peak, Math.hypot(ux[k], uy[k]));
+      const ux = texel[4 * k + 2];
+      const uy = texel[4 * k + 3];
+      const squared = ux * ux + uy * uy;
+      if (squared > peakSquared) peakSquared = squared;
     }
+    const peak = Math.sqrt(peakSquared);
     this.peakMach = valid ? peak * Math.sqrt(3) : Infinity;
     if (valid) this.regulateForce(peak);
     const config = this.host.config();

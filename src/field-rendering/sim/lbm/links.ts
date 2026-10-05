@@ -67,11 +67,15 @@ export function computeLinks(
   const q = new Float32Array(Q * cells).fill(0.5);
   let placed = 0;
   let fallbacks = 0;
+  const functions = new Map<number, (x: number, y: number) => number>();
   for (let j = 0; j < ny; j++) {
     for (let i = 0; i < nx; i++) {
       const k = j * nx + i;
       if (solid[k]) continue;
-      const [x0, y0] = grid.centre(i, j);
+      // The centre only once a solid neighbour is found: most cells have
+      // none, and this runs whenever the solids change.
+      let x0 = NaN;
+      let y0 = NaN;
       for (let d = 1; d < Q; d++) {
         const si = i - CX[d];
         const sj = j - CY[d];
@@ -82,8 +86,13 @@ export function computeLinks(
         if (!body) continue;
         // The unwrapped neighbour: the link runs one lattice vector from the
         // fluid cell, even where streaming carries it across a seam.
+        if (Number.isNaN(x0)) [x0, y0] = grid.centre(i, j);
         const [x1, y1] = grid.centre(si, sj);
-        const f = signed(body);
+        let f = functions.get(body);
+        if (f === undefined) {
+          f = signed(body);
+          functions.set(body, f);
+        }
         const at = (t: number) => f(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t);
         const found = crossing(at);
         if (found === undefined) {
@@ -104,12 +113,70 @@ function wrapIndex(index: number, n: number, periodic: boolean) {
   return periodic ? (index + n) % n : undefined;
 }
 
+/**
+ * A root of `at` in [0, 1], given at(0) = `start` > 0 and at(1) = `end` ≤ 0,
+ * by false position with the Illinois rule (the end that keeps its place has
+ * its value halved, so neither end sticks). Undefined if a value is NaN.
+ */
+function falsePosition(
+  at: (t: number) => number,
+  start: number,
+  end: number
+): number | undefined {
+  let lo = 0;
+  let hi = 1;
+  let fLo = start;
+  let fHi = end;
+  let side = 0;
+  let t = 0;
+  for (let n = 0; n < 60; n++) {
+    t = (lo * fHi - hi * fLo) / (fHi - fLo);
+    const value = at(t);
+    if (Number.isNaN(value)) return undefined;
+    if (value > 0) {
+      lo = t;
+      fLo = value;
+      if (side === -1) fHi /= 2;
+      side = -1;
+    } else {
+      hi = t;
+      fHi = value;
+      if (side === 1) fLo /= 2;
+      side = 1;
+    }
+    if (value === 0 || hi - lo < 1e-9) return t;
+  }
+  return t;
+}
+
 /** The first t in [0, 1] where `at` goes from positive to at most zero. */
 function crossing(at: (t: number) => number): number | undefined {
   let previousT = 0;
   let previous = at(0);
   if (Number.isNaN(previous)) return undefined;
   if (previous <= 0) return 0;
+  // The usual link: one crossing, the fluid end out and the solid end in.
+  // Where the function is close to straight along the link, as it is for
+  // any wall smooth on the scale of a cell, the straight line through the
+  // ends finds the root. If that and a point a millionth beyond it bracket
+  // the wall, with no sign change before it on a coarse scan, it is the
+  // crossing; this costs a few evaluations where the scan and bisection below
+  // cost forty, which made parking a dragged solid a visible hitch.
+  const end = at(1);
+  if (end <= 0) {
+    const root = falsePosition(at, previous, end);
+    if (root !== undefined) {
+      let earlier = false;
+      for (let s = 1; s / SAMPLES < root; s++) {
+        const value = at(s / SAMPLES);
+        if (!(value > 0)) {
+          earlier = true;
+          break;
+        }
+      }
+      if (!earlier) return root;
+    }
+  }
   for (let s = 1; s <= SAMPLES; s++) {
     const t = s / SAMPLES;
     const value = at(t);
@@ -143,16 +210,43 @@ export function bodyForce(
   solid: Uint8Array,
   grid: Pick<LinkGrid, "nx" | "ny" | "periodicX" | "periodicY">
 ): [number, number] {
-  const { nx, ny } = grid;
   const sum = [new Compensated(), new Compensated()];
   for (let k = 0; k < cellBody.length; k++) {
     if (cellBody[k] !== body) continue;
     sum[0].add(cellForce[2 * k]);
     sum[1].add(cellForce[2 * k + 1]);
   }
-  // The rest state's share, which shifted populations leave out.
-  for (let j = 0; j < ny; j++) {
-    for (let i = 0; i < nx; i++) {
+  const [rx, ry] = restShare(body, solid, grid);
+  sum[0].add(rx);
+  sum[1].add(ry);
+  return [sum[0].value, sum[1].value];
+}
+
+/**
+ * The rest state's share of a body's force, which shifted populations leave
+ * out of `cellForce`: −2 w c over every link from fluid into the body.
+ *
+ * `box` (`[x0, y0, x1, y1]`, the body's cells) limits the search to the
+ * fluid cells around it; without one, or on a periodic grid, every cell is
+ * looked at. The tab asks this of each body whenever its solids change, and
+ * over the whole grid it was a third of what parking a solid cost.
+ */
+export function restShare(
+  body: number,
+  solid: Uint8Array,
+  grid: Pick<LinkGrid, "nx" | "ny" | "periodicX" | "periodicY">,
+  box?: readonly number[]
+): [number, number] {
+  const { nx, ny } = grid;
+  const periodic = grid.periodicX === true || grid.periodicY === true;
+  const limit = box !== undefined && !periodic;
+  const i0 = limit ? Math.max(0, box[0] - 1) : 0;
+  const j0 = limit ? Math.max(0, box[1] - 1) : 0;
+  const i1 = limit ? Math.min(nx - 1, box[2] + 1) : nx - 1;
+  const j1 = limit ? Math.min(ny - 1, box[3] + 1) : ny - 1;
+  const sum = [new Compensated(), new Compensated()];
+  for (let j = j0; j <= j1; j++) {
+    for (let i = i0; i <= i1; i++) {
       if (solid[j * nx + i]) continue;
       for (let d = 1; d < Q; d++) {
         const si = wrapIndex(i - CX[d], nx, grid.periodicX === true);
