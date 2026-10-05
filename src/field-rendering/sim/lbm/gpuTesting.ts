@@ -34,6 +34,8 @@ export interface GpuSetup {
   forceScale?: number;
   /** Partially saturated cells: coverage, velocity (`2k`), body. */
   psm?: { coverage: number[]; velocity: number[]; body: number[] };
+  /** `CpuD2Q9.absorbingInlet`. */
+  absorbingInlet?: number;
   /** A change of lattice speed, made once the populations are set. */
   rescale?: { scale: number; tau: number };
 }
@@ -64,6 +66,7 @@ export async function runOnGpu(
         if (setup.forceField) lattice.setForceField(setup.forceField);
         lattice.forceScale = setup.forceScale ?? 1;
         if (setup.psm) lattice.setPartialSolids(setup.psm);
+        lattice.absorbingInlet = setup.absorbingInlet ?? 0;
         lattice.setPopulations(new Float32Array(populations));
         if (setup.rescale)
           lattice.rescale(setup.rescale.scale, setup.rescale.tau);

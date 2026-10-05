@@ -274,3 +274,59 @@ testWithPage(
   },
   120000
 );
+
+/**
+ * The absorbing inlet (`absorbingInflow`) on the GPU as on the CPU: a sound
+ * pulse sent at it, stepped past its arrival, with each row's mean carried
+ * from step to step in the force target.
+ */
+testWithPage(
+  "Fluid: the GPU's absorbing inlet steps as the CPU's does",
+  async (driver) => {
+    await driver.enablePlugin("vector-tools");
+    const nx = 120;
+    const ny = 8;
+    const u = 0.05;
+    const c = 1 / Math.sqrt(3);
+    const options = { nx, ny, tau: 0.55 };
+    const boundaries: Boundaries = {
+      left: { kind: "velocity", regularize: true },
+      right: { kind: "pressure", deltaRho: 0, regularize: true },
+      bottom: { kind: "slip" },
+      top: { kind: "slip" },
+    };
+    const inlet = {
+      ux: Array.from({ length: ny }, () => u),
+      uy: Array.from({ length: ny }, () => 0),
+    };
+    const cpu = new CpuD2Q9({ ...options, arithmetic: "float32" });
+    cpu.setBoundaries(boundaries);
+    cpu.inlet = { ux: Float64Array.from(inlet.ux), uy: new Float64Array(ny) };
+    cpu.absorbingInlet = 1 / 2000;
+    cpu.initialize((x) => {
+      const pulse = 1e-3 * Math.exp(-(((x - 40) / 8) ** 2));
+      return { deltaRho: pulse, ux: u - c * pulse, uy: 0 };
+    });
+    const [one, later] = await runOnGpu(
+      driver,
+      options,
+      Float32Array.from(cpu.populations),
+      [1, 100],
+      { boundaries, inlet, absorbingInlet: 1 / 2000 }
+    );
+    const worst = (a: ArrayLike<number>, b: ArrayLike<number>) => {
+      let w = 0;
+      for (let k = 0; k < b.length; k++) w = Math.max(w, Math.abs(a[k] - b[k]));
+      return w;
+    };
+    cpu.step(1);
+    expect(worst(one.populations, cpu.populations)).toBeLessThan(1e-8);
+    cpu.step(99);
+    // Looser than the other boundaries' 2e-7: the inlet feeds each step's
+    // density back into its velocity, which carries float32 rounding on
+    // while the pulse is leaving (measured 3.5e-7).
+    expect(worst(later.populations, cpu.populations)).toBeLessThan(5e-7);
+    await driver.disablePlugin("vector-tools");
+  },
+  90000
+);

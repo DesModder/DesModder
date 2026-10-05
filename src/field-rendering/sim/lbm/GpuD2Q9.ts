@@ -112,6 +112,8 @@ uniform vec2 u_wallVelocity[4];
 uniform bool u_regularize[4];
 uniform float u_openDeltaRho[4];
 uniform float u_inletScale;
+uniform float u_absorbingInlet;
+uniform sampler2D u_g3;
 uniform float u_spongeWidth;
 uniform float u_spongeMax;
 uniform float u_spongeEq[9];
@@ -296,6 +298,18 @@ void main() {
   // openPrescribed in boundaries.ts: an inlet blows only into the fluid part
   // of a cell, and moves the solid part at the solid's own speed.
   vec2 inflow = texelFetch(u_inlet, ivec2(c.y, 0), 0).xy * u_inletScale;
+  // absorbingInflow in boundaries.ts: the row's slow mean δρ rides in the
+  // force target's last channel, from one step to the next.
+  int openSide = c.x == 0 ? 0 : (c.x == n.x - 1 ? 1 : -1);
+  float inletMean = 0.0;
+  if (openSide >= 0 && u_kind[openSide] == 3 && u_absorbingInlet > 0.0) {
+    float dr = texelFetch(u_g2, c, 0).y;
+    float mean = texelFetch(u_g3, c, 0).w;
+    vec2 normal = vec2(FRAME_VECTOR[openSide * 4], FRAME_VECTOR[openSide * 4 + 1]);
+    float out_ = 0.5773502691896258 * (dr - mean);
+    inflow = vec2(inflow.x - out_ * normal.x, inflow.y - out_ * normal.y);
+    inletMean = mean + u_absorbingInlet * (dr - mean);
+  }
   vec2 prescribed = psm.x > 0.0 ? (1.0 - psm.x) * inflow + psm.x * psm.zw : inflow;
   if (c.x == 0 && u_kind[0] >= 3) {
     reconstruct(g, 0, prescribed, force);
@@ -387,7 +401,7 @@ void main() {
   o0 = vec4(g[0], g[1], g[2], g[3]);
   o1 = vec4(g[4], g[5], g[6], g[7]);
   o2 = vec4(g[8], dr, ux, uy);
-  o3 = vec4(linkFx, linkFy, float(linkBody), 0.0);
+  o3 = vec4(linkFx, linkFy, float(linkBody), inletMean);
 }`;
 
 /** `CpuD2Q9.rescale`, in the same operation order. */
@@ -402,6 +416,7 @@ uniform sampler2D u_solid;
 uniform bool u_hasSolid;
 uniform float u_scale;
 uniform float u_neqScale;
+uniform sampler2D u_g3;
 layout(location = 0) out vec4 o0;
 layout(location = 1) out vec4 o1;
 layout(location = 2) out vec4 o2;
@@ -416,7 +431,8 @@ void main() {
   vec4 a = texelFetch(u_g0, c, 0);
   vec4 b = texelFetch(u_g1, c, 0);
   vec4 m = texelFetch(u_g2, c, 0);
-  o3 = vec4(0.0);
+  // The absorbing inlet's mean pressure, like any other: times s².
+  o3 = vec4(0.0, 0.0, 0.0, (u_scale * u_scale) * texelFetch(u_g3, c, 0).w);
   if (u_hasSolid && texelFetch(u_solid, c, 0).r > 0.0) {
     o0 = a;
     o1 = b;
@@ -512,6 +528,8 @@ export class GpuD2Q9 {
   force: readonly [number, number];
   /** Multiplies the inlet profile, for an eased start or a gust. */
   inletScale = 1;
+  /** `CpuD2Q9.absorbingInlet`: 0 for a rigid inlet. */
+  absorbingInlet = 0;
   /** The Smagorinsky constant, 0 for plain BGK. See `CollisionParameters`. */
   smagorinsky = 0;
   /** What the force field is multiplied by (`CpuD2Q9.forceScale`). */
@@ -814,6 +832,7 @@ export class GpuD2Q9 {
     gl.uniform1f(at("u_forceScale"), this.forceScale);
     gl.uniform1i(at("u_hasPsm"), this.hasPsm ? 1 : 0);
     gl.uniform1f(at("u_inletScale"), this.inletScale);
+    gl.uniform1f(at("u_absorbingInlet"), this.absorbingInlet);
     const specs = SIDES.map((side) => this.boundaries[side]);
     gl.uniform1iv(
       at("u_kind"),
@@ -852,6 +871,7 @@ export class GpuD2Q9 {
       const from = this.sets[this.current];
       const to = this.sets[1 - this.current];
       for (let t = 0; t < 3; t++) bind(t, from.textures[t], `u_g${t}`);
+      bind(9, from.textures[3], "u_g3");
       gl.bindFramebuffer(gl.FRAMEBUFFER, to.framebuffer);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       this.current = 1 - this.current;
@@ -883,6 +903,9 @@ export class GpuD2Q9 {
     gl.activeTexture(gl.TEXTURE3);
     gl.bindTexture(gl.TEXTURE_2D, this.solidTexture);
     gl.uniform1i(at("u_solid"), 3);
+    gl.activeTexture(gl.TEXTURE4);
+    gl.bindTexture(gl.TEXTURE_2D, from.textures[3]);
+    gl.uniform1i(at("u_g3"), 4);
     gl.uniform1i(at("u_hasSolid"), this.hasSolid ? 1 : 0);
     gl.uniform1f(at("u_scale"), scale);
     gl.uniform1f(

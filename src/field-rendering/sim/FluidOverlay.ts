@@ -36,6 +36,8 @@ export interface LatticeSpec {
   inletUx: number[];
   inletUy: number[];
   sponge: Sponge | undefined;
+  /** `GpuD2Q9.absorbingInlet`, absent for a rigid inlet. */
+  absorbingInlet?: number;
   /** The velocity the tank starts at, everywhere outside the solids. */
   initial: readonly [number, number];
   /** A force density per cell (`2k`, `2k + 1`), or undefined for none. */
@@ -200,6 +202,7 @@ export class FluidOverlay {
       lattice.setBoundaries(spec.boundaries);
       lattice.setInlet(spec.inletUx, spec.inletUy);
       lattice.setSponge(spec.sponge);
+      lattice.absorbingInlet = spec.absorbingInlet ?? 0;
       lattice.setSolid(spec.solid);
       lattice.setLinks(spec.links);
       lattice.setForceField(spec.forceField);

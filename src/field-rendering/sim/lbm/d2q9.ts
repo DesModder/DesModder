@@ -35,6 +35,7 @@ import {
   SIDES,
   isOpen,
   isWall,
+  absorbingInflow,
   openPrescribed,
   reconstructOpen,
   sideFrame,
@@ -289,6 +290,7 @@ export class CpuD2Q9 {
     this.uy = new Float64Array(this.cells);
     this.cellForce = new Float64Array(2 * this.cells);
     this.cellBody = new Uint8Array(this.cells);
+    this.inletMean = new Float64Array(2 * this.ny);
   }
 
   /** Sets every cell to equilibrium at the density and velocity given. */
@@ -331,6 +333,14 @@ export class CpuD2Q9 {
   /** A velocity side's profile, per row, scaled by `inletScale`. */
   inlet: { ux: Float64Array; uy: Float64Array } | undefined;
   inletScale = 1;
+  /**
+   * Lets sound out through a velocity side instead of reflecting it (0 for
+   * the rigid inlet). See `absorbingInflow`: the value is the rate at which
+   * each row's mean δρ follows its δρ, per step.
+   */
+  absorbingInlet = 0;
+  /** Each velocity side's rows' slow mean δρ, `side·ny + y`, left then right. */
+  readonly inletMean: Float64Array;
   /** The Smagorinsky constant, 0 for plain BGK. See `CollisionParameters`. */
   smagorinsky = 0;
   /**
@@ -492,12 +502,22 @@ export class CpuD2Q9 {
             if (x !== (side === "left" ? 0 : nx - 1)) continue;
             const spec = boundaries[side];
             if (!isOpen(spec)) continue;
-            const inflow: [number, number] = this.inlet
+            let inflow: [number, number] = this.inlet
               ? [
                   r(this.inlet.ux[y] * this.inletScale),
                   r(this.inlet.uy[y] * this.inletScale),
                 ]
               : [0, 0];
+            if (this.absorbingInlet > 0 && spec.kind === "velocity") {
+              // This cell's δρ is still the last step's here.
+              const m = (side === "left" ? 0 : ny) + y;
+              const dr = r(this.deltaRho[k]);
+              const mean = r(this.inletMean[m]);
+              inflow = absorbingInflow(inflow, frames[side].n, dr, mean, r);
+              this.inletMean[m] = r(
+                mean + r(r(this.absorbingInlet) * r(dr - mean))
+              );
+            }
             const prescribed = this.psm
               ? openPrescribed(
                   inflow,
@@ -609,6 +629,9 @@ export class CpuD2Q9 {
       this.ux[k] = ux2;
       this.uy[k] = uy2;
     }
+    // The absorbing inlet's mean pressure, like any other: times s².
+    for (let m = 0; m < this.inletMean.length; m++)
+      this.inletMean[m] = r(r(s * s) * this.inletMean[m]);
     this.tau = tau;
   }
 

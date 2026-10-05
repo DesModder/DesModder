@@ -245,6 +245,33 @@ export function openPrescribed(
   ];
 }
 
+/** The lattice's speed of sound, 1/√3 cells a step. */
+export const SOUND_SPEED = 0.5773502691896258;
+
+/**
+ * A velocity side that lets sound out instead of reflecting it.
+ *
+ * A side that holds the velocity fixed reflects every pressure wave that
+ * reaches it, so a tunnel between it and the outlet rings like a pipe: with a
+ * solid touching the inlet, its noise built a standing wave with the
+ * tunnel's round-trip period, the inflow pulsed by 3.5%, and the particles
+ * drew it as bands across the stream. In linear acoustics a wave leaving
+ * through the side has u′ = −c_s ρ′ along its inward normal, so prescribing
+ * that leaves nothing reflected (the first-order characteristic condition).
+ * ρ′ is measured from each row's slow mean δρ (`mean`), so the steady
+ * pressure a solid raises at the inlet is kept, and with it the inflow.
+ */
+export function absorbingInflow(
+  inflow: readonly [number, number],
+  normal: readonly [number, number],
+  deltaRho: number,
+  mean: number,
+  r: (value: number) => number
+): [number, number] {
+  const out = r(r(SOUND_SPEED) * r(deltaRho - mean));
+  return [r(inflow[0] - r(out * normal[0])), r(inflow[1] - r(out * normal[1]))];
+}
+
 /** The sponge's strength at column x: 0 before it, rising to `max`. */
 export function spongeStrength(
   x: number,
