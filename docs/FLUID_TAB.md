@@ -89,6 +89,13 @@ The liquid comes next (brief §8.0).
   with the step they were taken at. Measured live (300 × 120, two solids),
   synchronous reads were 78% of each frame's main-thread time: 12.6 ms a frame
   then, 3.2 ms now. Moving solids are sampled the same way (above).
+- **The inlet lets sound out.** A rigid velocity inlet reflects every
+  pressure wave, and a solid near it made the tunnel ring at its round-trip
+  period, drawn by the particles as bands across the stream. The inlet now
+  prescribes u = U − c_s(δρ − δρ̄) against each row's slow mean δρ̄
+  (`absorbingInflow`): a pulse comes back at 0.018 of itself instead of 0.90.
+- **The particles follow the flow every frame** the GPU has a read ready,
+  about 45 times a second, not 10.
 - **The backdrop follows the arrows.** The dark backdrop is laid by the
   particles while they run, and by the arrows when the particles are off.
 
@@ -156,9 +163,13 @@ Evidence pictures: `assets/fluid-gate1-taylor-green.png`,
   last valid state while a solid moves above Re 200, and to roll back and cap
   Re at 200 if the flow goes invalid. For now the tab's general guard
   applies: an invalid flow halves the lattice speed and restarts.
-- **Parking and unparking rebuild the mask on the CPU**, 9 to 31 ms once at
-  the start of a drag and half a second after it, mostly placing the walls'
-  link fractions (up to 40 evaluations a link).
+- **Parking and unparking rebuild the mask on the CPU**, 9 to 19 ms once at
+  the start of a drag and half a second after it.
+- **The solver is memory-bandwidth bound.** 300 × 167 cells cost 0.10 ms a
+  step on Iris Xe, 600 × 334 cost 1.22 ms. Half-precision storage is round 4's
+  question A (`VECTOR_TOOLS_FLUID_RESEARCH_FOLLOWUP_3.md`).
+- **While the tank's mean pressure settles after a start**, the absorbing
+  inlet's mean lags it and the inflow runs up to 2% short for some seconds.
 - **While a solid moves, its walls are partially saturated cells**, a blend
   over a cell rather than a line, with fluid inside that moves with it. A
   sharper moving wall (interpolated bounce-back with refilled cells) is the
@@ -189,6 +200,7 @@ Evidence pictures: `assets/fluid-gate1-taylor-green.png`,
 
 ## Next
 
-- **The liquid** (brief §8.0).
+- **The liquid** (brief §8.0): method and oracle asked of GPT in round 4
+  (`VECTOR_TOOLS_FLUID_RESEARCH_FOLLOWUP_3.md`), then a mock-up.
 - **Gate 7 onward:** 3D FieldPlay on the camera match in
   `DESMOS_3D_CAMERA.md`.
