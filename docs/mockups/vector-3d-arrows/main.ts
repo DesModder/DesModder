@@ -145,8 +145,6 @@ const state = {
   look: "arrows" as Look,
   cutaway: "off" as Cutaway,
   cutAngle: Math.PI / 2,
-  cutFaces: true,
-  faceOpacity: 0.9,
   lines: { auto: true, value: 2500 } as Auto<number>,
   lineLength: 0.6,
   lineOpacity: 0.4,
@@ -313,8 +311,6 @@ function effective(): ArrowSettings & { autoNotes: Record<string, string> } {
     look: state.look,
     cutaway: state.cutaway,
     cutAngle: state.cutAngle,
-    cutFaces: state.cutFaces,
-    faceOpacity: state.faceOpacity,
     lines: state.lines.auto
       ? autoLines
       : clamp(Math.round(state.lines.value), 1, 40000),
@@ -643,7 +639,6 @@ function showReadouts(
   $("cloudContrastValue").textContent = state.cloudContrast.toFixed(1);
   syncChips("cutaway", state.cutaway);
   $("cutAngleRow").hidden = state.cutaway !== "wedge";
-  $("cutFaces").hidden = state.cutaway === "off";
   $("cutAngleValue").textContent =
     `${Math.round((state.cutAngle * 180) / Math.PI)}°`;
   $("flowSpeedValue").textContent = `${state.flowSpeed.toFixed(2)} lines/s`;
@@ -934,11 +929,6 @@ function wire() {
     "clip",
     () => state.clip,
     (v) => (state.clip = v)
-  );
-  toggle(
-    "cutFaces",
-    () => state.cutFaces,
-    (v) => (state.cutFaces = v)
   );
   onChips("cutaway", (v) => {
     state.cutaway = v as Cutaway;
