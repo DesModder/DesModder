@@ -1,0 +1,797 @@
+<title>Vector Tools 3D Arrows</title>
+<style>
+  /* Layout: the 3D graph on the left with the overlay laid exactly over it,
+     the panel that would sit in Vector Tools on the right; they stack below
+     960px. Desmos's own look is the design system, as in the other mock-ups. */
+  :root {
+    --ground: #eceef1;
+    --surface: #ffffff;
+    --surface-2: #f5f6f8;
+    --rule: #d8dbe0;
+    --ink: #1f2226;
+    --ink-2: #5f6670;
+    --accent: #2f6fd6;
+    --accent-ink: #ffffff;
+    --chip: #eceef1;
+    --chip-rule: #cdd1d7;
+    --paper: #ffffff;
+    --good-bg: #edf6ee;
+    --good-ink: #2d6a35;
+    --warn-bg: #fdf1e2;
+    --warn-ink: #8a5200;
+    --font-ui: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    --font-math: "Times New Roman", Times, "Liberation Serif", serif;
+    --font-num:
+      ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #141619;
+      --surface: #1e2125;
+      --surface-2: #25292e;
+      --rule: #353a41;
+      --ink: #e6e8eb;
+      --ink-2: #a2a9b3;
+      --accent: #5b93ef;
+      --accent-ink: #0d1420;
+      --chip: #2a2f35;
+      --chip-rule: #3e444c;
+      --paper: #1a1c1f;
+      --good-bg: #1d3221;
+      --good-ink: #93d39e;
+      --warn-bg: #3a2b16;
+      --warn-ink: #f2c27b;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #141619;
+    --surface: #1e2125;
+    --surface-2: #25292e;
+    --rule: #353a41;
+    --ink: #e6e8eb;
+    --ink-2: #a2a9b3;
+    --accent: #5b93ef;
+    --accent-ink: #0d1420;
+    --chip: #2a2f35;
+    --chip-rule: #3e444c;
+    --paper: #1a1c1f;
+    --good-bg: #1d3221;
+    --good-ink: #93d39e;
+    --warn-bg: #3a2b16;
+    --warn-ink: #f2c27b;
+    color-scheme: dark;
+  }
+  [hidden] {
+    display: none !important;
+  }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font: 14px/1.45 var(--font-ui);
+  }
+  .page {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    padding-block: 18px 28px;
+    display: grid;
+    gap: 14px;
+  }
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 14px;
+  }
+  h1 {
+    font-size: 20px;
+    margin: 0;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+  .badge {
+    font-size: 12px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+    border: 1px solid color-mix(in srgb, var(--warn-ink) 30%, transparent);
+  }
+  .lede {
+    margin: 0;
+    color: var(--ink-2);
+    max-width: 75ch;
+  }
+  .work {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 350px;
+    gap: 14px;
+    align-items: start;
+  }
+  @media (max-width: 960px) {
+    .work {
+      grid-template-columns: 1fr;
+    }
+  }
+  .graph {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 10px;
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+  }
+  @media (max-width: 960px) {
+    .graph {
+      position: static;
+    }
+  }
+  .stage {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 4 / 3;
+    touch-action: none;
+    cursor: grab;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .stage:active {
+    cursor: grabbing;
+  }
+  .stage canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  #overlay {
+    pointer-events: none;
+  }
+  .layers {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    display: flex;
+    gap: 6px;
+    pointer-events: none;
+    font-size: 11px;
+  }
+  .layers span {
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--surface) 85%, transparent);
+    border: 1px solid var(--rule);
+    color: var(--ink-2);
+  }
+  .caption {
+    font-size: 12px;
+    color: var(--ink-2);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    display: grid;
+    min-width: 0;
+  }
+  .panel > section {
+    padding: 12px 14px;
+    border-top: 1px solid var(--rule);
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+  .panel > section:first-child {
+    border-top: 0;
+  }
+  .label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .sub {
+    font-size: 12px;
+    color: var(--ink-2);
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .sub b {
+    color: var(--ink);
+    font-weight: 600;
+    font-family: var(--font-num);
+    font-size: 12px;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .chip {
+    font: inherit;
+    font-size: 13px;
+    padding: 4px 9px;
+    border-radius: 4px;
+    border: 1px solid var(--chip-rule);
+    background: var(--chip);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .chip[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  .chip:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .chip.swatch {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ramp {
+    width: 26px;
+    height: 10px;
+    border-radius: 2px;
+    border: 1px solid var(--chip-rule);
+  }
+  .chip:focus-visible,
+  .btn:focus-visible,
+  input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .btn {
+    font: inherit;
+    font-size: 13px;
+    padding: 5px 11px;
+    border-radius: 4px;
+    border: 1px solid var(--chip-rule);
+    background: var(--surface-2);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .eq {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 6px 8px;
+    align-items: center;
+  }
+  .eq label {
+    font-family: var(--font-math);
+    font-style: italic;
+    font-size: 15px;
+  }
+  input[type="text"],
+  input[type="number"] {
+    font: 13px var(--font-num);
+    padding: 5px 7px;
+    border: 1px solid var(--chip-rule);
+    border-radius: 4px;
+    background: var(--surface-2);
+    color: var(--ink);
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  input[type="number"] {
+    width: 76px;
+  }
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+  }
+  .box {
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr;
+    gap: 6px;
+    align-items: center;
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+  .box input[type="number"] {
+    width: 100%;
+  }
+  .hint {
+    font-size: 12px;
+    color: var(--ink-2);
+    margin: 0;
+  }
+  .error {
+    font-size: 12px;
+    padding: 6px 9px;
+    border-radius: 4px;
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+    margin: 0;
+  }
+  dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 5px 12px;
+    align-items: baseline;
+  }
+  dt {
+    color: var(--ink-2);
+    font-size: 12px;
+  }
+  dd {
+    margin: 0;
+    font-family: var(--font-num);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+  .verdict {
+    font-size: 12px;
+    padding: 6px 9px;
+    border-radius: 4px;
+  }
+  .verdict.good {
+    background: var(--good-bg);
+    color: var(--good-ink);
+  }
+  .verdict.warn {
+    background: var(--warn-bg);
+    color: var(--warn-ink);
+  }
+  .notes {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 12px 16px;
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+  .notes h2 {
+    font-size: 14px;
+    margin: 6px 0 0;
+  }
+  .notes p {
+    margin: 0;
+    max-width: 80ch;
+  }
+  .notes table {
+    border-collapse: collapse;
+    font-size: 13px;
+    width: 100%;
+  }
+  .notes th,
+  .notes td {
+    text-align: left;
+    padding: 5px 8px;
+    border-top: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  .notes th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-2);
+    border-top: 0;
+  }
+  .wrap {
+    overflow-x: auto;
+  }
+  #fatal {
+    padding: 12px;
+  }
+</style>
+<div class="page">
+  <header>
+    <h1>Vector Tools 3D Arrows</h1>
+    <span class="badge"
+      >Mock-up: the graph underneath is a stand-in for Desmos 3D</span
+    >
+    <p class="lede">
+      Live arrows for a field F(x, y, z) = (P, Q, R), drawn on their own WebGL
+      canvas over a 3D graph, as the plugin would draw them over Desmos 3D. Drag
+      to rotate, scroll to zoom. The two layers are separate GPU contexts, as
+      they are in the real page: the arrows cannot see the graph's depth.
+    </p>
+  </header>
+  <p id="fatal" class="error" hidden></p>
+
+  <div class="work">
+    <div class="graph">
+      <div
+        class="stage"
+        id="stage"
+        aria-label="3D graph with arrows; drag to rotate, scroll to zoom"
+        role="img"
+      >
+        <canvas id="desmos"></canvas>
+        <canvas id="overlay"></canvas>
+        <div class="layers">
+          <span>Desmos 3D (stand-in)</span><span>+ our arrow overlay</span>
+        </div>
+      </div>
+      <div class="caption">
+        <span>Drag: turn and tilt</span><span>Wheel: zoom</span>
+        <span id="presetNote"></span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <section>
+        <div class="label">Field</div>
+        <div class="chips" data-key="preset"></div>
+        <div class="eq">
+          <label for="fieldP">P =</label
+          ><input type="text" id="fieldP" spellcheck="false" />
+          <label for="fieldQ">Q =</label
+          ><input type="text" id="fieldQ" spellcheck="false" />
+          <label for="fieldR">R =</label
+          ><input type="text" id="fieldR" spellcheck="false" />
+        </div>
+        <p class="hint">
+          Desmos LaTeX, compiled by the plugin's own compiler, now with z.
+        </p>
+        <p class="error" id="fieldError" hidden></p>
+      </section>
+
+      <section>
+        <div class="label">Arrow shape</div>
+        <div class="chips" data-key="shape">
+          <button class="chip" data-value="auto">Auto</button>
+          <button class="chip" data-value="lines">Lines</button>
+          <button class="chip" data-value="flat">Flat</button>
+          <button class="chip" data-value="solid">Shaded 3D</button>
+        </div>
+        <div class="sub"><span>Auto picks</span><b id="autoShape"></b></div>
+        <div class="sub"><span>Thickness</span><b id="widthValue"></b></div>
+        <input
+          type="range"
+          id="width"
+          min="1"
+          max="10"
+          step="0.5"
+          value="3"
+          aria-label="Arrow thickness"
+        />
+      </section>
+
+      <section>
+        <div class="label">Where arrows go</div>
+        <div class="chips" data-key="sampling">
+          <button class="chip" data-value="grid">Whole box</button>
+          <button class="chip" data-value="slice">Slice</button>
+          <button class="chip" data-value="jitter">Jittered</button>
+          <button class="chip" data-value="surface">On the surface</button>
+        </div>
+        <div id="sliceRow" class="row" hidden>
+          <div class="chips" data-key="sliceAxis">
+            <button class="chip" data-value="0">x =</button>
+            <button class="chip" data-value="1">y =</button>
+            <button class="chip" data-value="2">z =</button>
+          </div>
+          <b
+            id="slicePosValue"
+            style="font-family: var(--font-num); font-size: 12px"
+          ></b>
+          <input
+            type="range"
+            id="slicePos"
+            min="0.02"
+            max="0.98"
+            step="0.005"
+            value="0.5"
+            aria-label="Slice position"
+          />
+        </div>
+        <div class="row">
+          <button class="chip" id="countAuto">Auto</button>
+          <input
+            type="number"
+            id="count"
+            min="1"
+            max="64"
+            step="1"
+            aria-label="Arrows per axis"
+          />
+          <span class="hint">per axis; Auto now <b id="autoCount"></b></span>
+        </div>
+      </section>
+
+      <section>
+        <div class="label">Length</div>
+        <div class="chips" data-key="lengthMode">
+          <button class="chip" data-value="normalized">All equal</button>
+          <button class="chip" data-value="saturating">Saturating</button>
+          <button class="chip" data-value="clamped">Linear, capped</button>
+          <button class="chip" data-value="actual">True size</button>
+        </div>
+        <div class="row">
+          <button class="chip" id="lengthAuto">Auto</button>
+          <span class="hint">Auto is <span id="autoLength"></span></span>
+        </div>
+        <div class="sub"><span>Size</span><b id="lengthValue"></b></div>
+        <input
+          type="range"
+          id="length"
+          min="0.2"
+          max="2.5"
+          step="0.05"
+          value="0.8"
+          aria-label="Arrow length as a multiple of spacing"
+        />
+        <p class="hint">
+          Saturating uses the colour ramp's curve, so length and colour agree.
+          Every mode is capped at an eighth of the box's diagonal.
+        </p>
+      </section>
+
+      <section>
+        <div class="label">Colour</div>
+        <div class="chips" data-key="colorMode">
+          <button class="chip" data-value="magnitude">By magnitude</button>
+          <button class="chip" data-value="fixed">One colour</button>
+        </div>
+        <div class="chips" data-key="palette"></div>
+        <div class="row">
+          <button class="chip" id="scaleAuto">Auto</button>
+          <input
+            type="number"
+            id="scale"
+            min="0"
+            step="any"
+            aria-label="Colour scale"
+          />
+          <span class="hint">scale; Auto is <span id="autoScale"></span></span>
+        </div>
+        <div class="row">
+          <span class="hint">Auto takes the scale</span>
+          <div class="chips" data-key="scaleRule">
+            <button class="chip" data-value="field">From the field</button>
+            <button class="chip" data-value="box">From the box (as 2D)</button>
+          </div>
+        </div>
+        <div class="verdict" id="colourVerdict"></div>
+      </section>
+
+      <section>
+        <div class="label">Depth cues</div>
+        <div class="chips">
+          <button class="chip" id="cueShading">Shading</button>
+          <button class="chip" id="cueFog">Fade with distance</button>
+          <button class="chip" id="cueOutline">Outline</button>
+          <button class="chip" id="cueDepth">Arrows hide each other</button>
+        </div>
+        <p class="hint">
+          Shading only applies to Shaded 3D. Try Spin below: motion is the
+          strongest depth cue of all.
+        </p>
+      </section>
+
+      <section>
+        <div class="label">Arrows behind the surface</div>
+        <div class="chips" data-key="occlusion">
+          <button class="chip" data-value="over">X-ray</button>
+          <button class="chip" data-value="hide">Hidden</button>
+          <button class="chip" data-value="fade">Faded</button>
+        </div>
+        <div id="meshRow" class="row" hidden>
+          <span class="hint">Our copy of the surface:</span>
+          <div class="chips" data-key="mesh">
+            <button class="chip" data-value="auto">Auto</button>
+          </div>
+          <span class="hint"
+            >Auto is <span id="autoMesh"></span> (coarsest under 1 px)</span
+          >
+        </div>
+        <button class="chip" id="clip">Clip to the box</button>
+        <p class="hint">
+          This is your decision. Hidden and Faded work by redrawing the surface
+          ourselves; see the notes below.
+        </p>
+      </section>
+
+      <section>
+        <div class="label">The graph (stand-in for Desmos)</div>
+        <div class="chips" data-key="surfacePreset"></div>
+        <div class="eq">
+          <label for="surface">z =</label
+          ><input type="text" id="surface" spellcheck="false" />
+        </div>
+        <p class="error" id="surfaceError" hidden></p>
+        <div class="sub">
+          <span>Surface opacity</span><b id="opacityValue"></b>
+        </div>
+        <input
+          type="range"
+          id="opacity"
+          min="0.2"
+          max="1"
+          step="0.05"
+          value="0.85"
+          aria-label="Surface opacity"
+        />
+        <div class="sub">
+          <span>Perspective</span><b id="perspectiveValue"></b>
+        </div>
+        <input
+          type="range"
+          id="perspective"
+          min="0"
+          max="3"
+          step="0.1"
+          value="1"
+          aria-label="Perspective"
+        />
+        <div class="box">
+          <span>x</span
+          ><input type="number" id="xmin" step="any" aria-label="x min" /><span
+            >to</span
+          ><input type="number" id="xmax" step="any" aria-label="x max" />
+          <span>y</span
+          ><input type="number" id="ymin" step="any" aria-label="y min" /><span
+            >to</span
+          ><input type="number" id="ymax" step="any" aria-label="y max" />
+          <span>z</span
+          ><input type="number" id="zmin" step="any" aria-label="z min" /><span
+            >to</span
+          ><input type="number" id="zmax" step="any" aria-label="z max" />
+        </div>
+        <div class="row">
+          <button class="chip" id="spin">Spin</button>
+          <button class="btn" id="resetView">Reset view</button>
+        </div>
+      </section>
+
+      <section>
+        <div class="label">Measured</div>
+        <dl>
+          <dt>Arrows asked for</dt>
+          <dd id="mInstances"></dd>
+          <dt>Arrows drawn</dt>
+          <dd id="mDrawn"></dd>
+          <dt>Vertices per arrow</dt>
+          <dd id="mPerArrow"></dd>
+          <dt>Vertices per frame</dt>
+          <dd id="mVertices"></dd>
+          <dt>Overlay GPU time</dt>
+          <dd id="mGpu"></dd>
+          <dt>Frame rate</dt>
+          <dd id="mFps"></dd>
+          <dt>|F| median</dt>
+          <dd id="mMedian"></dd>
+          <dt>|F| largest</dt>
+          <dd id="mMax"></dd>
+          <dt>At the end of the ramp</dt>
+          <dd id="mSaturated"></dd>
+          <dt>In its first tenth</dt>
+          <dd id="mBottom"></dd>
+          <dt>Lengths cut by the cap</dt>
+          <dd id="mCapped"></dd>
+          <dt>Our surface vs the true one</dt>
+          <dd id="mGap"></dd>
+        </dl>
+        <div class="row">
+          <button class="btn" id="benchmark">Time 90 frames</button>
+        </div>
+        <p class="hint" id="benchmarkResult">
+          Spins the view for 90 frames and reports the median. Run it on your
+          own machine; numbers from a hidden tab mean nothing.
+        </p>
+      </section>
+    </div>
+  </div>
+
+  <div class="notes">
+    <h2>What is real here and what is a stand-in</h2>
+    <p>
+      <b>Real, from the plugin:</b> the LaTeX compiler (now with z), the colour
+      palettes and the saturating ramp, and the camera module that turns
+      Desmos's three matrices into one. The arrows are drawn the way the 2D
+      overlay draws them: the field is evaluated on the GPU, one draw call, no
+      vertex buffer.
+    </p>
+    <p>
+      <b>Stand-in:</b> the graph underneath. It hands the overlay the same three
+      matrices Desmos 3D reports, in the same format, but its field of view per
+      perspective step is not Desmos's own. Desmos's real meshing and lighting
+      are also different. Lining up with the real Desmos is part B, after this.
+    </p>
+    <p>
+      <b>Checked against GPT's research round:</b> it independently recommends
+      shaded solid arrows that hide each other, stratified jitter rather than a
+      lattice, a colour scale taken from a percentile of the field rather than
+      from the box, and X-ray as the honest default. Its timings were guesses;
+      the "Time 90 frames" button measures them on your GPU.
+    </p>
+
+    <h2>Arrows behind a surface: the options</h2>
+    <div class="wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Option</th>
+            <th>How</th>
+            <th>Cost and risk</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>(a) X-ray: draw over everything</td>
+            <td>
+              No occlusion. Depth comes from shading, fading, outlines and
+              motion.
+            </td>
+            <td>
+              Free, and never wrong about where an arrow is. An arrow behind a
+              hill still shows in front of it.
+            </td>
+          </tr>
+          <tr>
+            <td>(b) Hidden, our copy of the surface</td>
+            <td>
+              We redraw the surface you graphed, depth only, on our canvas, so
+              it hides arrows behind it.
+            </td>
+            <td>
+              Works for z = f(x, y) here. Implicit and parametric surfaces each
+              need their own mesher. Where our mesh and Desmos's differ, arrows
+              that touch the surface can flicker; the "Our surface vs the true
+              one" figure measures that gap.
+            </td>
+          </tr>
+          <tr>
+            <td>(b′) Faded, same copy</td>
+            <td>
+              As (b), but hidden parts are drawn faintly instead of removed.
+            </td>
+            <td>
+              Same cost as (b). Suits translucent surfaces: try lowering the
+              surface opacity.
+            </td>
+          </tr>
+          <tr>
+            <td>(c) Desmos-native vectors</td>
+            <td>
+              Write vector(start, end) expressions and let Desmos depth-sort
+              them.
+            </td>
+            <td>
+              That is step 2. Shareable and always correct, but capped, and
+              Desmos draws the arrowheads.
+            </td>
+          </tr>
+          <tr>
+            <td>(d) Hook Desmos's renderer</td>
+            <td>Draw inside Desmos's own WebGL context.</td>
+            <td>
+              Not shown here. Nothing has done this before: GLesmos, the obvious
+              precedent, draws on its own canvas too and copies the picture into
+              Desmos's 2D drawing. It would mean patching Desmos's private
+              renderer, which breaks when Desmos ships a new build.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script>
+  /*BUNDLE*/
+</script>

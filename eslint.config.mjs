@@ -16,6 +16,13 @@ export default tseslint.config(
       "LICENSE*",
       "**/dist",
       "**/dist-ts",
+      // Mock-ups, their measuring scripts and research delivered from outside
+      // sit outside every tsconfig, so the type-aware rules cannot parse them;
+      // they are bundled or run on their own and never ship. Worktrees are
+      // whole checkouts of this repo and are linted where they live.
+      "docs/mockups",
+      "docs/research",
+      ".claude",
       // Opt-out instead of opt-in to avoid forgetting to include some js file.
       "**/*.md",
       "**/*.json",

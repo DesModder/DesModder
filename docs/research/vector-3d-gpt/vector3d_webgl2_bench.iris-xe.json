@@ -1,0 +1,74 @@
+{
+  "info": {
+    "vendor": "Google Inc. (Intel)",
+    "renderer": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+    "shadingLanguageVersion": "WebGL GLSL ES 3.00 (OpenGL ES GLSL ES 3.0 Chromium)",
+    "extColorBufferFloat": true,
+    "timerQuery": true
+  },
+  "glyphs": {
+    "1000": {
+      "line": {
+        "median_ms": 0,
+        "min_ms": 0,
+        "max_ms": 0,
+        "vertices_per_arrow": 2,
+        "total_vertices": 2000
+      },
+      "billboard": {
+        "median_ms": 0,
+        "min_ms": 0,
+        "max_ms": 0,
+        "vertices_per_arrow": 9,
+        "total_vertices": 9000
+      },
+      "solid": {
+        "median_ms": 0,
+        "min_ms": 0,
+        "max_ms": 0,
+        "vertices_per_arrow": 72,
+        "total_vertices": 72000
+      }
+    },
+    "8000": {
+      "line": {
+        "median_ms": 0,
+        "min_ms": 0,
+        "max_ms": 0.19999998807907104,
+        "vertices_per_arrow": 2,
+        "total_vertices": 16000
+      },
+      "billboard": {
+        "median_ms": 0,
+        "min_ms": 0,
+        "max_ms": 0,
+        "vertices_per_arrow": 9,
+        "total_vertices": 72000
+      },
+      "solid": {
+        "median_ms": 0,
+        "min_ms": 0,
+        "max_ms": 0,
+        "vertices_per_arrow": 72,
+        "total_vertices": 576000
+      }
+    }
+  },
+  "particles": {
+    "16000": {
+      "resolution": 127,
+      "texels": 16129,
+      "median_ms": 0,
+      "min_ms": 0,
+      "max_ms": 0
+    },
+    "64000": {
+      "resolution": 253,
+      "texels": 64009,
+      "median_ms": 0,
+      "min_ms": 0,
+      "max_ms": 0
+    }
+  }
+}

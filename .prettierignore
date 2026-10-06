@@ -6,3 +6,6 @@ coverage
 run_calc_for_tests.ts
 state_schema.json
 raw.css
+
+# Built from docs/mockups/vector-3d-arrows/ by its build.mjs
+docs/mockups/vector-3d-arrows.html

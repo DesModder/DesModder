@@ -1,0 +1,335 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Vector Tools 3D glyph prototype</title>
+<style>
+  html,
+  body {
+    margin: 0;
+    height: 100%;
+    background: #101114;
+    color: #ddd;
+    font:
+      14px system-ui,
+      sans-serif;
+    overflow: hidden;
+  }
+  #ui {
+    position: absolute;
+    z-index: 2;
+    left: 12px;
+    top: 12px;
+    background: #181a1fcc;
+    padding: 10px 12px;
+    border-radius: 8px;
+    line-height: 1.45;
+    max-width: 330px;
+  }
+  label {
+    display: block;
+    margin: 5px 0;
+  }
+  select,
+  input {
+    background: #22262d;
+    color: #ddd;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 2px 4px;
+  }
+  canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  #stats {
+    white-space: pre-wrap;
+    color: #b9c6d8;
+    margin-top: 6px;
+    font-size: 12px;
+  }
+</style>
+<div id="ui">
+  <b>Vector Tools 3D — proposed glyph defaults</b>
+  <label
+    >Field
+    <select id="field">
+      <option value="0">Point charge</option>
+      <option value="1">Dipole</option>
+    </select></label
+  >
+  <label
+    >Samples
+    <select id="count">
+      <option>216</option>
+      <option selected>512</option>
+      <option>1000</option>
+      <option>1728</option>
+    </select></label
+  >
+  <label><input id="fog" type="checkbox" checked /> camera-depth fade</label>
+  <div>
+    Drag to orbit · wheel to zoom. Arrow length is fixed; magnitude is encoded
+    by the robust saturation ramp.
+  </div>
+  <div id="stats"></div>
+</div>
+<canvas id="c"></canvas>
+<script>
+  (() => {
+    const c = document.querySelector("#c"),
+      gl = c.getContext("webgl2", { antialias: true, alpha: false });
+    if (!gl) {
+      document.querySelector("#stats").textContent = "WebGL2 unavailable";
+      return;
+    }
+    const vs = `#version 300 es
+precision highp float;
+layout(location=0) in vec3 a_pos;
+uniform mat4 u_vp; uniform mat4 u_view; uniform int u_field; uniform float u_scale; uniform float u_len; uniform float u_fog;
+out vec3 v_n; out float v_mag; out float v_depth; out float v_valid;
+const float PI=3.141592653589793;
+vec3 F(vec3 p,out float valid){
+ if(u_field==0){float r2=dot(p,p); valid=step(0.025*0.025,r2); return p/pow(max(r2,1e-8),1.5);}
+ vec3 a=p-vec3(-.5,0,0), b=p-vec3(.5,0,0); float a2=dot(a,a),b2=dot(b,b); valid=step(0.025*0.025,min(a2,b2)); return a/pow(max(a2,1e-8),1.5)-b/pow(max(b2,1e-8),1.5);
+}
+mat3 basis(vec3 d){vec3 z=normalize(d),h=abs(z.z)<.9?vec3(0,0,1):vec3(0,1,0);vec3 x=normalize(cross(h,z));return mat3(x,cross(z,x),z);}
+void main(){
+ float ok; vec3 f=F(a_pos,ok); float m=length(f); vec3 d=m>1e-10?f/m:vec3(0,0,1); mat3 B=basis(d);
+ int id=gl_VertexID; float L=u_len, shaftL=.70*L, r=.050*L, hr=.145*L; vec3 local,nrm; const int S=8;
+ if(id<48){int tri=id/3,corner=id%3,seg=tri/2,halfIdx=tri%2;float a0=2.*PI*float(seg)/8.,a1=2.*PI*float(seg+1)/8.;vec2 c0=vec2(cos(a0),sin(a0)),c1=vec2(cos(a1),sin(a1)),q;float z;
+   if(halfIdx==0){if(corner==0){q=c0;z=0.;}else if(corner==1){q=c1;z=0.;}else{q=c1;z=shaftL;}}
+   else{if(corner==0){q=c0;z=0.;}else if(corner==1){q=c1;z=shaftL;}else{q=c0;z=shaftL;}}
+   local=vec3(q*r,z);nrm=normalize(vec3(q,0));
+ }else{int j=id-48,seg=j/3,corner=j%3;float a0=2.*PI*float(seg)/8.,a1=2.*PI*float(seg+1)/8.;vec2 c0=vec2(cos(a0),sin(a0)),c1=vec2(cos(a1),sin(a1));
+   if(corner==0)local=vec3(c0*hr,shaftL);else if(corner==1)local=vec3(c1*hr,shaftL);else local=vec3(0,0,L);
+   vec3 e1=vec3((c1-c0)*hr,0),e2=vec3(-c0*hr,L-shaftL);nrm=normalize(cross(e1,e2));}
+ vec3 world=a_pos+B*local; vec4 view=u_view*vec4(world,1); gl_Position=u_vp*vec4(world,1); v_n=B*nrm; v_mag=1.-exp(-m/max(u_scale,1e-7));v_depth=-view.z;v_valid=ok;
+ if(ok<.5) gl_Position=vec4(2,2,2,1);
+}`;
+    const fs = `#version 300 es
+precision highp float; in vec3 v_n; in float v_mag; in float v_depth; in float v_valid; uniform float u_fog; out vec4 o;
+vec3 turbo(float x){x=clamp(x,0.,1.);vec3 c=vec3(0.12,0.20,0.65)*(1.-x)+vec3(0.95,0.22,0.08)*x; c+=vec3(0.28,0.52,0.05)*4.*x*(1.-x);return clamp(c,0.,1.);}
+void main(){if(v_valid<.5)discard;float lam=.28+.72*abs(dot(normalize(v_n),normalize(vec3(.35,.55,1))));float fade=mix(1.,clamp(1.25-.07*v_depth,.38,1.),u_fog);o=vec4(turbo(v_mag)*lam*fade,1);}`;
+    function sh(t, s) {
+      const x = gl.createShader(t);
+      gl.shaderSource(x, s);
+      gl.compileShader(x);
+      if (!gl.getShaderParameter(x, gl.COMPILE_STATUS))
+        throw Error(gl.getShaderInfoLog(x));
+      return x;
+    }
+    const p = gl.createProgram();
+    gl.attachShader(p, sh(gl.VERTEX_SHADER, vs));
+    gl.attachShader(p, sh(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS))
+      throw Error(gl.getProgramInfoLog(p));
+    gl.useProgram(p);
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribDivisor(0, 1);
+    function mul(a, b) {
+      const o = new Float32Array(16);
+      for (let c = 0; c < 4; c++)
+        for (let r = 0; r < 4; r++) {
+          let s = 0;
+          for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k];
+          o[c * 4 + r] = s;
+        }
+      return o;
+    }
+    function persp(fov, asp, n, f) {
+      let t = 1 / Math.tan(fov / 2),
+        o = new Float32Array(16);
+      o[0] = t / asp;
+      o[5] = t;
+      o[10] = (f + n) / (n - f);
+      o[11] = -1;
+      o[14] = (2 * f * n) / (n - f);
+      return o;
+    }
+    function look(eye, at = [0, 0, 0], up = [0, 0, 1]) {
+      const norm = (v) => {
+          let l = Math.hypot(...v);
+          return v.map((x) => x / l);
+        },
+        sub = (a, b) => a.map((x, i) => x - b[i]),
+        cross = (a, b) => [
+          a[1] * b[2] - a[2] * b[1],
+          a[2] * b[0] - a[0] * b[2],
+          a[0] * b[1] - a[1] * b[0],
+        ],
+        dot = (a, b) => a.reduce((s, x, i) => s + x * b[i], 0);
+      let z = norm(sub(eye, at)),
+        x = norm(cross(up, z)),
+        y = cross(z, x);
+      return new Float32Array([
+        x[0],
+        y[0],
+        z[0],
+        0,
+        x[1],
+        y[1],
+        z[1],
+        0,
+        x[2],
+        y[2],
+        z[2],
+        0,
+        -dot(x, eye),
+        -dot(y, eye),
+        -dot(z, eye),
+        1,
+      ]);
+    }
+    let yaw = 0.8,
+      pitch = 0.45,
+      dist = 7,
+      pts = new Float32Array(),
+      scale = 1,
+      spacing = 0.5;
+    function rngFactory(seed) {
+      let s = seed >>> 0;
+      return () => (s = (1664525 * s + 1013904223) >>> 0) / 4294967296;
+    }
+    function fieldCPU(x, y, z, mode) {
+      if (mode === 0) {
+        let r2 = x * x + y * y + z * z,
+          rr = Math.sqrt(r2);
+        return r2 < 0.000625
+          ? null
+          : [x / (r2 * rr), y / (r2 * rr), z / (r2 * rr)];
+      }
+      let ax = x + 0.5,
+        bx = x - 0.5,
+        a2 = ax * ax + y * y + z * z,
+        b2 = bx * bx + y * y + z * z;
+      if (Math.min(a2, b2) < 0.000625) return null;
+      let ar = Math.sqrt(a2),
+        br = Math.sqrt(b2);
+      return [
+        ax / (a2 * ar) - bx / (b2 * br),
+        y / (a2 * ar) - y / (b2 * br),
+        z / (a2 * ar) - z / (b2 * br),
+      ];
+    }
+    function quantile(a, q) {
+      a = [...a].sort((x, y) => x - y);
+      let t = (a.length - 1) * q,
+        i = Math.floor(t),
+        f = t - i;
+      return a[i] * (1 - f) + a[Math.min(i + 1, a.length - 1)] * f;
+    }
+    function rebuild() {
+      let N = +document.querySelector("#count").value,
+        n = Math.round(Math.cbrt(N));
+      N = n * n * n;
+      let R = rngFactory(20261005),
+        a = [],
+        lo = -2,
+        hi = 2;
+      spacing = (hi - lo) / n;
+      for (let i = 0; i < n; i++)
+        for (let j = 0; j < n; j++)
+          for (let k = 0; k < n; k++)
+            a.push(
+              lo + (i + 0.14 + 0.72 * R()) * spacing,
+              lo + (j + 0.14 + 0.72 * R()) * spacing,
+              lo + (k + 0.14 + 0.72 * R()) * spacing
+            );
+      pts = new Float32Array(a);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, pts, gl.STATIC_DRAW);
+      let mode = +document.querySelector("#field").value,
+        ms = [];
+      for (let q = 0; q < pts.length; q += 3) {
+        let f = fieldCPU(pts[q], pts[q + 1], pts[q + 2], mode);
+        if (f) ms.push(Math.hypot(...f));
+      }
+      scale = quantile(ms, 0.6);
+      let med = quantile(ms, 0.5),
+        mx = Math.max(...ms);
+      document.querySelector("#stats").textContent =
+        `${N} stratified-jittered samples\nP60 magnitude scale = ${scale.toPrecision(4)}\nmax / median magnitude = ${(mx / med).toFixed(1)}×\nfixed arrow length = ${(0.55 * spacing).toFixed(3)} world units`;
+      draw();
+    }
+    function resize() {
+      let d = devicePixelRatio || 1,
+        w = Math.floor(c.clientWidth * d),
+        h = Math.floor(c.clientHeight * d);
+      if (c.width !== w || c.height !== h) {
+        c.width = w;
+        c.height = h;
+      }
+      gl.viewport(0, 0, w, h);
+    }
+    function draw() {
+      resize();
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LEQUAL);
+      gl.disable(gl.BLEND);
+      gl.clearColor(0.045, 0.05, 0.065, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      let cp = Math.cos(pitch),
+        eye = [
+          dist * cp * Math.cos(yaw),
+          dist * cp * Math.sin(yaw),
+          dist * Math.sin(pitch),
+        ],
+        V = look(eye),
+        P = persp(0.8, c.width / c.height, 0.05, 50),
+        VP = mul(P, V);
+      gl.useProgram(p);
+      gl.uniformMatrix4fv(gl.getUniformLocation(p, "u_vp"), false, VP);
+      gl.uniformMatrix4fv(gl.getUniformLocation(p, "u_view"), false, V);
+      gl.uniform1i(
+        gl.getUniformLocation(p, "u_field"),
+        +document.querySelector("#field").value
+      );
+      gl.uniform1f(gl.getUniformLocation(p, "u_scale"), scale);
+      gl.uniform1f(gl.getUniformLocation(p, "u_len"), 0.55 * spacing);
+      gl.uniform1f(
+        gl.getUniformLocation(p, "u_fog"),
+        document.querySelector("#fog").checked ? 1 : 0
+      );
+      gl.bindVertexArray(vao);
+      gl.drawArraysInstanced(gl.TRIANGLES, 0, 72, pts.length / 3);
+    }
+    let drag = false,
+      lx = 0,
+      ly = 0;
+    c.addEventListener("pointerdown", (e) => {
+      drag = true;
+      lx = e.clientX;
+      ly = e.clientY;
+      c.setPointerCapture(e.pointerId);
+    });
+    c.addEventListener("pointermove", (e) => {
+      if (!drag) return;
+      yaw -= (e.clientX - lx) * 0.007;
+      pitch = Math.max(-1.35, Math.min(1.35, pitch + (e.clientY - ly) * 0.007));
+      lx = e.clientX;
+      ly = e.clientY;
+      draw();
+    });
+    c.addEventListener("pointerup", () => (drag = false));
+    c.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+        dist = Math.max(3, Math.min(16, dist * Math.exp(e.deltaY * 0.001)));
+        draw();
+      },
+      { passive: false }
+    );
+    addEventListener("resize", draw);
+    document.querySelector("#field").onchange = rebuild;
+    document.querySelector("#count").onchange = rebuild;
+    document.querySelector("#fog").onchange = draw;
+    rebuild();
+  })();
+</script>

@@ -1,0 +1,333 @@
+{
+  "errors": [],
+  "default": {
+    "settings": {
+      "shape": "solid",
+      "sampling": "jitter",
+      "count": 8,
+      "sliceAxis": 2,
+      "slicePosition": 0.5,
+      "lengthMode": "normalized",
+      "length": 0.2,
+      "widthPx": 3,
+      "colorMode": "magnitude",
+      "palette": "spectral",
+      "fixedColor": [0.18, 0.38, 0.72],
+      "speedScale": 0.05933804997177853,
+      "shading": true,
+      "fog": false,
+      "outline": false,
+      "selfDepth": true,
+      "occlusion": "over",
+      "meshResolution": 32,
+      "clip": true,
+      "autoNotes": {
+        "count": "8 per axis",
+        "shape": "Shaded 3D",
+        "length": "0.8 × spacing",
+        "scale": "0.0593",
+        "mesh": "32"
+      }
+    },
+    "stats": {
+      "drawn": 512,
+      "median": 0.041130002037863427,
+      "max": 1.0749580347634322,
+      "saturated": 0.0625,
+      "bottom": 0,
+      "capped": 0
+    },
+    "gap": {
+      "worst": 0.6201031530727322,
+      "mean": 0.07177960275975646
+    },
+    "gaps": {
+      "16": {
+        "worst": 2.3933834601560147,
+        "mean": 0.28558160084336065
+      },
+      "32": {
+        "worst": 0.6201031530727322,
+        "mean": 0.07177960275975646
+      },
+      "64": {
+        "worst": 0.15634598479450984,
+        "mean": 0.01802328289752535
+      },
+      "128": {
+        "worst": 0.03916041510761878,
+        "mean": 0.004506009375758128
+      },
+      "256": {
+        "worst": 0.009793596354628531,
+        "mean": 0.0011265040674528835
+      }
+    },
+    "standInResolution": 160,
+    "boxPx": 570.4665843110323
+  },
+  "poles": {
+    "charge": {
+      "normalized, box rule, scale 3.33": {
+        "drawn": 1000,
+        "median": 0.04040404040404041,
+        "max": 1.3333333333333333,
+        "saturated": 0,
+        "bottom": 0.968,
+        "capped": 0
+      },
+      "normalized, field rule, scale 0.0583": {
+        "drawn": 1000,
+        "median": 0.04040404040404041,
+        "max": 1.3333333333333333,
+        "saturated": 0.056,
+        "bottom": 0,
+        "capped": 0
+      },
+      "saturating, box rule, scale 3.33": {
+        "drawn": 1000,
+        "median": 0.04040404040404041,
+        "max": 1.3333333333333333,
+        "saturated": 0,
+        "bottom": 0.968,
+        "capped": 0
+      },
+      "saturating, field rule, scale 0.0583": {
+        "drawn": 1000,
+        "median": 0.04040404040404041,
+        "max": 1.3333333333333333,
+        "saturated": 0.056,
+        "bottom": 0,
+        "capped": 0
+      },
+      "clamped, box rule, scale 3.33": {
+        "drawn": 1000,
+        "median": 0.04040404040404041,
+        "max": 1.3333333333333333,
+        "saturated": 0,
+        "bottom": 0.968,
+        "capped": 0
+      },
+      "clamped, field rule, scale 0.0583": {
+        "drawn": 1000,
+        "median": 0.04040404040404041,
+        "max": 1.3333333333333333,
+        "saturated": 0.056,
+        "bottom": 0,
+        "capped": 0
+      },
+      "actual, box rule, scale 3.33": {
+        "drawn": 1000,
+        "median": 0.04040404040404041,
+        "max": 1.3333333333333333,
+        "saturated": 0,
+        "bottom": 0.968,
+        "capped": 0
+      },
+      "actual, field rule, scale 0.0583": {
+        "drawn": 1000,
+        "median": 0.04040404040404041,
+        "max": 1.3333333333333333,
+        "saturated": 0.056,
+        "bottom": 0,
+        "capped": 0
+      }
+    },
+    "dipole": {
+      "normalized, box rule, scale 3.33": {
+        "drawn": 1000,
+        "median": 0.022155462447730208,
+        "max": 1.4418085026135223,
+        "saturated": 0,
+        "bottom": 0.984,
+        "capped": 0
+      },
+      "normalized, field rule, scale 0.032": {
+        "drawn": 1000,
+        "median": 0.022155462447730208,
+        "max": 1.4418085026135223,
+        "saturated": 0.12,
+        "bottom": 0,
+        "capped": 0
+      },
+      "saturating, box rule, scale 3.33": {
+        "drawn": 1000,
+        "median": 0.022155462447730208,
+        "max": 1.4418085026135223,
+        "saturated": 0,
+        "bottom": 0.984,
+        "capped": 0
+      },
+      "saturating, field rule, scale 0.032": {
+        "drawn": 1000,
+        "median": 0.022155462447730208,
+        "max": 1.4418085026135223,
+        "saturated": 0.12,
+        "bottom": 0,
+        "capped": 0
+      },
+      "clamped, box rule, scale 3.33": {
+        "drawn": 1000,
+        "median": 0.022155462447730208,
+        "max": 1.4418085026135223,
+        "saturated": 0,
+        "bottom": 0.984,
+        "capped": 0
+      },
+      "clamped, field rule, scale 0.032": {
+        "drawn": 1000,
+        "median": 0.022155462447730208,
+        "max": 1.4418085026135223,
+        "saturated": 0.12,
+        "bottom": 0,
+        "capped": 0
+      },
+      "actual, box rule, scale 3.33": {
+        "drawn": 1000,
+        "median": 0.022155462447730208,
+        "max": 1.4418085026135223,
+        "saturated": 0,
+        "bottom": 0.984,
+        "capped": 0
+      },
+      "actual, field rule, scale 0.032": {
+        "drawn": 1000,
+        "median": 0.022155462447730208,
+        "max": 1.4418085026135223,
+        "saturated": 0.12,
+        "bottom": 0,
+        "capped": 0
+      }
+    }
+  },
+  "meshGap": {
+    "bump": {
+      "auto": 32,
+      "gaps": {
+        "16": {
+          "worst": 3.503564973937253,
+          "mean": 0.41461597006554524
+        },
+        "32": {
+          "worst": 0.9073685619010685,
+          "mean": 0.10421495954961228
+        },
+        "64": {
+          "worst": 0.22870175792022326,
+          "mean": 0.026167732307586136
+        },
+        "128": {
+          "worst": 0.05727289136430143,
+          "mean": 0.006542216603726285
+        },
+        "256": {
+          "worst": 0.014321892753112393,
+          "mean": 0.0016355571687083883
+        }
+      },
+      "boxPx": 832.6588436369901
+    },
+    "saddle": {
+      "auto": 16,
+      "gaps": {
+        "16": {
+          "worst": 0.4871556379251242,
+          "mean": 0.29790444987098863
+        },
+        "32": {
+          "worst": 0.12228903762785617,
+          "mean": 0.07446862798478131
+        },
+        "64": {
+          "worst": 0.030633950690032098,
+          "mean": 0.018616239239729274
+        },
+        "128": {
+          "worst": 0.007666318424690097,
+          "mean": 0.0046539461756725745
+        },
+        "256": {
+          "worst": 0.001917565950886624,
+          "mean": 0.0011634724065757442
+        }
+      },
+      "boxPx": 832.6588436369901
+    },
+    "ripple": {
+      "auto": 32,
+      "gaps": {
+        "16": {
+          "worst": 3.5855199904050394,
+          "mean": 0.858950174910499
+        },
+        "32": {
+          "worst": 0.9079173924656404,
+          "mean": 0.21826494167161625
+        },
+        "64": {
+          "worst": 0.22870933181054365,
+          "mean": 0.054715827731375795
+        },
+        "128": {
+          "worst": 0.05721945692330066,
+          "mean": 0.013686778590208936
+        },
+        "256": {
+          "worst": 0.014309318054853668,
+          "mean": 0.003422269581146264
+        }
+      },
+      "boxPx": 832.6588436369901
+    }
+  },
+  "cost": {
+    "10³ lines": {
+      "vertices": "6,000",
+      "result": "1,000 arrows, lines: GPU 0.16 ms median, 60 fps (both layers redrawn every frame)."
+    },
+    "10³ flat": {
+      "vertices": "9,000",
+      "result": "1,000 arrows, flat: GPU 0.18 ms median, 60 fps (both layers redrawn every frame)."
+    },
+    "10³ solid": {
+      "vertices": "120,000",
+      "result": "1,000 arrows, shaded 3D: GPU 1.83 ms median, 60 fps (both layers redrawn every frame)."
+    },
+    "15³ lines": {
+      "vertices": "20,250",
+      "result": "3,375 arrows, lines: GPU 0.42 ms median, 60 fps (both layers redrawn every frame)."
+    },
+    "15³ flat": {
+      "vertices": "30,375",
+      "result": "3,375 arrows, flat: GPU 0.37 ms median, 60 fps (both layers redrawn every frame)."
+    },
+    "15³ solid": {
+      "vertices": "405,000",
+      "result": "3,375 arrows, shaded 3D: GPU 5.12 ms median, 60 fps (both layers redrawn every frame)."
+    },
+    "20³ lines": {
+      "vertices": "48,000",
+      "result": "8,000 arrows, lines: GPU 0.69 ms median, 60 fps (both layers redrawn every frame)."
+    },
+    "20³ flat": {
+      "vertices": "72,000",
+      "result": "8,000 arrows, flat: GPU 0.67 ms median, 60 fps (both layers redrawn every frame)."
+    },
+    "20³ solid": {
+      "vertices": "960,000",
+      "result": "8,000 arrows, shaded 3D: GPU 6.48 ms median, 60 fps (both layers redrawn every frame)."
+    },
+    "30³ lines": {
+      "vertices": "162,000",
+      "result": "27,000 arrows, lines: GPU 1.87 ms median, 60 fps (both layers redrawn every frame)."
+    },
+    "30³ flat": {
+      "vertices": "243,000",
+      "result": "27,000 arrows, flat: GPU 1.79 ms median, 60 fps (both layers redrawn every frame)."
+    },
+    "30³ solid": {
+      "vertices": "3,240,000",
+      "result": "27,000 arrows, shaded 3D: GPU 16.06 ms median, 60 fps (both layers redrawn every frame)."
+    }
+  }
+}
