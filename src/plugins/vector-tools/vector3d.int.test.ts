@@ -7,6 +7,7 @@ import {
 import type { Calc as CalcType } from "#globals";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { PANEL_TABS } from "./model";
 
 declare let Calc: CalcType;
 declare let DSM: Window["DSM"];
@@ -137,6 +138,64 @@ async function greenPixels(driver: Driver, png: string) {
 }
 
 testWithPageAndOpts(
+  "Vector Tools offers its 3D settings on Desmos 3D, and keeps them",
+  { path: "/3d", timeout: 120000 },
+  async (driver) => {
+    await driver.enablePlugin("vector-tools");
+    await driver.assertSelectorEventually(
+      ".dsm-action-menu .dsm-icon-compass2"
+    );
+    await driver.click(".dsm-action-menu .dsm-icon-compass2");
+    const index = PANEL_TABS.findIndex((tab) => tab.id === "arrows");
+    await driver.click(
+      `.dsm-vector-tools-tabs .dcg-segmented-control-btn:nth-child(${index + 1})`
+    );
+    // The 3D sections replace the 2D length and arrowhead ones, which mean
+    // nothing in a rotatable box.
+    await driver.assertSelectorEventually("#dsm-vector-tools-3d-look");
+    await driver.assertSelectorNot("#dsm-vector-tools-arrowhead-size");
+    await driver.click('#dsm-vector-tools-3d-look [data-value="cloud"]');
+    await driver.page.waitForFunction(
+      () =>
+        (DSM.enabledPlugins["vector-tools"] as any).volume3dFrame?.look ===
+        "cloud",
+      { timeout: 5000 }
+    );
+    // Stored with the field, so a reload draws the same picture.
+    const stored = await driver.page.evaluate(() => {
+      const library = JSON.parse(
+        DSM.pluginSettings["vector-tools"]!.serializedFieldConfig as string
+      );
+      return library.fields.find(
+        (field: { id: string }) => field.id === library.activeId
+      ).space3d.look;
+    });
+    expect(stored).toBe("cloud");
+    // R is offered on 3D, beside P and Q.
+    const fieldIndex = PANEL_TABS.findIndex((tab) => tab.id === "field");
+    await driver.click(
+      `.dsm-vector-tools-tabs .dcg-segmented-control-btn:nth-child(${fieldIndex + 1})`
+    );
+    await driver.page.waitForFunction(
+      () =>
+        [...document.querySelectorAll(".dsm-vector-tools-label")].some(
+          (label) => label.textContent === "R(x, y, z)"
+        ),
+      { timeout: 5000 }
+    );
+    await driver.click(
+      `.dsm-vector-tools-tabs .dcg-segmented-control-btn:nth-child(${index + 1})`
+    );
+    await waitForRedraw(driver);
+    mkdirSync(ASSETS, { recursive: true });
+    await driver.page.screenshot({ path: join(ASSETS, "plugin-panel-3d.png") });
+    await driver.click('#dsm-vector-tools-3d-look [data-value="arrows"]');
+    await driver.disablePlugin("vector-tools");
+    await driver.setBlank();
+  }
+);
+
+testWithPageAndOpts(
   "Vector Tools draws live arrows over Desmos 3D",
   { path: "/3d", timeout: 120000 },
   async (driver) => {
@@ -149,6 +208,7 @@ testWithPageAndOpts(
     await configure(
       driver,
       `config.arrowMode = "live";
+       config.space3d.look = "arrows";
        config.source = "components";
        config.components.xLatex = "\\\\frac{x}{\\\\left(x^{2}+y^{2}+z^{2}\\\\right)^{1.5}}";
        config.components.yLatex = "\\\\frac{y}{\\\\left(x^{2}+y^{2}+z^{2}\\\\right)^{1.5}}";

@@ -49,6 +49,9 @@ import {
   type VectorFieldConfig,
   type VectorLengthMode,
   type ZeroVectorMode,
+  Look3D,
+  Occlusion3D,
+  Space3DConfig,
 } from "../model";
 import {
   COLOR_CONTRAST_MAXIMUM,
@@ -418,8 +421,6 @@ function analysisSection(vectorTools: VectorTools) {
 }
 
 function arrowsTab(vectorTools: VectorTools, config: ConfigGetter) {
-  const length = () => config().length;
-  const inputs = () => lengthInputsFor(length().mode);
   return (
     <div>
       <section class="dsm-vector-tools-section">
@@ -438,7 +439,12 @@ function arrowsTab(vectorTools: VectorTools, config: ConfigGetter) {
                 : "No arrows are drawn. The flow visualizer and Generate still work."
           }
         </div>
-        <If predicate={() => vectorTools.arrowMode === "live"}>
+        {/* The 2D grid's thinning; in 3D the count is the box's own control. */}
+        <If
+          predicate={() =>
+            vectorTools.arrowMode === "live" && !vectorTools.is3d
+          }
+        >
           {() =>
             checkboxControl(
               "Thin very dense grids so arrows stay readable",
@@ -452,6 +458,22 @@ function arrowsTab(vectorTools: VectorTools, config: ConfigGetter) {
         </div>
       </section>
 
+      <If predicate={() => vectorTools.is3d}>
+        {() => space3dSections(vectorTools, config)}
+      </If>
+      <If predicate={() => !vectorTools.is3d}>
+        {() => arrowSections2D(vectorTools, config)}
+      </If>
+    </div>
+  );
+}
+
+/** Length and arrowhead, which mean what they say only on the 2D graph paper. */
+function arrowSections2D(vectorTools: VectorTools, config: ConfigGetter) {
+  const length = () => config().length;
+  const inputs = () => lengthInputsFor(length().mode);
+  return (
+    <div>
       <section class="dsm-vector-tools-section">
         {chipGroup(
           "Length mode",
@@ -549,6 +571,424 @@ function arrowsTab(vectorTools: VectorTools, config: ConfigGetter) {
       </section>
     </div>
   );
+}
+
+const LOOKS_3D: readonly Choice<Look3D>[] = [
+  { value: "arrows", label: "Arrows" },
+  { value: "streamlines", label: "Streamlines" },
+  { value: "cloud", label: "Glow cloud" },
+];
+const SHAPES_3D: readonly Choice<Space3DConfig["shape"]>[] = [
+  { value: "auto", label: "Auto" },
+  { value: "lines", label: "Lines" },
+  { value: "flat", label: "Flat" },
+  { value: "solid", label: "Shaded 3D" },
+];
+const PLACEMENTS_3D: readonly Choice<"jitter" | "grid" | "slice">[] = [
+  { value: "jitter", label: "Jittered" },
+  { value: "grid", label: "Whole box" },
+  { value: "slice", label: "Slice" },
+];
+const AXES_3D: readonly Choice<"0" | "1" | "2">[] = [
+  { value: "0", label: "x =" },
+  { value: "1", label: "y =" },
+  { value: "2", label: "z =" },
+];
+const LENGTHS_3D: readonly Choice<Space3DConfig["lengthMode"]>[] = [
+  { value: "normalized", label: "All equal" },
+  { value: "saturating", label: "Saturating" },
+  { value: "clamped", label: "Linear, capped" },
+  { value: "actual", label: "True size" },
+];
+const OCCLUSIONS_3D: readonly Choice<Occlusion3D>[] = [
+  { value: "hide", label: "Hidden" },
+  { value: "fade", label: "Faded" },
+  { value: "over", label: "X-ray" },
+];
+const CUTAWAYS_3D: readonly Choice<Space3DConfig["cutaway"]>[] = [
+  { value: "off", label: "Nothing" },
+  { value: "half", label: "Near half" },
+  { value: "wedge", label: "Cake slice" },
+];
+const SCALES_3D: readonly Choice<"field" | "box" | "manual">[] = [
+  { value: "field", label: "From the field" },
+  { value: "box", label: "From the box (as 2D)" },
+  { value: "manual", label: "By hand" },
+];
+const DEGREES = 180 / Math.PI;
+
+/**
+ * Everything about drawing the field over Desmos 3D, from the step-1
+ * mock-up: each trade-off a control with Auto beside it, so nothing is
+ * decided on the user's behalf (`docs/VECTOR_TOOLS_3D_BUILD_PLAN.md` §2).
+ *
+ * Shown in place of the 2D length and arrowhead sections rather than beside
+ * them: on a rotatable box those numbers have no meaning, and two sets of
+ * length controls of which one silently does nothing is worse than one.
+ */
+function space3dSections(vectorTools: VectorTools, config: ConfigGetter) {
+  const s = () => config().space3d;
+  const set = vectorTools.setSpace3D.bind(vectorTools);
+  const arrows = () => vectorTools.arrow3dFrame;
+  const volume = () => vectorTools.volume3dFrame;
+  const look = () => s().look;
+  return (
+    <div class="dsm-vector-tools-3d">
+      <section class="dsm-vector-tools-section">
+        {chipGroup(
+          "Look",
+          look,
+          LOOKS_3D,
+          (v) => set("look", v),
+          "dsm-vector-tools-3d-look"
+        )}
+        <div class="dsm-vector-tools-note">
+          {() =>
+            look() === "arrows"
+              ? "Arrows at points through the box. Opaque, so the front ones hide the middle; the cutaway below opens it up."
+              : look() === "streamlines"
+                ? "Thin lines traced along the field, faint enough to see the middle through the edges."
+                : "Dots kept more often where the field is stronger: its shape drawn as density, like an orbital."
+          }
+        </div>
+      </section>
+
+      <If predicate={() => look() === "arrows"}>
+        {() => (
+          <section class="dsm-vector-tools-section">
+            {chipGroup(
+              "Shape",
+              () => s().shape,
+              SHAPES_3D,
+              (v) => set("shape", v)
+            )}
+            <div class="dsm-vector-tools-hint">
+              {() =>
+                s().shape === "auto" && arrows() !== undefined
+                  ? `Auto is drawing ${arrows()!.shape === "solid" ? "shaded 3D" : arrows()!.shape} arrows: shaded up to 3,000, flat past that.`
+                  : ""
+              }
+            </div>
+            {chipGroup(
+              "Where arrows go",
+              () => (s().placement === "surface" ? "jitter" : s().placement),
+              PLACEMENTS_3D,
+              (v) => set("placement", v)
+            )}
+            <If predicate={() => s().placement === "slice"}>
+              {() => (
+                <div>
+                  {chipGroup(
+                    "Slice",
+                    () => String(s().sliceAxis) as "0" | "1" | "2",
+                    AXES_3D,
+                    (v) => set("sliceAxis", Number(v) as 0 | 1 | 2)
+                  )}
+                  {sliderControl(
+                    "dsm-vector-tools-3d-slice",
+                    "Across the box",
+                    () => s().slicePosition,
+                    { minimum: 0.02, maximum: 0.98, step: 0.01, decimals: 2 },
+                    (v) => set("slicePosition", v)
+                  )}
+                </div>
+              )}
+            </If>
+            {checkboxControl(
+              "Auto count from the box's size on screen",
+              () => s().countAuto,
+              (v) => set("countAuto", v)
+            )}
+            <div class="dsm-vector-tools-number-grid">
+              {numberControl(
+                "dsm-vector-tools-3d-count",
+                "Per axis",
+                () =>
+                  s().countAuto ? (arrows()?.count ?? s().count) : s().count,
+                (v) => set("count", Math.max(1, Math.round(v))),
+                () => s().countAuto
+              )}
+            </div>
+            {chipGroup(
+              "Length",
+              () => s().lengthMode,
+              LENGTHS_3D,
+              (v) => set("lengthMode", v)
+            )}
+            {checkboxControl(
+              "Auto length (0.8 of the spacing)",
+              () => s().lengthAuto,
+              (v) => set("lengthAuto", v)
+            )}
+            <If predicate={() => !s().lengthAuto}>
+              {() =>
+                sliderControl(
+                  "dsm-vector-tools-3d-length",
+                  "× spacing",
+                  () => s().lengthMultiple,
+                  { minimum: 0.1, maximum: 2.5, step: 0.05, decimals: 2 },
+                  (v) => set("lengthMultiple", v)
+                )
+              }
+            </If>
+            {sliderControl(
+              "dsm-vector-tools-3d-width",
+              "Thickness (px)",
+              () => s().widthPx,
+              { minimum: 1, maximum: 10, step: 0.5, decimals: 1 },
+              (v) => set("widthPx", v)
+            )}
+            {checkboxControl(
+              "Shading",
+              () => s().shading,
+              (v) => set("shading", v)
+            )}
+            {checkboxControl(
+              "Outline",
+              () => s().outline,
+              (v) => set("outline", v)
+            )}
+            {checkboxControl(
+              "Arrows hide each other",
+              () => s().selfDepth,
+              (v) => set("selfDepth", v)
+            )}
+          </section>
+        )}
+      </If>
+
+      <If predicate={() => look() === "streamlines"}>
+        {() => (
+          <section class="dsm-vector-tools-section">
+            {checkboxControl(
+              "Auto number of lines",
+              () => s().linesAuto,
+              (v) => set("linesAuto", v)
+            )}
+            <div class="dsm-vector-tools-number-grid">
+              {numberControl(
+                "dsm-vector-tools-3d-lines",
+                "Lines",
+                () =>
+                  s().linesAuto ? (volume()?.count ?? s().lines) : s().lines,
+                (v) => set("lines", Math.max(1, Math.round(v))),
+                () => s().linesAuto
+              )}
+            </div>
+            {sliderControl(
+              "dsm-vector-tools-3d-line-length",
+              "Line length (of the box)",
+              () => s().lineLength,
+              { minimum: 0.1, maximum: 2, step: 0.05, decimals: 2 },
+              (v) => set("lineLength", v)
+            )}
+            {sliderControl(
+              "dsm-vector-tools-3d-line-opacity",
+              "Opacity",
+              () => s().lineOpacity,
+              { minimum: 0.05, maximum: 1, step: 0.05, decimals: 2 },
+              (v) => set("lineOpacity", v)
+            )}
+            {checkboxControl(
+              "Animate along the flow",
+              () => s().animate,
+              (v) => set("animate", v)
+            )}
+            <If predicate={() => s().animate}>
+              {() => (
+                <div>
+                  {sliderControl(
+                    "dsm-vector-tools-3d-flow-speed",
+                    "Lines per second",
+                    () => s().flowSpeed,
+                    { minimum: 0.02, maximum: 1, step: 0.02, decimals: 2 },
+                    (v) => set("flowSpeed", v)
+                  )}
+                  {sliderControl(
+                    "dsm-vector-tools-3d-flow-window",
+                    "Lit stretch (of a line)",
+                    () => s().flowWindow,
+                    { minimum: 0.05, maximum: 1, step: 0.05, decimals: 2 },
+                    (v) => set("flowWindow", v)
+                  )}
+                </div>
+              )}
+            </If>
+          </section>
+        )}
+      </If>
+
+      <If predicate={() => look() === "cloud"}>
+        {() => (
+          <section class="dsm-vector-tools-section">
+            {checkboxControl(
+              "Auto number of points",
+              () => s().pointsAuto,
+              (v) => set("pointsAuto", v)
+            )}
+            <div class="dsm-vector-tools-number-grid">
+              {numberControl(
+                "dsm-vector-tools-3d-points",
+                "Points tried",
+                () =>
+                  s().pointsAuto ? (volume()?.count ?? s().points) : s().points,
+                (v) => set("points", Math.max(1, Math.round(v))),
+                () => s().pointsAuto
+              )}
+            </div>
+            {sliderControl(
+              "dsm-vector-tools-3d-point-size",
+              "Dot size (px)",
+              () => s().pointPx,
+              { minimum: 1, maximum: 6, step: 0.5, decimals: 1 },
+              (v) => set("pointPx", v)
+            )}
+            {sliderControl(
+              "dsm-vector-tools-3d-cloud-opacity",
+              "Opacity",
+              () => s().cloudOpacity,
+              { minimum: 0.05, maximum: 1, step: 0.05, decimals: 2 },
+              (v) => set("cloudOpacity", v)
+            )}
+            {sliderControl(
+              "dsm-vector-tools-3d-cloud-contrast",
+              "Edge sharpness",
+              () => s().cloudContrast,
+              { minimum: 0.3, maximum: 8, step: 0.1, decimals: 1 },
+              (v) => set("cloudContrast", v)
+            )}
+            {checkboxControl(
+              "Colour by direction",
+              () => s().cloudByDirection,
+              (v) => set("cloudByDirection", v)
+            )}
+          </section>
+        )}
+      </If>
+
+      <section class="dsm-vector-tools-section">
+        {chipGroup(
+          "Colour scale",
+          () => (s().scaleAuto ? s().scaleRule : "manual"),
+          SCALES_3D,
+          (v) => {
+            if (v === "manual") set("scaleAuto", false);
+            else {
+              set("scaleRule", v);
+              set("scaleAuto", true);
+            }
+          }
+        )}
+        <div class="dsm-vector-tools-hint">
+          From the field puts the median strength mid-ramp, which a pole cannot
+          move. From the box is the 2D rule, which leaves an inverse-square
+          field almost one colour.
+        </div>
+        <div class="dsm-vector-tools-number-grid">
+          {numberControl(
+            "dsm-vector-tools-3d-scale",
+            "Scale",
+            () =>
+              s().scaleAuto
+                ? round3(
+                    arrows()?.speedScale ?? volume()?.speedScale ?? s().scale
+                  )
+                : s().scale,
+            (v) => set("scale", Math.max(1e-9, v)),
+            () => s().scaleAuto
+          )}
+        </div>
+        {checkboxControl(
+          "Fade with distance",
+          () => s().fog,
+          (v) => set("fog", v)
+        )}
+      </section>
+
+      <section class="dsm-vector-tools-section">
+        {chipGroup(
+          "Behind a surface",
+          () => s().occlusion,
+          OCCLUSIONS_3D,
+          (v) => set("occlusion", v),
+          "dsm-vector-tools-3d-occlusion"
+        )}
+        <div class="dsm-vector-tools-hint">
+          Hidden and Faded redraw the surfaces you graphed, which Desmos cannot
+          share. Implicit surfaces cannot hide the field yet.
+        </div>
+        {checkboxControl(
+          "Auto surface detail (128 cells a side)",
+          () => s().meshAuto,
+          (v) => set("meshAuto", v)
+        )}
+        <If predicate={() => !s().meshAuto}>
+          {() => (
+            <div class="dsm-vector-tools-number-grid">
+              {numberControl(
+                "dsm-vector-tools-3d-mesh",
+                "Cells a side",
+                () => s().mesh,
+                (v) => set("mesh", Math.max(4, Math.round(v)))
+              )}
+            </div>
+          )}
+        </If>
+        {checkboxControl(
+          "Clip to the box",
+          () => s().clip,
+          (v) => set("clip", v)
+        )}
+      </section>
+
+      <section class="dsm-vector-tools-section">
+        {chipGroup(
+          "Cut away",
+          () => s().cutaway,
+          CUTAWAYS_3D,
+          (v) => set("cutaway", v),
+          "dsm-vector-tools-3d-cutaway"
+        )}
+        <If predicate={() => s().cutaway === "wedge"}>
+          {() => (
+            <div>
+              {sliderControl(
+                "dsm-vector-tools-3d-cut-angle",
+                "Slice angle (°)",
+                () => s().cutAngle * DEGREES,
+                { minimum: 20, maximum: 180, step: 5, decimals: 0 },
+                (v) => set("cutAngle", v / DEGREES)
+              )}
+              {chipGroup(
+                "Slice",
+                () => (s().cutTurn === null ? "facing" : "fixed"),
+                [
+                  { value: "facing", label: "Faces you" },
+                  { value: "fixed", label: "Fixed in the box" },
+                ],
+                (v) => vectorTools.setCakeSliceFixed(v === "fixed")
+              )}
+              <If predicate={() => s().cutTurn !== null}>
+                {() =>
+                  sliderControl(
+                    "dsm-vector-tools-3d-cut-turn",
+                    "Points to (°)",
+                    () => ((((s().cutTurn ?? 0) * DEGREES) % 360) + 360) % 360,
+                    { minimum: 0, maximum: 360, step: 1, decimals: 0 },
+                    (v) => set("cutTurn", v / DEGREES)
+                  )
+                }
+              </If>
+            </div>
+          )}
+        </If>
+      </section>
+    </div>
+  );
+}
+
+function round3(value: number) {
+  return Number(value.toPrecision(3));
 }
 
 /**
