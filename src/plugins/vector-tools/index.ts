@@ -47,6 +47,8 @@ import {
   VECTOR_FIELD_PRESETS,
   cloneDefaultConfig,
   validateVectorFieldConfig,
+  AUTO_LENGTH_MULTIPLE_3D,
+  type Space3DConfig,
 } from "./model";
 import {
   auditVectorFieldPlan,
@@ -100,6 +102,12 @@ import {
   scanDefinitions,
 } from "../../field-rendering/environment";
 import type { FlowField } from "../../field-rendering/FlowRenderer";
+import { Overlay3D } from "../../field-rendering/Overlay3D";
+import {
+  Arrow3DRenderer,
+  type Arrow3DOptions,
+} from "../../field-rendering/Arrow3DRenderer";
+import type { Field3D } from "../../field-rendering/field3d";
 import type { ConfigItem } from "..";
 
 /** The divergence and curl of a field, and whether it has a potential. */
@@ -133,7 +141,7 @@ type TestChecklistID = "visual" | "zero" | "colors" | "responsiveness";
  * The field's three slots plus the curve's two. Mirrors the union in
  * `globals/Calc.ts`, which is where the calculator learns about them.
  */
-export type VectorToolsFocusKind = ComponentSlot | "curve-x" | "curve-y";
+export type VectorToolsFocusKind = ComponentSlot | "r" | "curve-x" | "curve-y";
 
 /** The compiled shader field, or the reason it could not be put on the GPU. */
 type FlowCompilation =
@@ -208,6 +216,69 @@ function compileFlowField(
   };
 }
 
+type Field3DCompilation =
+  | { ok: true; field: Field3D }
+  | { ok: false; error: string };
+
+/**
+ * The field as three GLSL components over `vec3 p`, for Desmos 3D.
+ *
+ * Compiled against the same environment as the 2D field with z made a
+ * coordinate, so a slider or a definition in the graph reaches the 3D arrows
+ * exactly as it reaches the 2D ones.
+ */
+function compileField3D(
+  config: VectorFieldConfig,
+  environment: FieldEnvironment
+): Field3DCompilation {
+  if (config.source === "gradient") {
+    return {
+      ok: false,
+      error:
+        "Gradient fields are not drawn live in 3D yet. Switch the field to components, or generate it into Desmos.",
+    };
+  }
+  const space: FieldEnvironment = { ...environment, dimensions: 3 };
+  const compiled = [
+    ["P(x, y, z)", config.components.xLatex],
+    ["Q(x, y, z)", config.components.yLatex],
+    ["R(x, y, z)", config.components.zLatex],
+  ].map(([name, latex]) => ({
+    name,
+    result: compileFieldComponentToGLSL(
+      latex.trim() === "" ? "0" : latex,
+      space
+    ),
+  }));
+  const helpers: Field3D["helpers"][number][] = [];
+  const params = new Set<string>();
+  let usesTime = false;
+  const glsl: string[] = [];
+  for (const { name, result } of compiled) {
+    if (!result.ok) return { ok: false, error: `${name}: ${result.error}` };
+    glsl.push(result.glsl);
+    // The three share one shader, so their helpers merge: the first of each
+    // name keeps the dependency order, as in 2D.
+    for (const helper of result.helpers) {
+      if (!helpers.some((existing) => existing.name === helper.name))
+        helpers.push(helper);
+    }
+    for (const param of result.params) params.add(param);
+    usesTime ||= result.usesTime;
+  }
+  return {
+    ok: true,
+    field: {
+      p: glsl[0],
+      q: glsl[1],
+      r: glsl[2],
+      helpers,
+      params: [...params],
+      usesTime,
+    },
+  };
+}
+
 const TEST_CHECKLIST: readonly {
   id: TestChecklistID;
   label: string;
@@ -266,6 +337,41 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       this.util.tick();
     },
   });
+  /**
+   * The live arrows on Desmos 3D: their own overlay, laid over Desmos's 3D
+   * canvas and drawn in its redraw (see `Overlay3D`). Only one of this and the
+   * 2D overlays is ever mounted, because only one product is ever on a page.
+   */
+  private readonly overlay3d = new Overlay3D(
+    this.calc,
+    {
+      onError: (message) => {
+        this.arrowMessage = message;
+        this.util.tick();
+      },
+      onRecovered: () => {
+        this.arrowMessage = "";
+        this.util.tick();
+      },
+    },
+    (canvas) => {
+      const renderer = new Arrow3DRenderer(canvas);
+      this.arrow3d = renderer;
+      this.configureArrow3D();
+      return renderer;
+    }
+  );
+  private arrow3d?: Arrow3DRenderer;
+  private field3dCache?: {
+    source: FieldSource;
+    xLatex: string;
+    yLatex: string;
+    zLatex: string;
+    revision: number;
+    result: Field3DCompilation;
+  };
+  /** The values last read for the names the field uses, for a renderer made later. */
+  private parameterValues: ReadonlyMap<string, number> = new Map();
   private arrowMessage = "";
   private flowMessage = "";
   private flowRefreshTimer?: ReturnType<typeof setTimeout>;
@@ -402,6 +508,10 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
    * arrows stay the still picture they were.
    */
   get fieldUsesTime() {
+    if (this.cc.is3dProduct()) {
+      const compiled = this.field3dCompilation;
+      return compiled.ok && compiled.field.usesTime;
+    }
     const compiled = this.flowAvailability;
     return compiled.ok && compiled.field.usesTime === true;
   }
@@ -468,6 +578,8 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.clockSeconds = 0;
     this.arrowOverlay.setTime(0);
     this.flowOverlay.setTime(0);
+    this.arrow3d?.setTime(0);
+    this.overlay3d.requestFrame();
     this.util.tick();
   }
 
@@ -507,6 +619,8 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     // showing the same instant of the same field.
     this.arrowOverlay.setTime(this.clockSeconds);
     this.flowOverlay.setTime(this.clockSeconds);
+    this.arrow3d?.setTime(this.clockSeconds);
+    this.overlay3d.requestFrame();
   };
 
   // ---- what the rest of the graph defines ----------------------------------
@@ -555,6 +669,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       // environment, so the cache key has to move with it.
       this.environmentRevision++;
       this.flowCompilationCache = undefined;
+      this.field3dCache = undefined;
     }
     this.syncParameterValues();
     if (changed) {
@@ -574,7 +689,9 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
    * into one.
    */
   private syncParameterValues() {
-    const compiled = this.flowCompilation;
+    const compiled = this.cc.is3dProduct()
+      ? this.field3dCompilation
+      : this.flowCompilation;
     const names = compiled.ok ? (compiled.field.params ?? []) : [];
     const values = new Map<string, number>();
     for (const name of names) {
@@ -590,8 +707,16 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       }
       values.set(name, helper.numericValue);
     }
+    this.setParameterValues(values);
+  }
+
+  /** Hands the values to whatever is drawing. */
+  private setParameterValues(values: ReadonlyMap<string, number>) {
+    this.parameterValues = values;
     this.arrowOverlay.setParameters(values);
     this.flowOverlay.setParameters(values);
+    this.arrow3d?.setParameters(values);
+    this.overlay3d.requestFrame();
   }
 
   /**
@@ -608,8 +733,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     for (const [name, helper] of this.parameterHelpers) {
       values.set(name, helper.numericValue);
     }
-    this.arrowOverlay.setParameters(values);
-    this.flowOverlay.setParameters(values);
+    this.setParameterValues(values);
   }
 
   /**
@@ -641,6 +765,11 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     if (this.arrowMode === "off") return "Arrows are off.";
     if (this.arrowMode !== "live") return "";
     if (this.arrowMessage !== "") return this.arrowMessage;
+    if (this.cc.is3dProduct()) {
+      const frame = this.arrow3d?.last;
+      if (!this.overlay3d.isRunning || frame === undefined) return "";
+      return `Drawing ${frame.instances} arrows live in 3D.`;
+    }
     if (!this.arrowOverlay.isRunning) return "";
     const grid = this.arrowGrid;
     if (grid.thinned) {
@@ -674,6 +803,10 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
    * upload and one frame.
    */
   refreshArrows() {
+    if (this.cc.is3dProduct()) {
+      this.refreshArrows3D();
+      return;
+    }
     if (this.arrowMode !== "live") {
       if (this.arrowOverlay.isRunning) {
         this.arrowOverlay.stop();
@@ -692,6 +825,119 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     // A start may have mounted a canvas, and a fresh canvas lands wherever the
     // overlay's own default puts it until it is told which side it is on.
     this.syncLayer();
+  }
+
+  /**
+   * The live arrows over Desmos 3D. As cheap to call on every change as the 2D
+   * path: the renderer relinks only for a new field, and a settings change is
+   * a redraw with the camera Desmos last drew with.
+   */
+  private refreshArrows3D() {
+    this.arrowOverlay.stop();
+    if (this.arrowMode !== "live") {
+      this.overlay3d.stop();
+      this.arrow3d = undefined;
+      this.arrowMessage = "";
+      return;
+    }
+    const compiled = this.field3dCompilation;
+    if (!compiled.ok) {
+      this.overlay3d.stop();
+      this.arrow3d = undefined;
+      this.arrowMessage = compiled.error;
+      return;
+    }
+    this.arrowMessage = "";
+    if (!this.overlay3d.isRunning) {
+      // Mounting builds the renderer, which configures itself.
+      this.overlay3d.start();
+      return;
+    }
+    try {
+      this.configureArrow3D();
+    } catch (error) {
+      this.overlay3d.stop();
+      this.arrow3d = undefined;
+      this.arrowMessage =
+        error instanceof Error
+          ? error.message
+          : "The 3D arrows could not be drawn.";
+      return;
+    }
+    this.overlay3d.requestFrame();
+  }
+
+  /** Gives the 3D renderer the current field, settings, values and time. */
+  private configureArrow3D() {
+    const renderer = this.arrow3d;
+    const compiled = this.field3dCompilation;
+    if (renderer === undefined || !compiled.ok) return;
+    renderer.setField(compiled.field);
+    renderer.setOptions(this.arrow3dOptions);
+    renderer.setParameters(this.parameterValues);
+    renderer.setTime(this.clockSeconds);
+  }
+
+  /** What the 3D renderer is told, from the field's settings. */
+  get arrow3dOptions(): Arrow3DOptions {
+    const config = this.getConfig();
+    const s = config.space3d;
+    return {
+      shape: s.shape,
+      placement: s.placement,
+      count: s.countAuto ? "auto" : s.count,
+      sliceAxis: s.sliceAxis,
+      slicePosition: s.slicePosition,
+      lengthMode: s.lengthMode,
+      lengthMultiple: s.lengthAuto ? AUTO_LENGTH_MULTIPLE_3D : s.lengthMultiple,
+      widthPx: s.widthPx,
+      colorMode: config.color.mode === "fixed" ? "fixed" : "magnitude",
+      palette: config.color.palette,
+      fixedColor: config.color.fixedColor,
+      saturation: config.color.saturation,
+      contrast: config.color.contrast,
+      scale: s.scaleAuto ? s.scaleRule : s.scale,
+      shading: s.shading,
+      fog: s.fog,
+      outline: s.outline,
+      selfDepth: s.selfDepth,
+      clip: s.clip,
+      cut: {
+        cutaway: s.cutaway,
+        angle: s.cutAngle,
+        turn: s.cutTurn ?? undefined,
+      },
+    };
+  }
+
+  /** Tests and the panel: what the last 3D frame drew. */
+  get arrow3dFrame() {
+    return this.overlay3d.isRunning ? this.arrow3d?.last : undefined;
+  }
+
+  get field3dCompilation(): Field3DCompilation {
+    const config = this.getConfig();
+    const cached = this.field3dCache;
+    if (
+      cached !== undefined &&
+      cached.source === config.source &&
+      cached.xLatex === config.components.xLatex &&
+      cached.yLatex === config.components.yLatex &&
+      cached.zLatex === config.components.zLatex &&
+      cached.revision === this.environmentRevision
+    ) {
+      return cached.result;
+    }
+    const result = compileField3D(config, this.environment);
+    this.field3dCache = {
+      source: config.source,
+      xLatex: config.components.xLatex,
+      yLatex: config.components.yLatex,
+      zLatex: config.components.zLatex,
+      revision: this.environmentRevision,
+      result,
+    };
+    return result;
   }
 
   /**
@@ -772,6 +1018,8 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.detachPanelElement();
     this.arrowOverlay.stop();
     this.flowOverlay.stop();
+    this.overlay3d.stop();
+    this.arrow3d = undefined;
     this.fluid.dispose();
     this.dsm.pillboxMenus?.removePillboxButton("dsm-vector-tools-menu");
   }
@@ -1098,6 +1346,34 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
   /** The definitions the user types into for the current source. */
   get editableSlots() {
     return editableSlots(this.getConfig());
+  }
+
+  /** Whether this page is Desmos 3D, where the field has a third component. */
+  get is3d() {
+    return this.cc.is3dProduct();
+  }
+
+  get componentZLatex() {
+    return this.getConfig().components.zLatex;
+  }
+
+  get space3d() {
+    return this.getConfig().space3d;
+  }
+
+  /** Changes one 3D setting; the arrows follow through afterConfigChange. */
+  setSpace3D<K extends keyof Space3DConfig>(key: K, value: Space3DConfig[K]) {
+    this.updateConfig((config) => {
+      config.space3d[key] = value;
+    });
+  }
+
+  /** R(x, y, z), which only the live 3D arrows read. */
+  setComponentZ(latex: string) {
+    if (this.getConfig().components.zLatex === latex) return;
+    this.updateConfig((next) => {
+      next.components.zLatex = latex;
+    });
   }
 
   slotLatex(slot: ComponentSlot) {

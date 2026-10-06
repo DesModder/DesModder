@@ -913,9 +913,11 @@ describe("the field library", () => {
     expect(library.fields).toHaveLength(1);
     expect(library.activeId).toBe("default");
     expect(library.fields[0].name).toBe("My Field");
+    // R did not exist then; it takes 0, so the field lies flat on Desmos 3D.
     expect(library.fields[0].components).toEqual({
       xLatex: "y",
       yLatex: "-x",
+      zLatex: "0",
     });
     // The id and the token address expressions already written into the user's
     // saved graphs, so the migration is not allowed to reassign either.

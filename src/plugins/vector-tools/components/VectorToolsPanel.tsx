@@ -285,6 +285,9 @@ function fieldTab(
             <div class="dsm-vector-tools-math-row">
               {componentInput(vectorTools, validation, "p")}
               {componentInput(vectorTools, validation, "q")}
+              <If predicate={() => vectorTools.is3d}>
+                {() => componentInputR(vectorTools)}
+              </If>
             </div>
           ),
         })}
@@ -1728,6 +1731,37 @@ function componentInput(
             type: "dsm-focus",
             plugin: "vector-tools",
             kind: which,
+          },
+        })}
+        controller={vectorTools.cc}
+        readonly={false}
+      />
+    </div>
+  );
+}
+
+/**
+ * R, the third component, shown only on Desmos 3D. Separate from the P and Q
+ * slots because those are also generated into the expression list, and the
+ * generator does not write 3D fields yet; R is read by the live arrows alone.
+ */
+function componentInputR(vectorTools: VectorTools) {
+  return (
+    <div>
+      <label class="dsm-vector-tools-label">R(x, y, z)</label>
+      <InlineMathInputViewGeneral
+        containerClass={() => ({ "dsm-vector-tools-math-input": true })}
+        placeholder="0"
+        ariaLabel="R of x, y and z"
+        latex={() => vectorTools.componentZLatex}
+        handleLatexChanged={(latex) => vectorTools.setComponentZ(latex)}
+        hasError={() => false}
+        manageFocus={mathquillFocusHelper({
+          controller: vectorTools.cc,
+          location: {
+            type: "dsm-focus",
+            plugin: "vector-tools",
+            kind: "r",
           },
         })}
         controller={vectorTools.cc}

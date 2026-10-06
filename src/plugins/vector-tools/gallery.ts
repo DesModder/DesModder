@@ -53,7 +53,7 @@ export function colorsFromGallery(
     ...base,
     name: preset.name,
     source: "components",
-    components: { xLatex: preset.xLatex, yLatex: preset.yLatex },
+    components: { xLatex: preset.xLatex, yLatex: preset.yLatex, zLatex: "0" },
     color: { ...base.color, palette: preset.palette },
     time: { ...base.time, speed: preset.timeSpeed ?? base.time.speed },
     flow: {
@@ -81,7 +81,7 @@ export function configFromGallery(
     ...base,
     name: preset.name,
     source: "components",
-    components: { xLatex: preset.xLatex, yLatex: preset.yLatex },
+    components: { xLatex: preset.xLatex, yLatex: preset.yLatex, zLatex: "0" },
     domain: { x: axis(base.domain.x), y: axis(base.domain.y) },
     // These are flow pictures. An arrow grid samples a field at fixed points,
     // which is how you read one rather than how you watch one.

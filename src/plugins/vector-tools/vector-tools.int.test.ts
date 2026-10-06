@@ -344,6 +344,8 @@ testWithPage(
     expect((await storedConfig(driver)).components).toEqual({
       xLatex: "-3y",
       yLatex: "x",
+      // R is read only on Desmos 3D and untouched by the 2D mirror.
+      zLatex: "0",
     });
 
     // A definition renamed out from under the plugin is reported, not adopted.
@@ -1594,7 +1596,12 @@ testWithPage(
     expect(field.name).toBe("Saved before libraries");
     // And the stored value is now a library, so nothing migrates it again.
     expect((await storedLibrary(driver)).schemaVersion).toBe(4);
-    expect(field.components).toEqual({ xLatex: "2y", yLatex: "-2x" });
+    // R did not exist then; it takes 0, so the field lies flat on Desmos 3D.
+    expect(field.components).toEqual({
+      xLatex: "2y",
+      yLatex: "-2x",
+      zLatex: "0",
+    });
     // Its id and token address expressions already in the user's saved graphs.
     expect(field.id).toBe("default");
     expect(field.symbolToken).toBe("d");

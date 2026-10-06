@@ -22,6 +22,12 @@ import type {
   FlowColorMode,
   OverlayLayer,
 } from "../../field-rendering/types";
+import type {
+  ArrowLength3D,
+  ArrowShape3D,
+  ScaleRule3D,
+} from "../../field-rendering/Arrow3DRenderer";
+import type { Cutaway3D, Placement3D } from "../../field-rendering/glsl3d";
 export type {
   VectorLengthMode,
   VectorColorMode,
@@ -280,6 +286,111 @@ export interface TimeConfig {
   /** Clock seconds per real second. */
   speed: number;
 }
+
+/**
+ * How the field is drawn over Desmos 3D. Every trade-off from the step-1
+ * mock-up is here as a setting with its default, so the panel can offer each
+ * one as a control rather than a choice made on the user's behalf
+ * (`docs/VECTOR_TOOLS_3D_BUILD_PLAN.md` §2).
+ *
+ * A separate block rather than a reuse of the 2D settings, because almost
+ * none of them mean the same thing in a rotatable box: a sampling domain is
+ * the box, a viewport-relative length is a box-relative one, and occlusion
+ * and cutaways have no 2D meaning at all. The colour settings are shared, as
+ * a field coloured one way in 2D should be the same field in 3D.
+ */
+export interface Space3DConfig {
+  look: Look3D;
+  shape: "auto" | ArrowShape3D;
+  placement: Placement3D;
+  countAuto: boolean;
+  /** Arrows per axis when not Auto. */
+  count: number;
+  sliceAxis: 0 | 1 | 2;
+  /** 0..1 across the box. */
+  slicePosition: number;
+  lengthMode: ArrowLength3D;
+  lengthAuto: boolean;
+  /** Arrow length as a multiple of the spacing, when not Auto. */
+  lengthMultiple: number;
+  widthPx: number;
+  scaleRule: ScaleRule3D;
+  scaleAuto: boolean;
+  scale: number;
+  shading: boolean;
+  fog: boolean;
+  outline: boolean;
+  selfDepth: boolean;
+  clip: boolean;
+  /** What happens to what a graphed surface covers. Hidden by Rafael's call. */
+  occlusion: Occlusion3D;
+  meshAuto: boolean;
+  mesh: number;
+  cutaway: Cutaway3D;
+  cutAngle: number;
+  /** Where a fixed cake slice points, radians round z; null faces the camera. */
+  cutTurn: number | null;
+  linesAuto: boolean;
+  lines: number;
+  lineLength: number;
+  lineOpacity: number;
+  animate: boolean;
+  flowSpeed: number;
+  flowWindow: number;
+  pointsAuto: boolean;
+  points: number;
+  pointPx: number;
+  cloudOpacity: number;
+  cloudContrast: number;
+  cloudByDirection: boolean;
+}
+
+export type Look3D = "arrows" | "streamlines" | "cloud";
+export type Occlusion3D = "hide" | "fade" | "over";
+
+/** Auto's arrow length, as a multiple of the spacing; see the plan's §5. */
+export const AUTO_LENGTH_MULTIPLE_3D = 0.8;
+
+export const DEFAULT_SPACE_3D: Space3DConfig = {
+  look: "arrows",
+  shape: "auto",
+  placement: "jitter",
+  countAuto: true,
+  count: 8,
+  sliceAxis: 2,
+  slicePosition: 0.5,
+  lengthMode: "normalized",
+  lengthAuto: true,
+  lengthMultiple: AUTO_LENGTH_MULTIPLE_3D,
+  widthPx: 3,
+  scaleRule: "field",
+  scaleAuto: true,
+  scale: 1,
+  shading: true,
+  fog: false,
+  outline: false,
+  selfDepth: true,
+  clip: true,
+  occlusion: "hide",
+  meshAuto: true,
+  mesh: 64,
+  cutaway: "off",
+  cutAngle: Math.PI / 2,
+  cutTurn: null,
+  linesAuto: true,
+  lines: 2500,
+  lineLength: 0.6,
+  lineOpacity: 0.4,
+  animate: true,
+  flowSpeed: 0.25,
+  flowWindow: 0.4,
+  pointsAuto: true,
+  points: 150_000,
+  pointPx: 2,
+  cloudOpacity: 0.35,
+  cloudContrast: 3,
+  cloudByDirection: false,
+};
 
 export const TIME_SPEED_MINIMUM = 0.05;
 export const TIME_SPEED_MAXIMUM = 8;
@@ -563,6 +674,8 @@ export interface VectorFieldConfig {
   components: {
     xLatex: string;
     yLatex: string;
+    /** R(x, y, z), read only on Desmos 3D. */
+    zLatex: string;
   };
   /** The potential whose gradient is the field, used when source is gradient. */
   scalar: {
@@ -599,6 +712,7 @@ export interface VectorFieldConfig {
   curve: CurveConfig;
   time: TimeConfig;
   fluid: FluidConfig;
+  space3d: Space3DConfig;
 }
 
 /**
@@ -714,7 +828,9 @@ export const DEFAULT_VECTOR_FIELD_CONFIG: VectorFieldConfig = {
   // it has already written into saved graphs.
   symbolToken: "d",
   source: "components",
-  components: { xLatex: "-y", yLatex: "x" },
+  // R is 0 so a 2D field opened on Desmos 3D is the same field, lying flat
+  // in every horizontal plane.
+  components: { xLatex: "-y", yLatex: "x", zLatex: "0" },
   // ∇(x²+y²) = (2x, 2y): a radial field that is obviously the gradient of the
   // bowl it comes from, so switching to gradient mode shows something legible.
   scalar: { fLatex: "x^{2}+y^{2}" },
@@ -801,6 +917,7 @@ export const DEFAULT_VECTOR_FIELD_CONFIG: VectorFieldConfig = {
     writeback: false,
     playing: true,
   },
+  space3d: DEFAULT_SPACE_3D,
 };
 
 export const DENSITY_PRESETS: readonly DensityPreset[] = [
@@ -920,6 +1037,7 @@ export function cloneDefaultConfig(): VectorFieldConfig {
       ...DEFAULT_VECTOR_FIELD_CONFIG.fluid,
       tank: { ...DEFAULT_VECTOR_FIELD_CONFIG.fluid.tank },
     },
+    space3d: { ...DEFAULT_SPACE_3D },
   };
 }
 
@@ -1132,6 +1250,10 @@ export function normalizeVectorFieldConfig(value: unknown): VectorFieldConfig {
         typeof components?.yLatex === "string"
           ? components.yLatex
           : fallback.components.yLatex,
+      zLatex:
+        typeof components?.zLatex === "string"
+          ? components.zLatex
+          : fallback.components.zLatex,
     },
     domain: {
       x: normalizeAxis(domain?.x, fallback.domain.x),
@@ -1212,8 +1334,80 @@ export function normalizeVectorFieldConfig(value: unknown): VectorFieldConfig {
     curve: normalizeCurve(value.curve, fallback.curve),
     time: normalizeTime(value.time, fallback.time),
     fluid: normalizeFluid(value.fluid, fallback.fluid),
+    space3d: normalizeSpace3D(value.space3d, fallback.space3d),
   };
   return config;
+}
+
+/**
+ * Each 3D setting read back on its own, so a stored config from before one
+ * existed takes that one's default and keeps the rest.
+ */
+export function normalizeSpace3D(
+  value: unknown,
+  fallback: Space3DConfig
+): Space3DConfig {
+  const v = asRecord(value);
+  const oneOf = <T extends string>(
+    key: keyof Space3DConfig,
+    options: readonly T[]
+  ): T =>
+    options.includes(v?.[key] as T) ? (v![key] as T) : (fallback[key] as T);
+  const flag = (key: keyof Space3DConfig) =>
+    typeof v?.[key] === "boolean" ? v[key] : (fallback[key] as boolean);
+  const num = (key: keyof Space3DConfig, min: number, max: number) =>
+    clampNumber(v?.[key], fallback[key] as number, min, max);
+  const axis = v?.sliceAxis;
+  const turn = v?.cutTurn;
+  return {
+    look: oneOf("look", ["arrows", "streamlines", "cloud"]),
+    shape: oneOf("shape", ["auto", "lines", "flat", "solid"]),
+    placement: oneOf("placement", ["jitter", "grid", "slice", "surface"]),
+    countAuto: flag("countAuto"),
+    count: Math.round(num("count", 1, 64)),
+    sliceAxis:
+      axis === 0 || axis === 1 || axis === 2 ? axis : fallback.sliceAxis,
+    slicePosition: num("slicePosition", 0, 1),
+    lengthMode: oneOf("lengthMode", [
+      "normalized",
+      "saturating",
+      "clamped",
+      "actual",
+    ]),
+    lengthAuto: flag("lengthAuto"),
+    lengthMultiple: num("lengthMultiple", 0.05, 4),
+    widthPx: num("widthPx", 0.5, 12),
+    scaleRule: oneOf("scaleRule", ["field", "box"]),
+    scaleAuto: flag("scaleAuto"),
+    scale: num("scale", 1e-9, 1e12),
+    shading: flag("shading"),
+    fog: flag("fog"),
+    outline: flag("outline"),
+    selfDepth: flag("selfDepth"),
+    clip: flag("clip"),
+    occlusion: oneOf("occlusion", ["hide", "fade", "over"]),
+    meshAuto: flag("meshAuto"),
+    mesh: Math.round(num("mesh", 4, 512)),
+    cutaway: oneOf("cutaway", ["off", "half", "wedge"]),
+    cutAngle: num("cutAngle", 0.05, Math.PI * 2),
+    cutTurn:
+      typeof turn === "number" && Number.isFinite(turn)
+        ? turn
+        : fallback.cutTurn,
+    linesAuto: flag("linesAuto"),
+    lines: Math.round(num("lines", 1, 40_000)),
+    lineLength: num("lineLength", 0.02, 4),
+    lineOpacity: num("lineOpacity", 0.01, 1),
+    animate: flag("animate"),
+    flowSpeed: num("flowSpeed", 0.01, 4),
+    flowWindow: num("flowWindow", 0.02, 1),
+    pointsAuto: flag("pointsAuto"),
+    points: Math.round(num("points", 1, 2_000_000)),
+    pointPx: num("pointPx", 0.5, 12),
+    cloudOpacity: num("cloudOpacity", 0.01, 1),
+    cloudContrast: num("cloudContrast", 0.1, 12),
+    cloudByDirection: flag("cloudByDirection"),
+  };
 }
 
 /**
@@ -1560,7 +1754,11 @@ export function configForPreset(
   const config = cloneDefaultConfig();
   config.id = "test";
   config.name = `Test — ${preset.name}`;
-  config.components = { xLatex: preset.xLatex, yLatex: preset.yLatex };
+  config.components = {
+    xLatex: preset.xLatex,
+    yLatex: preset.yLatex,
+    zLatex: "0",
+  };
   config.domain.x = {
     ...config.domain.x,
     mode: "count",

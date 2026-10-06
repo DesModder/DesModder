@@ -26,7 +26,7 @@ export type FocusLocation =
   | {
       type: "dsm-focus";
       plugin: "vector-tools";
-      kind: "p" | "q" | "f" | "curve-x" | "curve-y";
+      kind: "p" | "q" | "r" | "f" | "curve-x" | "curve-y";
     }
   | {
       type: "dsm-focus";
