@@ -145,6 +145,8 @@ const state = {
   look: "arrows" as Look,
   cutaway: "off" as Cutaway,
   cutAngle: Math.PI / 2,
+  /** Undefined while the slice faces the viewer; an angle once fixed. */
+  cutTurn: undefined as number | undefined,
   lines: { auto: true, value: 2500 } as Auto<number>,
   lineLength: 0.6,
   lineOpacity: 0.4,
@@ -311,6 +313,7 @@ function effective(): ArrowSettings & { autoNotes: Record<string, string> } {
     look: state.look,
     cutaway: state.cutaway,
     cutAngle: state.cutAngle,
+    cutTurn: state.cutTurn,
     lines: state.lines.auto
       ? autoLines
       : clamp(Math.round(state.lines.value), 1, 40000),
@@ -639,6 +642,14 @@ function showReadouts(
   $("cloudContrastValue").textContent = state.cloudContrast.toFixed(1);
   syncChips("cutaway", state.cutaway);
   $("cutAngleRow").hidden = state.cutaway !== "wedge";
+  syncChips("cutFacing", state.cutTurn === undefined ? "camera" : "fixed");
+  $("cutTurnRow").hidden = state.cutTurn === undefined;
+  if (state.cutTurn !== undefined) {
+    const degrees = ((((state.cutTurn * 180) / Math.PI) % 360) + 360) % 360;
+    if (document.activeElement !== $("cutTurn"))
+      $<HTMLInputElement>("cutTurn").value = String(Math.round(degrees));
+    $("cutTurnValue").textContent = `${Math.round(degrees)}°`;
+  }
   $("cutAngleValue").textContent =
     `${Math.round((state.cutAngle * 180) / Math.PI)}°`;
   $("flowSpeedValue").textContent = `${state.flowSpeed.toFixed(2)} lines/s`;
@@ -930,6 +941,16 @@ function wire() {
     () => state.clip,
     (v) => (state.clip = v)
   );
+  onChips("cutFacing", (v) => {
+    // Fixing the slice keeps it where it is now, so switching never jumps.
+    state.cutTurn = v === "fixed" ? overlay.cameraAzimuth : undefined;
+  });
+  $<HTMLInputElement>("cutTurn").addEventListener("input", (e) => {
+    state.cutTurn =
+      (Number((e.target as HTMLInputElement).value) * Math.PI) / 180;
+    syncChips("cutFacing", "fixed");
+    requestRender();
+  });
   onChips("cutaway", (v) => {
     state.cutaway = v as Cutaway;
   });

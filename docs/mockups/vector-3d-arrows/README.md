@@ -122,5 +122,9 @@ the front layer hides the middle. Three additions, all under **Look**:
   streamlines and cloud points are clipped at its faces. Painting the cut
   faces with the field was tried and rejected by Rafael: he wants the slice
   empty.
+  The slice either **faces you**, turning with the camera, or is **fixed in
+  the box**. A fixed slice stays put while the camera goes round it, so its
+  cut sides come into view the way a cut cake is seen. Fixing it keeps the
+  slice where it currently points, and a slider turns it from there.
 
 Evidence: `docs/assets/vector-3d/looks.png`.

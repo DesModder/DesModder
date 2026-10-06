@@ -608,6 +608,24 @@
             value="90"
             aria-label="Angle of the slice cut out"
           />
+          <div class="chips" data-key="cutFacing">
+            <button class="chip" data-value="camera">Faces you</button>
+            <button class="chip" data-value="fixed">Fixed in the box</button>
+          </div>
+          <div id="cutTurnRow" hidden>
+            <div class="sub">
+              <span>Slice points to</span><b id="cutTurnValue"></b>
+            </div>
+            <input
+              type="range"
+              id="cutTurn"
+              min="0"
+              max="360"
+              step="1"
+              value="0"
+              aria-label="Direction the slice points, round the vertical axis"
+            />
+          </div>
         </div>
       </section>
 

@@ -51,6 +51,11 @@ export interface ArrowSettings extends LookSettings {
   cutaway: Cutaway;
   /** The cake slice's angle, in radians. */
   cutAngle: number;
+  /**
+   * Where the slice points, in radians round the vertical axis, or undefined
+   * for a slice that turns with the camera so it always faces the viewer.
+   */
+  cutTurn: number | undefined;
   shape: Shape;
   sampling: Sampling;
   /** Arrows per axis; slices and surfaces use the first two. */
@@ -398,6 +403,8 @@ export class Overlay {
   private readonly pending: WebGLQuery[] = [];
   private readonly looks: VolumeLooks;
   gpuMs: number[] = [];
+  /** The direction the camera looks from, round the vertical axis. */
+  cameraAzimuth = 0;
 
   constructor(readonly canvas: HTMLCanvasElement) {
     const gl = canvas.getContext("webgl2", {
@@ -510,7 +517,12 @@ export class Overlay {
       r0[0] * r1[1] - r0[1] * r1[0],
     ];
     const half = [0, 1, 2].map((i) => (box.max[i] - box.min[i]) / 2);
-    const azimuth = Math.atan2(toCamera[1] / half[1], toCamera[0] / half[0]);
+    const facing = Math.atan2(toCamera[1] / half[1], toCamera[0] / half[0]);
+    this.cameraAzimuth = facing;
+    // A slice that faces the viewer follows the camera; a fixed one stays in
+    // the box while the camera goes round it, the way a cut cake is seen
+    // from one side and its cut faces come into view.
+    const azimuth = s.cutTurn ?? facing;
     const cutMode = { off: 0, half: 1, wedge: 2 }[s.cutaway];
     const uploadCut = (cu: Uniforms) => {
       gl.uniform1i(cu.u_cut, cutMode);
