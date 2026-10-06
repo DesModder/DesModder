@@ -259,5 +259,16 @@ Evidence pictures: `assets/fluid-gate1-taylor-green.png`,
   - **Discharge is still not validated**: Cd 0.89–0.90 at 6 mm and water's
     viscosity, against 0.61 for a sharp-edged slot (Kirchhoff, π/(π+2)).
     An 8-cell gap does not resolve the jet narrowing past the edge.
+  - **Rafael's report after real time** (water too fast, holes, sticking to
+    walls, a walled-in tap bursting) was checked against experiments and
+    exact theory in `docs/mockups/liquid-validation/`. In the mock-up now:
+    - sliding walls with log-law friction, as a switch against gripping
+      ones;
+    - the tap as a nozzle kept full, which pours only where there is room.
+      Measured, not yet in the mock-up: an ideal-gas bubble model (pockets
+      held at one atmosphere implode and stir the water; with it they rise,
+      but at half Collins' speed at 6 mm). Also measured, with no fix yet:
+      the standing wave damps 13% a period at 6 mm, against under 1% for real
+      water.
 - **Gate 7 onward:** 3D FieldPlay on the camera match in
   `DESMOS_3D_CAMERA.md`.

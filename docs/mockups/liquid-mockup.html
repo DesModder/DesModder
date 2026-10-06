@@ -390,6 +390,22 @@
         ></div>
       </section>
       <section>
+        <span class="label" id="walls-label">Walls</span>
+        <div
+          class="chips"
+          role="group"
+          aria-labelledby="walls-label"
+          id="walls"
+        ></div>
+        <p class="hint">
+          Water grips a wall over half a millimetre, far less than a cell. Grip
+          stops the whole first cell, so films hang on walls (a 1.5 cm film fell
+          38% as far as it should). Slide lets the wall reflect the water and
+          puts back the friction the law of the wall gives (80%). Sliding walls
+          take less energy out, so the water stays livelier.
+        </p>
+      </section>
+      <section>
         <span class="label" id="fill-label"
           >Half-full cells inside the liquid</span
         >
@@ -500,6 +516,26 @@
             <td>passes the 0.1% gate</td>
           </tr>
           <tr>
+            <td>Water on walls</td>
+            <td>
+              a 1.5 cm film beside a wall fell 38% as far as free fall with
+              gripping walls; 80% with sliding ones (89% in open air)
+            </td>
+            <td>Walls switch: slide is the law of the wall</td>
+          </tr>
+          <tr>
+            <td>Air trapped under water</td>
+            <td>
+              held at one atmosphere, so a pocket under 30 cm of water implodes
+              in 0.14 s and stirs the water at 0.3–0.5 m/s; real air pockets
+              rise and pop
+            </td>
+            <td>
+              not yet here: an ideal-gas bubble model works on the CPU, its
+              bubbles rise at 0.2 m/s against the 0.46 m/s Collins measured
+            </td>
+          </tr>
+          <tr>
             <td>Drops one or two cells wide</td>
             <td>too small to resolve; held to Mach 0.25</td>
             <td>a numerical guard, not physics</td>
@@ -541,6 +577,23 @@
     INTERFACE = 1,
     FLUID = 2,
     SOLID = 3;
+  const DIR = [7, 3, 6, 4, 0, 2, 8, 1, 5]; // direction index of (cx, cy), at (cx + 1) * 3 + cy + 1
+  const dirOf = (cx, cy) => DIR[(cx + 1) * 3 + cy + 1];
+  const KAPPA = 0.41,
+    LOG_B = 5.2;
+  /** Friction velocity from the law of the wall, U at height y (lattice units). */
+  function frictionVelocity(U, y, nu) {
+    if (U < 1e-12) return 0;
+    const viscous = Math.sqrt((nu * U) / y);
+    if ((y * viscous) / nu < 11) return viscous; // inside the viscous sublayer
+    let u = U / 20;
+    for (let n = 0; n < 6; n++) {
+      const l = Math.log((y * u) / nu) / KAPPA + LOG_B;
+      u -= (u * l - U) / (l + 1 / KAPPA);
+      if (!(u > 0)) return viscous;
+    }
+    return u;
+  }
 
   function equilibrium(dr, ux, uy, out) {
     const rho = 1 + dr,
@@ -553,6 +606,13 @@
   }
 
   const EQ = new Float64Array(9);
+  function feqi(i, dr, ux, uy) {
+    const cu = CX[i] * ux + CY[i] * uy;
+    return (
+      W[i] *
+      (dr + (1 + dr) * (3 * cu + 4.5 * cu * cu - 1.5 * (ux * ux + uy * uy)))
+    );
+  }
   const SPRAY_CAP = 0.25 / Math.sqrt(3);
   const REGULARIZED = typeof process === "undefined" || !process.env.BGK;
   // BGK with Guo forcing and an optional Smagorinsky closure (collideCell).
@@ -639,10 +699,35 @@
       smagorinsky = 0.1,
       gravity = 1e-4,
       fillRate = 0.05,
+      bubbles = true,
+      atmosphere = 0.148,
+      closePockets = true,
+      instantFill = false,
+      wallSlip = 0,
+      gasModel = "regions",
+      gasPasses = 4,
+      minBubble = 4,
+      maxGauge = Infinity,
       solid = () => false,
       fill = () => 0,
     }) {
-      Object.assign(this, { nx, ny, tau, smagorinsky, gravity, fillRate });
+      Object.assign(this, {
+        nx,
+        ny,
+        tau,
+        smagorinsky,
+        gravity,
+        fillRate,
+        bubbles,
+        atmosphere,
+        closePockets,
+        instantFill,
+        wallSlip,
+        gasModel,
+        gasPasses,
+        minBubble,
+        maxGauge,
+      });
       const N = (this.N = nx * ny);
       const f64 = () => new Float64Array(N);
       this.type = new Uint8Array(N);
@@ -668,6 +753,16 @@
       this.reserve = f64();
       this.recipients = new Uint8Array(N);
       this.enclosed = new Uint8Array(N);
+      this.gasRho = f64().fill(1);
+      this.label = new Int32Array(N);
+      this.lastLabel = new Int32Array(N).fill(-1);
+      this.stack = new Int32Array(N);
+      this.bubblePV = [];
+      this.stressOut = [0, 0];
+      this.smallGas = new Uint8Array(N);
+      this.gasMass = f64();
+      this.gasVol = f64();
+      this.gasFlow = f64();
       this.steps = 0;
       this.poured = 0;
       this.peakSpeed = 0;
@@ -755,10 +850,12 @@
         this.uy[k] = -speed;
         equilibrium(this.rho[k] - 1, 0, -speed, eq);
         for (let i = 0; i < 9; i++) this.p[i * N + k] = eq[i];
-        this.mass[k] += share;
+        // Only where there is room: see GpuLiquid's brush.
+        const added = Math.min(share, Math.max(0, this.rho[k] - this.mass[k]));
+        this.mass[k] += added;
+        this.poured += added;
         this.phi[k] = Math.max(0, Math.min(1, this.mass[k] / this.rho[k]));
       }
-      this.poured += amount;
     }
 
     /** A cell turned to wall where it was empty, or back to empty. */
@@ -775,6 +872,272 @@
 
     step(count = 1) {
       for (let n = 0; n < count; n++) this.oneStep();
+    }
+
+    /** The gas pressure, as a density, that the free surface pushes against.
+     *  Without it every gas pocket is a vacuum: a bubble in still water
+     *  imploded in 0.14 s and left the water churning at 0.3 m/s. As in the
+     *  free-surface bubble models of Thürey, Körner and Anderl, each enclosed
+     *  gas region is an ideal gas whose pressure times volume is kept, so a
+     *  squeezed bubble pushes back and a bubble rises instead of imploding.
+     *  Regions are found afresh each step and matched to the last step's by
+     *  the cells they share: merging bubbles add their p·V, a splitting one
+     *  shares it by volume. Gas reaching the open top is the atmosphere.
+     *  Pressure is in atmospheres; `atmosphere` is one atmosphere as a lattice
+     *  density (P_atm / ρ c_s², 0.148 for 6 mm cells and g_lat 3e-5). */
+    updateGas() {
+      const { N, nx, ny, type: t, phi, nb } = this;
+      const label = this.label,
+        last = this.lastLabel,
+        K = this.atmosphere;
+      label.fill(-1);
+      const regions = []; // { cells, volume, top }
+      const stack = this.stack;
+      for (let k0 = 0; k0 < N; k0++) {
+        if (t[k0] !== GAS || label[k0] >= 0) continue;
+        const r = regions.length,
+          region = { cells: [], volume: 0, top: false };
+        regions.push(region);
+        let sp = 0;
+        stack[sp++] = k0;
+        label[k0] = r;
+        while (sp) {
+          const k = stack[--sp];
+          region.cells.push(k);
+          region.volume += 1;
+          if (k >= (ny - 1) * nx) region.top = true;
+          for (let i = 1; i < 9; i++) {
+            const j = nb[i * N + k];
+            if (j >= 0 && t[j] === GAS && label[j] < 0) {
+              label[j] = r;
+              stack[sp++] = j;
+            }
+          }
+        }
+      }
+      // The gas part of surface cells belongs to the region beside them.
+      for (let k = 0; k < N; k++) {
+        if (t[k] !== INTERFACE) continue;
+        for (let i = 1; i < 9; i++) {
+          const j = nb[i * N + k];
+          if (j >= 0 && t[j] === GAS) {
+            regions[label[j]].volume += 1 - phi[k];
+            break;
+          }
+        }
+      }
+      // Match to the last step's bubbles by shared cells; carry p·V. A bubble
+      // that splits shares its p·V by the parts' volumes, so both keep its
+      // pressure: shared by gas cells, a small part (more surface, fewer gas
+      // cells) was born at 0.57 atmospheres and sucked water in at 10 m/s.
+      const oldPV = this.bubblePV,
+        oldVolume = new Map(),
+        newPV = [];
+      for (const region of regions) {
+        if (region.top) continue;
+        const share = new Map();
+        for (const k of region.cells) {
+          const o = last[k];
+          if (o >= -2) share.set(o, (share.get(o) || 0) + 1);
+        }
+        region.share = share;
+        for (const [o, n] of share)
+          if (o >= 0)
+            oldVolume.set(
+              o,
+              (oldVolume.get(o) || 0) +
+                (region.volume * n) / region.cells.length
+            );
+      }
+      for (const region of regions) {
+        if (region.top) {
+          newPV.push(region.volume);
+          continue;
+        } // the atmosphere: p = 1
+        let pv = 0,
+          matched = 0;
+        for (const [o, n] of region.share) {
+          const part = (region.volume * n) / region.cells.length;
+          if (o === -2) {
+            pv += part;
+            matched += n;
+          } // pinched off the open air at p = 1
+          else if (o >= 0 && oldPV[o] !== undefined) {
+            pv += (oldPV[o] * part) / oldVolume.get(o);
+            matched += n;
+          }
+        }
+        // Gas with no history (liquid emptied out) starts at the pressure of
+        // the liquid around it, so it is born without a kick. Cells that just
+        // emptied beside old gas join it: the same p·V, spread thinner.
+        if (matched === 0)
+          pv = region.volume * this.surroundingPressure(region.cells);
+        newPV.push(pv);
+      }
+      this.bubblePV = newPV;
+      this.lastVolume = regions.map((g) => g.volume);
+      // Each gas cell's density: 1 + K (p − 1), p = p·V / V.
+      const G = this.gasRho,
+        small = this.smallGas;
+      G.fill(1);
+      small.fill(0);
+      for (const [r, region] of regions.entries()) {
+        if (region.top) {
+          for (const k of region.cells) last[k] = -2;
+          continue;
+        }
+        // A pocket of a few gas cells is too small to resolve, often a few gas
+        // cells in a froth of part-filled ones whose volume swings 5% a step;
+        // its p·V law then gave 0.6 to 1.9 atmospheres and threw water at
+        // Mach 0.76. It takes the liquid's pressure, pushes on nothing, and may
+        // close.
+        if (region.cells.length < this.minBubble) {
+          const rhoGas = 1 + K * (this.surroundingPressure(region.cells) - 1);
+          for (const k of region.cells) {
+            G[k] = rhoGas;
+            small[k] = 1;
+            last[k] = -1;
+          }
+          newPV[r] = undefined;
+          continue;
+        }
+        const pressure = Math.max(
+          1 - this.maxGauge,
+          Math.min(1 + this.maxGauge, newPV[r] / region.volume)
+        );
+        if (this.debugGas && (pressure < 0.6 || pressure > 1.4))
+          this.debugGas(
+            `step ${this.steps}: region of ${region.cells.length} cells, volume ${region.volume.toFixed(2)}, p ${pressure.toFixed(2)}, from ${[...region.share].map(([o, n]) => `${o}:${n}` + (o >= 0 ? `(pv ${oldPV[o]?.toFixed(2)}, vol ${this.lastVolume?.[o]?.toFixed(2)})` : "")).join(" ")}`
+          );
+        const rhoGas = 1 + K * (pressure - 1);
+        for (const k of region.cells) {
+          G[k] = rhoGas;
+          last[k] = r;
+        }
+      }
+      for (let k = 0; k < N; k++) if (t[k] !== GAS) last[k] = -1;
+    }
+
+    /** The population a wall sends into cell k along direction i. Bounce-back
+     *  stops the first cell dead: with water's viscosity nothing inside the
+     *  liquid replaces the momentum, so a 6 mm layer sticks where real water
+     *  grips the wall over half a millimetre (a 1.5 cm film fell at 38% of free
+     *  fall). On a straight wall the population is mirrored instead (free
+     *  slip), and `wallStress` puts back the friction the law of the wall
+     *  gives; corners and diagonal walls still bounce back. */
+    wallPopulation(k, i) {
+      const { N, nb, type: t, p } = this,
+        back = p[OPP[i] * N + k];
+      const cx = CX[i],
+        cy = CY[i];
+      if (cx === 0 || cy === 0) return back; // head-on: mirror and bounce agree
+      const sx = nb[dirOf(-cx, 0) * N + k],
+        sy = nb[dirOf(0, -cy) * N + k];
+      const solidX = sx < 0 || t[sx] === SOLID,
+        solidY = sy < 0 || t[sy] === SOLID;
+      let mirrored = back;
+      if (solidX && !solidY && (t[sy] === FLUID || t[sy] === INTERFACE))
+        mirrored = p[dirOf(-cx, cy) * N + sy]; // upright wall
+      else if (solidY && !solidX && (t[sx] === FLUID || t[sx] === INTERFACE))
+        mirrored = p[dirOf(cx, -cy) * N + sx]; // floor or lid
+      return this.wallSlip * mirrored + (1 - this.wallSlip) * back;
+    }
+
+    /** Wall friction from the log law at the first cell's centre, half a cell out. */
+    wallStress(k, ux, uy) {
+      const { N, nb, type: t } = this,
+        out = this.stressOut;
+      out[0] = 0;
+      out[1] = 0;
+      const nu = (this.tau - 0.5) / 3,
+        wall = (d) => {
+          const j = nb[d * N + k];
+          return j < 0 || t[j] === SOLID;
+        };
+      if (wall(1) || wall(3)) {
+        const u = frictionVelocity(Math.abs(uy), 0.5, nu);
+        out[1] -= Math.sign(uy) * u * u * this.wallSlip;
+      }
+      if (wall(2) || wall(4)) {
+        const u = frictionVelocity(Math.abs(ux), 0.5, nu);
+        out[0] -= Math.sign(ux) * u * u * this.wallSlip;
+      }
+      return out;
+    }
+
+    /** The same ideal gas, kept locally: each cell holds a gas mass, its
+     *  pressure (in atmospheres) is that mass over its gas volume, and gas
+     *  flows between neighbouring gas cells until the pressures even out.
+     *  A bubble's gas then has a fixed total, which is the ideal-gas p·V law,
+     *  and merging, splitting and the open top need no bookkeeping. Gas that a
+     *  filling cell can no longer hold is pushed to its gas neighbours. */
+    updateGasLocal() {
+      const { N, nx, ny, type: t, phi, nb } = this;
+      const M = this.gasMass,
+        V = this.gasVol,
+        flow = this.gasFlow,
+        K = this.atmosphere;
+      for (let k = 0; k < N; k++)
+        V[k] =
+          t[k] === GAS ? 1 : t[k] === INTERFACE ? Math.max(0, 1 - phi[k]) : 0;
+      if (!this.gasStarted) {
+        for (let k = 0; k < N; k++) M[k] = V[k];
+        this.gasStarted = true;
+      }
+      // Gas in cells that filled goes to their gas neighbours.
+      flow.fill(0);
+      for (let k = 0; k < N; k++) {
+        if (V[k] > 0 || M[k] === 0) continue;
+        let n = 0;
+        for (let i = 1; i < 9; i++) {
+          const j = nb[i * N + k];
+          if (j >= 0 && V[j] > 0) n++;
+        }
+        if (!n) continue;
+        for (let i = 1; i < 9; i++) {
+          const j = nb[i * N + k];
+          if (j >= 0 && V[j] > 0) flow[j] += M[k] / n;
+        }
+        M[k] = 0;
+      }
+      for (let k = 0; k < N; k++) M[k] += flow[k];
+      const D = 1 / 9,
+        top = (ny - 1) * nx;
+      for (let pass = 0; pass < this.gasPasses; pass++) {
+        for (let k = 0; k < N; k++) {
+          flow[k] = 0;
+          if (V[k] <= 0) continue;
+          const pk = M[k] / V[k];
+          let d = 0;
+          for (let i = 1; i < 9; i++) {
+            const j = nb[i * N + k];
+            if (j >= 0 && V[j] > 0)
+              d += Math.min(V[k], V[j]) * (M[j] / V[j] - pk);
+          }
+          if (k >= top) d += V[k] * (1 - pk); // the air above the open tank
+          flow[k] = D * d;
+        }
+        for (let k = 0; k < N; k++) M[k] += flow[k];
+      }
+      const G = this.gasRho;
+      for (let k = 0; k < N; k++)
+        G[k] = V[k] > 0 ? 1 + K * (M[k] / V[k] - 1) : 1;
+    }
+
+    // Pressure in atmospheres of the liquid touching these gas cells.
+    surroundingPressure(cells) {
+      const { N, type: t, rho, nb } = this;
+      let sum = 0,
+        n = 0;
+      for (const k of cells)
+        for (let i = 1; i < 9; i++) {
+          const j = nb[i * N + k];
+          if (j >= 0 && (t[j] === INTERFACE || t[j] === FLUID)) {
+            sum += rho[j];
+            n++;
+          }
+        }
+      return n ? 1 + (sum / n - 1) / this.atmosphere : 1;
     }
 
     oneStep() {
@@ -800,8 +1163,13 @@
       nUx.fill(0);
       nUy.fill(0);
       tent.set(t);
+      if (this.bubbles) {
+        if (this.gasModel === "local") this.updateGasLocal();
+        else this.updateGas();
+      }
+      const slip = this.wallSlip > 0;
+      const gasRho = this.gasRho;
       const g = new Float64Array(9),
-        gas = new Float64Array(9),
         macro = [0, 0, 0];
       let peak = this.peakSpeed;
       // Pass 1: mass exchange, gas-side reconstruction, collision.
@@ -809,16 +1177,22 @@
         nMass[k] = m[k];
         this.enclosed[k] = 0;
         if (t[k] === SOLID || t[k] === GAS) continue;
-        equilibrium(0, this.ux[k], this.uy[k], gas);
         let dm = 0,
           wet = 0,
           dry = 0,
           bulk = 0;
+        const uxk = this.ux[k],
+          uyk = this.uy[k];
         for (let i = 0; i < 9; i++) {
           const j = nb[OPP[i] * N + k];
-          if (j < 0 || t[j] === SOLID) g[i] = p[OPP[i] * N + k];
+          if (j < 0 || t[j] === SOLID)
+            g[i] = slip ? this.wallPopulation(k, i) : p[OPP[i] * N + k];
           else if (t[j] === GAS) {
-            g[i] = gas[i] + gas[OPP[i]] - p[OPP[i] * N + k];
+            const dg = gasRho[j] - 1;
+            g[i] =
+              feqi(i, dg, uxk, uyk) +
+              feqi(OPP[i], dg, uxk, uyk) -
+              p[OPP[i] * N + k];
             dry++;
           } else {
             g[i] = p[i * N + j];
@@ -832,14 +1206,14 @@
           }
         }
         nMass[k] += dm;
-        collide(
-          g,
-          this.tau,
-          this.smagorinsky,
-          0,
-          -this.gravity * rho[k],
-          macro
-        );
+        let fx = 0,
+          fy = -this.gravity * rho[k];
+        if (slip) {
+          const w = this.wallStress(k, uxk, uyk);
+          fx += w[0];
+          fy += w[1];
+        }
+        collide(g, this.tau, this.smagorinsky, fx, fy, macro);
         // Spray, a surface cell with no bulk liquid beside it, is a drop one or
         // two cells wide: too small for the lattice to resolve, and bounced off
         // the lid without a splash it reached Mach 0.34. Past Mach 0.25 it is
@@ -870,7 +1244,7 @@
           tent[k] =
             wet === 0
               ? GAS
-              : nMass[k] >= nRho[k]
+              : nMass[k] >= nRho[k] || (this.instantFill && dry === 0)
                 ? FLUID
                 : nMass[k] <= 0
                   ? GAS
@@ -900,7 +1274,13 @@
           if (t[j] === GAS) dry++;
           else if (t[j] !== SOLID) wet++;
         }
-        if (t[k] === GAS && wet > 0 && dry === 0) fixed[k] = INTERFACE;
+        if (
+          (this.closePockets || this.smallGas[k]) &&
+          t[k] === GAS &&
+          wet > 0 &&
+          dry === 0
+        )
+          fixed[k] = INTERFACE;
       }
       // Pass 3: liquid beside gas stays interface; newly wet cells start at their neighbours' mean.
       fin.set(fixed);
@@ -1011,7 +1391,7 @@
   // where float32 resolves 1e-7, and the ledger's small shares fell below that
   // (mass drifted 3e-4 in 12 s of a draining tank).
   //   O0 g0..g3   O1 g4..g7   O2 tent, ux, uy   O3 mass−rho, rho, g8, enclosed
-  //   C0 type (+4 if fresh), phi, ux, uy        C1 mass−rho, reservoir, rho
+  //   C0 type (+4 if fresh), phi, ux, uy        C1 mass−rho, reservoir, rho, poured here
   const GPU_COMMON = `#version 300 es
 precision highp float; precision highp int; precision highp sampler2D;
 uniform ivec2 N;
@@ -1035,7 +1415,9 @@ void main() { vec2 p = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2); gl_Positio
     GPU_COMMON +
     `
 uniform sampler2D O0, O1, O3, C0, C1;
-uniform float tau, smag, gravity, sprayCap;
+uniform float tau, smag, gravity, sprayCap, wallSlip;
+const int DIR[9] = int[9](7, 3, 6, 4, 0, 2, 8, 1, 5);
+int dirOf(int cx, int cy) { return DIR[(cx + 1) * 3 + cy + 1]; }
 layout(location = 0) out vec4 o0; layout(location = 1) out vec4 o1;
 layout(location = 2) out vec4 o2; layout(location = 3) out vec4 o3;
 float popAt(ivec2 p, int i, vec4 c0) {
@@ -1043,6 +1425,32 @@ float popAt(ivec2 p, int i, vec4 c0) {
   if (i < 4) return texelFetch(O0, p, 0)[i];
   if (i < 8) return texelFetch(O1, p, 0)[i - 4];
   return texelFetch(O3, p, 0).z;
+}
+bool solidAt(ivec2 p) { return !inside(p) || kind(texelFetch(C0, p, 0).x) == SOLID; }
+// liquid.js wallPopulation: a straight wall mirrors (free slip); corners and
+// diagonal walls bounce back; wallSlip mixes the two.
+float wallPopulation(ivec2 x, int i, float back) {
+  ivec2 c = C[i];
+  if (wallSlip <= 0.0 || c.x == 0 || c.y == 0) return back;
+  ivec2 sx = x - ivec2(c.x, 0), sy = x - ivec2(0, c.y);
+  bool solidX = solidAt(sx), solidY = solidAt(sy);
+  float mirrored = back;
+  if (solidX && !solidY) { vec4 cs = texelFetch(C0, sy, 0); int ts = kind(cs.x); if (ts == FLUID || ts == INTERFACE) mirrored = popAt(sy, dirOf(-c.x, c.y), cs); }
+  else if (solidY && !solidX) { vec4 cs = texelFetch(C0, sx, 0); int ts = kind(cs.x); if (ts == FLUID || ts == INTERFACE) mirrored = popAt(sx, dirOf(c.x, -c.y), cs); }
+  return wallSlip * mirrored + (1.0 - wallSlip) * back;
+}
+// liquid.js frictionVelocity: the law of the wall at the first cell's centre.
+float frictionVelocity(float U, float nu) {
+  if (U < 1e-12) return 0.0;
+  float y = 0.5, viscous = sqrt(nu * U / y);
+  if (y * viscous / nu < 11.0) return viscous;
+  float u = U / 20.0;
+  for (int n = 0; n < 6; n++) {
+    float l = log(y * u / nu) / 0.41 + 5.2;
+    u -= (u * l - U) / (l + 1.0 / 0.41);
+    if (!(u > 0.0)) return viscous;
+  }
+  return u;
 }
 void main() {
   ivec2 x = ivec2(gl_FragCoord.xy);
@@ -1061,10 +1469,10 @@ void main() {
   for (int i = 1; i < 9; i++) {
     ivec2 j = x - C[i];
     int o = OPP[i];
-    if (!inside(j)) { g[i] = f[o]; continue; }
+    if (!inside(j)) { g[i] = wallPopulation(x, i, f[o]); continue; }
     vec4 cj = texelFetch(C0, j, 0);
     int tj = kind(cj.x);
-    if (tj == SOLID) g[i] = f[o];
+    if (tj == SOLID) g[i] = wallPopulation(x, i, f[o]);
     else if (tj == GAS) { g[i] = gas[i] + gas[o] - f[o]; dry++; }
     else {
       float pij = popAt(j, i, cj);
@@ -1076,6 +1484,11 @@ void main() {
   }
   // Collision: regularized BGK, Guo forcing, Smagorinsky (liquid.js collide).
   float fx = 0.0, fy = -gravity * c1.z;
+  if (wallSlip > 0.0) { // liquid.js wallStress: friction the slip wall leaves out
+    float nu = (tau - 0.5) / 3.0;
+    if (solidAt(x + ivec2(1, 0)) || solidAt(x - ivec2(1, 0))) { float ut = frictionVelocity(abs(c0.w), nu); fy -= sign(c0.w) * ut * ut * wallSlip; }
+    if (solidAt(x + ivec2(0, 1)) || solidAt(x - ivec2(0, 1))) { float ut = frictionVelocity(abs(c0.z), nu); fx -= sign(c0.z) * ut * ut * wallSlip; }
+  }
   float dr = 0.0, jx = 0.0, jy = 0.0;
   for (int i = 0; i < 9; i++) { dr += g[i]; jx += float(C[i].x) * g[i]; jy += float(C[i].y) * g[i]; }
   float rho = 1.0 + dr;
@@ -1196,7 +1609,7 @@ void main() {
   const GPU_GATHER =
     GPU_COMMON +
     `
-uniform sampler2D C0, V, Y;
+uniform sampler2D C0, C1, V, Y;
 layout(location = 0) out vec4 o0; layout(location = 1) out vec4 o1;
 void main() {
   ivec2 x = ivec2(gl_FragCoord.xy);
@@ -1208,7 +1621,7 @@ void main() {
   float phi = fin == FLUID ? 1.0 : fin == INTERFACE ? clamp((base + v.y) / v.y, 0.0, 1.0) : 0.0;
   bool isNew = kind(texelFetch(C0, x, 0).x) == GAS && fin == INTERFACE;
   o0 = vec4(float(fin + (isNew ? 4 : 0)), phi, v.zw);
-  o1 = vec4(base, y.z, v.y, 0.0);
+  o1 = vec4(base, y.z, v.y, texelFetch(C1, x, 0).w); // the poured tally rides along
 }`;
 
   // Pour, draw walls or erase, inside a disc: C -> C'.
@@ -1224,19 +1637,31 @@ void main() {
   vec2 d = vec2(x) - centre;
   int t = kind(c0.x);
   if (dot(d, d) <= radius * radius) {
-    if (mode == 0 && t != SOLID) {
-      if (t == GAS || t == INTERFACE) {
-        if (t == GAS) { c1.x = -1.0; c1.z = 1.0; } // empty: mass 0 at density 1
-        c0.x = float(INTERFACE + 4); // fresh: populations at equilibrium, moving down
-        c0.zw = vec2(0.0, -speed);
-      }
-      c1.x += share;
+    // Water goes only where there is room: poured into full cells it piled
+    // up in the ledger with no pressure, and a tap walled into a cup stored
+    // half a tank and released it all at once when the wall was erased.
+    if (mode == 0 && (t == GAS || t == INTERFACE)) {
+      if (t == GAS) { c1.x = -1.0; c1.z = 1.0; } // empty: mass 0 at density 1
+      c0.x = float(INTERFACE + 4); // fresh: populations at equilibrium, moving down
+      c0.zw = vec2(0.0, -speed);
+      float added = min(share, max(0.0, -c1.x));
+      c1.x += added; c1.w += added;
       c0.y = clamp((c1.x + c1.z) / c1.z, 0.0, 1.0);
     } else if (mode == 1 && t == GAS) c0.x = float(SOLID);
     else if (mode == 2 && t == SOLID && x.x > 0 && x.x < N.x - 1 && x.y > 0) { c0 = vec4(float(GAS), 0.0, 0.0, 0.0); c1.x = -c1.z; }
   }
   o0 = c0; o1 = c1;
 }`;
+
+  // After a read has copied the poured tally, it starts again from zero: the
+  // CPU adds it up in float64. Grown on the GPU, a cell's float32 tally lost
+  // 6e-5 of the mass check in five seconds of pouring.
+  const GPU_ZERO_TALLY =
+    GPU_COMMON +
+    `
+uniform sampler2D C0, C1;
+layout(location = 0) out vec4 o0; layout(location = 1) out vec4 o1;
+void main() { ivec2 x = ivec2(gl_FragCoord.xy); o0 = texelFetch(C0, x, 0); o1 = vec4(texelFetch(C1, x, 0).xyz, 0.0); }`;
 
   // Liquid where the smoothed fill passes a third, opaque by two-thirds.
   const GPU_RENDER =
@@ -1299,9 +1724,11 @@ void main() {
         smagorinsky: initial.smagorinsky,
         gravity: initial.gravity,
         fillRate: initial.fillRate,
+        wallSlip: initial.wallSlip || 0,
       });
       this.steps = 0;
       this.poured = 0;
+      this.pouredIn = 0;
       const tex = () => {
         const t = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, t);
@@ -1370,6 +1797,7 @@ void main() {
         excess: build(GPU_EXCESS),
         gather: build(GPU_GATHER),
         brush: build(GPU_BRUSH),
+        zeroTally: build(GPU_ZERO_TALLY),
         render: build(GPU_RENDER),
       };
       this.upload(initial);
@@ -1386,7 +1814,7 @@ void main() {
         }
         o[3].set([s.mass[k] - s.rho[k], s.rho[k], s.p[8 * N + k], 0], 4 * k);
         c[0].set([s.type[k], s.phi[k], s.ux[k], s.uy[k]], 4 * k);
-        c[1].set([s.mass[k] - s.rho[k], s.reservoir[k], s.rho[k], 0], 4 * k);
+        c[1].set([s.mass[k] - s.rho[k], s.reservoir[k], s.rho[k], 0], 4 * k); // nothing poured yet
       }
       const put = (texture, data) => {
         gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -1465,6 +1893,7 @@ void main() {
             smag: ["uniform1f", this.smagorinsky],
             gravity: ["uniform1f", this.gravity],
             sprayCap: ["uniform1f", 0.25 / Math.sqrt(3)],
+            wallSlip: ["uniform1f", this.wallSlip],
           });
         if (on("advance")) this.draw(this.prog.advance, { C0, O2: Q2 }, this.X);
         if (on("settle"))
@@ -1483,7 +1912,7 @@ void main() {
         if (on("gather"))
           this.draw(
             this.prog.gather,
-            { C0, V: this.V.textures[0], Y: this.Y.textures[0] },
+            { C0, C1, V: this.V.textures[0], Y: this.Y.textures[0] },
             this.C2
           );
         void Q0;
@@ -1507,7 +1936,10 @@ void main() {
       [this.C, this.C2] = [this.C2, this.C];
     }
 
-    /** Mass `amount` spread over the open cells of a disc, moving down at `speed`. */
+    /** Up to `amount` of mass over the open cells of a disc, moving down at
+     *  `speed`. With an endless amount the disc is a tap's nozzle, refilled to
+     *  full, and its flow is whatever the jet carries away. A read's `poured`
+     *  is what went in, which the mass check uses. */
     pour(cx, cy, radius, amount, speed) {
       let open = 0;
       for (
@@ -1526,8 +1958,7 @@ void main() {
           )
             open++;
       if (!open) return;
-      this.brush(0, cx, cy, radius, amount / open, speed);
-      this.poured += amount;
+      this.brush(0, cx, cy, radius, Math.min(1e6, amount / open), speed);
     }
 
     paint(cx, cy, radius, wall) {
@@ -1546,6 +1977,9 @@ void main() {
         else gl.readPixels(0, 0, nx, ny, gl.RGBA, gl.FLOAT, a);
       });
       if (pbo) gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+      const [C0, C1] = this.C.textures;
+      this.draw(this.prog.zeroTally, { C0, C1 }, this.C2);
+      [this.C, this.C2] = [this.C2, this.C];
     }
 
     /** The state as CPU arrays, at once. It stalls the GPU, so it is rare. */
@@ -1603,10 +2037,12 @@ void main() {
 
     unpack(c0, c1) {
       const { nx, ny, N } = this;
+      for (let k = 0; k < N; k++) this.pouredIn += c1[4 * k + 3];
       const out = {
         nx,
         ny,
         N,
+        poured: this.pouredIn,
         type: new Uint8Array(N),
         mass: new Float32Array(N),
         reservoir: new Float32Array(N),
@@ -1753,7 +2189,6 @@ void main() {
     }
     const LEVELS = [120, 160, 240, 320, 480];
     const TAP = { width: 0.025, speed: 1.0 }; // a 2.5 cm stream at 1 m/s
-    const POUR_RATE = TAP.width * TAP.speed; // m² a second in this 2D slice
 
     const SCENES = {
       dam: {
@@ -1823,6 +2258,8 @@ void main() {
         smagorinsky: 0.1,
         gravity: G_LAT,
         fillRate: state.fill === "slow" ? 0.05 : 0,
+        wallSlip: state.walls === "slide" ? 1 : 0,
+        bubbles: false,
         solid,
         fill,
       });
@@ -1830,6 +2267,10 @@ void main() {
     const TOOLS = { pour: "Pour", wall: "Draw walls", erase: "Erase walls" };
     const SHOWS = { speed: "Speed", pressure: "Pressure", cells: "Cell types" };
     const FILLS = { slow: "Fill slowly", leave: "Leave them" };
+    const WALLS = {
+      slide: "Slide (law of the wall)",
+      grip: "Grip (bounce-back)",
+    };
     const PACES = { 1: "Real time", 0.25: "Slow motion ¼" };
     const SIZES = {
       auto: "Auto",
@@ -1846,6 +2287,7 @@ void main() {
       tool: "pour",
       show: "speed",
       fill: "slow",
+      walls: "slide",
       pace: "1",
       size: "auto",
       playing: true,
@@ -2001,16 +2443,13 @@ void main() {
         try {
           while (done < n && (gpu || performance.now() - t0 < 10)) {
             const chunk = Math.min(POUR_EVERY, n - done);
-            if (
-              state.tap &&
-              state.tap.on &&
-              state.engine.poured < 0.4 * gr.nx * gr.ny
-            )
+            // The nozzle is kept full and the jet leaves it at the tap's speed.
+            if (state.tap && state.tap.on && poured() < 0.4 * gr.nx * gr.ny)
               state.engine.pour(
                 state.tap.x,
                 state.tap.y,
                 TAP.width / 2 / gr.dx,
-                (POUR_RATE * gr.dt * chunk) / gr.dx ** 2,
+                Infinity,
                 (TAP.speed * gr.dt) / gr.dx
               );
             state.engine.step(chunk);
@@ -2045,6 +2484,7 @@ void main() {
           consider(done.data, done.tag);
       render();
     }
+    const poured = () => (gpu ? state.dataPoured : state.engine.poured);
     function fail(message) {
       state.error = message;
       state.playing = false;
@@ -2067,7 +2507,7 @@ void main() {
       const gr = state.gr;
       if (d.N !== gr.nx * gr.ny) return; // a read from before a reload
       state.data = d;
-      state.dataPoured = tag.poured;
+      state.dataPoured = d.poured ?? tag.poured; // the GPU counts what went in, cell by cell
       let peak = 0;
       for (let k = 0; k < d.N; k++) {
         if (!Number.isFinite(d.rho[k])) {
@@ -2202,11 +2642,11 @@ void main() {
       } else if (state.scene === "pour") {
         rows.push([
           "Poured",
-          `${(state.engine.poured * gr.dx ** 2 * 1e4).toFixed(0)} cm² of water`,
+          `${(state.dataPoured * gr.dx ** 2 * 1e4).toFixed(0)} cm² of water`,
         ]);
         verdict = [
           "good",
-          state.engine.poured >= 0.4 * gr.nx * gr.ny
+          poured() >= 0.4 * gr.nx * gr.ny
             ? "The tap has stopped at 40% full. Every drop poured is still in the tank."
             : "Every drop poured is still in the tank.",
         ];
@@ -2589,6 +3029,10 @@ void main() {
     chips($("fills"), FILLS, "fill", (id) => {
       state.fill = id;
       state.engine.fillRate = id === "slow" ? 0.05 : 0;
+    });
+    chips($("walls"), WALLS, "walls", (id) => {
+      state.walls = id;
+      state.engine.wallSlip = id === "slide" ? 1 : 0;
     });
     $("play").textContent = state.playing ? "Pause" : "Play";
     $("play").addEventListener("click", () => {
