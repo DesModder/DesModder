@@ -158,8 +158,8 @@ async function sheet(browser, title, cells, columns, file) {
     ["wire", { look: "streamlines", animate: false }, "streamlines"],
     [
       "abc",
-      { look: "streamlines", animate: false, cutaway: true },
-      "streamlines, near half cut away",
+      { look: "streamlines", animate: false, cutaway: "wedge" },
+      "streamlines, cake slice cut out",
     ],
     ["dipole", { look: "cloud" }, "glow cloud by strength"],
     [
@@ -169,15 +169,19 @@ async function sheet(browser, title, cells, columns, file) {
     ],
     [
       "dipole",
-      { look: "cloud", cloudByDirection: true, cutaway: true },
-      "by direction, cut away",
+      { look: "cloud", cloudByDirection: true, cutaway: "wedge" },
+      "by direction, cake slice cut out",
     ],
-    ["charge", { look: "arrows", cutaway: true }, "arrows, cut away"],
+    [
+      "charge",
+      { look: "arrows", cutaway: "wedge" },
+      "arrows, cake slice cut out",
+    ],
   ]) {
     await preset(id);
     await set({
       surface: "",
-      cutaway: false,
+      cutaway: "off",
       cloudByDirection: false,
       ...patch,
     });
@@ -190,7 +194,7 @@ async function sheet(browser, title, cells, columns, file) {
     4,
     "looks.png"
   );
-  await set({ look: "arrows", cutaway: false, cloudByDirection: false });
+  await set({ look: "arrows", cutaway: "off", cloudByDirection: false });
 
   // ---- Poles: colour and length on the point charge and the dipole.
   out.poles = {};

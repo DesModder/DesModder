@@ -589,7 +589,27 @@
         <button class="chip" id="cloudByDirection" data-look="cloud">
           Colour by direction
         </button>
-        <button class="chip" id="cutaway">Cut away the near half</button>
+        <div class="sub"><span>Cut away</span></div>
+        <div class="chips" data-key="cutaway">
+          <button class="chip" data-value="off">Nothing</button>
+          <button class="chip" data-value="half">Near half</button>
+          <button class="chip" data-value="wedge">Cake slice</button>
+        </div>
+        <button class="chip" id="cutFaces" hidden>Paint the cut faces</button>
+        <div id="cutAngleRow" hidden>
+          <div class="sub">
+            <span>Slice angle</span><b id="cutAngleValue"></b>
+          </div>
+          <input
+            type="range"
+            id="cutAngle"
+            min="20"
+            max="180"
+            step="5"
+            value="90"
+            aria-label="Angle of the slice cut out"
+          />
+        </div>
       </section>
 
       <section data-look="arrows">

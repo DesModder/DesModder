@@ -27,6 +27,7 @@ import {
   type ArrowSettings,
   type LengthMode,
   type Occlusion,
+  type Cutaway,
   type Look,
   type Sampling,
   type Shape,
@@ -142,7 +143,10 @@ const state = {
   clip: true,
   spin: false,
   look: "arrows" as Look,
-  cutaway: false,
+  cutaway: "off" as Cutaway,
+  cutAngle: Math.PI / 2,
+  cutFaces: true,
+  faceOpacity: 0.9,
   lines: { auto: true, value: 2500 } as Auto<number>,
   lineLength: 0.6,
   lineOpacity: 0.4,
@@ -308,6 +312,9 @@ function effective(): ArrowSettings & { autoNotes: Record<string, string> } {
     clip: state.clip,
     look: state.look,
     cutaway: state.cutaway,
+    cutAngle: state.cutAngle,
+    cutFaces: state.cutFaces,
+    faceOpacity: state.faceOpacity,
     lines: state.lines.auto
       ? autoLines
       : clamp(Math.round(state.lines.value), 1, 40000),
@@ -634,6 +641,11 @@ function showReadouts(
   $("pointPxValue").textContent = `${state.pointPx} px`;
   $("cloudOpacityValue").textContent = state.cloudOpacity.toFixed(2);
   $("cloudContrastValue").textContent = state.cloudContrast.toFixed(1);
+  syncChips("cutaway", state.cutaway);
+  $("cutAngleRow").hidden = state.cutaway !== "wedge";
+  $("cutFaces").hidden = state.cutaway === "off";
+  $("cutAngleValue").textContent =
+    `${Math.round((state.cutAngle * 180) / Math.PI)}°`;
   $("flowSpeedValue").textContent = `${state.flowSpeed.toFixed(2)} lines/s`;
   $("flowWindowValue").textContent =
     `${Math.round(state.flowWindow * 100)}% of a line`;
@@ -924,10 +936,13 @@ function wire() {
     (v) => (state.clip = v)
   );
   toggle(
-    "cutaway",
-    () => state.cutaway,
-    (v) => (state.cutaway = v)
+    "cutFaces",
+    () => state.cutFaces,
+    (v) => (state.cutFaces = v)
   );
+  onChips("cutaway", (v) => {
+    state.cutaway = v as Cutaway;
+  });
   onChips("look", (v) => {
     state.look = v as Look;
   });
@@ -973,6 +988,7 @@ function wire() {
   slider("pointPx", (v) => (state.pointPx = v));
   slider("cloudOpacity", (v) => (state.cloudOpacity = v));
   slider("cloudContrast", (v) => (state.cloudContrast = v));
+  slider("cutAngle", (v) => (state.cutAngle = (v * Math.PI) / 180));
   slider("flowSpeed", (v) => (state.flowSpeed = v));
   slider("flowWindow", (v) => (state.flowWindow = v));
   toggle(

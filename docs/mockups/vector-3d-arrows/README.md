@@ -114,7 +114,15 @@ the front layer hides the middle. Three additions, all under **Look**:
   featureless blob. **Colour by direction** (|F̂| as RGB, the map used in 3D
   flow and diffusion imaging) separates its lobes, which is what makes orbital
   pictures read.
-- **Cut away the near half.** This discards everything nearer the camera than
-  the plane through the box's centre, for every look.
+- **Cut away: Nothing, Near half, or Cake slice.** The slice is a wedge
+  (90° by default, adjustable) around the vertical axis through the box's
+  centre. It is measured in box half-widths and always opens towards the
+  camera. A wedge on its own did not read as a cut: through the gap you
+  just see more of the field. A cut cake reads as cut because of its faces.
+  So the cut faces are painted with the field at every point (strength, or
+  direction for a cloud coloured by direction), and they write depth, so
+  whatever lies behind a face is hidden by it. "Paint the cut faces" turns
+  that off. A 90° slice removes 22% of the arrows' pixels, and 180° matches
+  "Near half".
 
 Evidence: `docs/assets/vector-3d/looks.png`.

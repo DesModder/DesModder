@@ -111,3 +111,32 @@ vec3 vtHash3(uint i) {
   return vec3(vtPcg(i), vtPcg(i ^ 0x9e3779b9u), vtPcg(i ^ 0x85ebca6bu)) / 4294967295.0;
 }
 `;
+
+/**
+ * The cutaway, shared by every look: off, the half of the box nearer the
+ * camera, or a wedge out of it like a slice out of a cake.
+ *
+ * The wedge is measured around the vertical axis through the box's centre,
+ * in box half-widths so it stays a symmetric slice in a box with unequal
+ * axes, and it is centred on the camera's own direction so it always opens
+ * towards the viewer: two cut faces meeting at the middle of the field,
+ * which is where its structure usually is.
+ */
+export const CUT_GLSL = `
+uniform int u_cut;
+uniform float u_cutZ;
+uniform vec3 u_cutCentre;
+uniform vec3 u_cutHalf;
+uniform float u_cutAzimuth;
+uniform float u_cutAngle;
+bool vtCutAway(vec3 math, vec3 view) {
+  if (u_cut == 1) return view.z > u_cutZ;
+  if (u_cut == 2) {
+    vec2 q = ((math - u_cutCentre) / u_cutHalf).xy;
+    float d = atan(q.y, q.x) - u_cutAzimuth;
+    d = mod(d + 3.14159265, 6.2831853) - 3.14159265;
+    return abs(d) < 0.5 * u_cutAngle;
+  }
+  return false;
+}
+`;

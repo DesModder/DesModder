@@ -29,6 +29,7 @@ import {
 import type { Box } from "./camera";
 import {
   CLIP_GLSL,
+  CUT_GLSL,
   HASH_GLSL,
   program,
   surfaceVertexSource,
@@ -42,11 +43,17 @@ export type Sampling = "grid" | "slice" | "jitter" | "surface";
 export type LengthMode = "normalized" | "saturating" | "clamped" | "actual";
 export type Occlusion = "over" | "hide" | "fade";
 export type Look = "arrows" | "streamlines" | "cloud";
+export type Cutaway = "off" | "half" | "wedge";
 
 export interface ArrowSettings extends LookSettings {
   look: Look;
-  /** Remove the half of the box nearer the camera, to see its middle. */
-  cutaway: boolean;
+  /** Remove part of the box nearer the camera, to see its middle. */
+  cutaway: Cutaway;
+  /** The cake slice's angle, in radians. */
+  cutAngle: number;
+  /** Paint the faces the cut leaves with the field. */
+  cutFaces: boolean;
+  faceOpacity: number;
   shape: Shape;
   sampling: Sampling;
   /** Arrows per axis; slices and surfaces use the first two. */
@@ -318,8 +325,7 @@ uniform int u_shading;
 uniform int u_outline;
 uniform float u_fog;
 uniform float u_alpha;
-uniform int u_cut;
-uniform float u_cutZ;
+${CUT_GLSL}
 in vec4 v_color;
 in vec3 v_normal;
 in vec3 v_view;
@@ -330,7 +336,7 @@ out vec4 outColor;
 ${CLIP_GLSL}
 void main() {
   if (u_clip == 1 && vtOutsideBox(v_math)) discard;
-  if (u_cut == 1 && v_view.z > u_cutZ) discard;
+  if (vtCutAway(v_math, v_view)) discard;
   vec3 c = v_color.rgb;
   vec3 n = normalize(v_normal);
   vec3 V = u_ortho == 1 ? vec3(0.0, 0.0, 1.0) : normalize(-v_view);
@@ -370,6 +376,73 @@ void main() {
 }
 `;
 
+/**
+ * The faces the cutaway leaves, coloured by the field at every point on them.
+ *
+ * A wedge cut out of a field of arrows does not read as a cut: through the
+ * gap you simply see more arrows. A cut cake reads as cut because of its
+ * faces, which show the inside. These are those faces: two half-planes for a
+ * slice, one plane for a half, each painted with the field's own colour and
+ * writing depth, so whatever lies behind a face is behind it.
+ */
+function faceVertexSource() {
+  return `#version 300 es
+precision highp float;
+precision highp int;
+uniform mat4 u_mathToView;
+uniform mat4 u_projection;
+uniform vec3 u_quad[8];
+out vec3 v_math;
+out float v_face;
+const int CORNER[6] = int[6](0, 1, 2, 0, 2, 3);
+void main() {
+  int quad = gl_VertexID / 6;
+  vec3 p = u_quad[quad * 4 + CORNER[gl_VertexID % 6]];
+  v_math = p;
+  v_face = float(quad);
+  gl_Position = u_projection * (u_mathToView * vec4(p, 1.0));
+}
+`;
+}
+
+function faceFragmentSource(field: string[], helpers: string) {
+  return `#version 300 es
+precision highp float;
+precision highp int;
+uniform vec3 u_boxMin;
+uniform vec3 u_boxMax;
+uniform float u_speedScale;
+uniform int u_colorMode;
+uniform vec3 u_fixedColor;
+uniform int u_byDirection;
+uniform float u_faceOpacity;
+in vec3 v_math;
+in float v_face;
+out vec4 outColor;
+${CLIP_GLSL}
+${GLSL_PRELUDE}
+${helpers}
+${PALETTE_GLSL}
+vec3 vtField(vec3 p) {
+  vec3 v = vec3(${field[0]}, ${field[1]}, ${field[2]});
+  return any(isnan(v)) || any(isinf(v)) ? vec3(0.0) : v;
+}
+void main() {
+  if (vtOutsideBox(v_math)) discard;
+  vec3 F = vtField(v_math);
+  float m = length(F);
+  vec3 c = u_byDirection == 1
+    ? abs(F) / max(m, 1.0e-12)
+    : u_colorMode == 1
+      ? vtAdjust(u_fixedColor)
+      : vtPalette(1.0 - exp(-m / u_speedScale));
+  // The two faces of a slice a shade apart, so the eye reads a corner.
+  c *= v_face > 0.5 ? 0.86 : 1.0;
+  outColor = vec4(c * u_faceOpacity, u_faceOpacity);
+}
+`;
+}
+
 export interface FrameStats {
   instances: number;
   vertices: number;
@@ -383,6 +456,8 @@ export class Overlay {
   private arrowUniforms?: Uniforms;
   private depthProgram?: WebGLProgram;
   private depthUniforms?: Uniforms;
+  private faceProgram?: WebGLProgram;
+  private faceUniforms?: Uniforms;
   private readonly vao: WebGLVertexArrayObject;
   private readonly timer: {
     TIME_ELAPSED_EXT: number;
@@ -431,6 +506,12 @@ export class Overlay {
     );
     this.arrowUniforms = uniforms(gl, this.arrowProgram);
     this.looks.setField(field, fieldHelpers);
+    this.faceProgram = program(
+      gl,
+      faceVertexSource(),
+      faceFragmentSource(field, fieldHelpers)
+    );
+    this.faceUniforms = uniforms(gl, this.faceProgram);
     this.depthProgram = undefined;
     if (surface !== undefined) {
       this.depthProgram = program(
@@ -490,6 +571,29 @@ export class Overlay {
       mathToView[6] * centre[1] +
       mathToView[10] * centre[2] +
       mathToView[14];
+    // The camera's direction in box half-widths, for the cake slice: the
+    // third column of the inverse of the linear part of math-to-view, divided
+    // by the half-widths, which is the camera direction with the box's
+    // scaling taken back out.
+    const m = mathToView;
+    const row = (r: number) => [m[r], m[4 + r], m[8 + r]];
+    const [r0, r1] = [row(0), row(1)];
+    const toCamera = [
+      r0[1] * r1[2] - r0[2] * r1[1],
+      r0[2] * r1[0] - r0[0] * r1[2],
+      r0[0] * r1[1] - r0[1] * r1[0],
+    ];
+    const half = [0, 1, 2].map((i) => (box.max[i] - box.min[i]) / 2);
+    const azimuth = Math.atan2(toCamera[1] / half[1], toCamera[0] / half[0]);
+    const cutMode = { off: 0, half: 1, wedge: 2 }[s.cutaway];
+    const uploadCut = (cu: Uniforms) => {
+      gl.uniform1i(cu.u_cut, cutMode);
+      gl.uniform1f(cu.u_cutZ, cutZ);
+      gl.uniform3fv(cu.u_cutCentre, centre);
+      gl.uniform3fv(cu.u_cutHalf, half);
+      gl.uniform1f(cu.u_cutAzimuth, azimuth);
+      gl.uniform1f(cu.u_cutAngle, s.cutAngle);
+    };
     const palette = paletteUniforms(s.palette);
     const uploadPalette = (pu: Uniforms) => {
       gl.uniform1fv(pu.u_paletteAt, palette.positions);
@@ -499,6 +603,47 @@ export class Overlay {
       gl.uniform1f(pu.u_saturation, 1);
       gl.uniform1f(pu.u_contrast, 1);
     };
+
+    // The cut faces, drawn before the look and writing depth, so anything
+    // behind a face is hidden by it the way the inside of a cake is.
+    const facing = s.cutaway !== "off" && s.cutFaces;
+    if (
+      facing &&
+      this.faceProgram !== undefined &&
+      this.faceUniforms !== undefined
+    ) {
+      const quads = cutFaces(
+        s.cutaway as "half" | "wedge",
+        s.cutAngle,
+        azimuth,
+        centre,
+        half,
+        row(2)
+      );
+      const corners = quads.flat();
+      while (corners.length < 24) corners.push(0);
+      const fu = this.faceUniforms;
+      gl.useProgram(this.faceProgram);
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LEQUAL);
+      gl.depthMask(true);
+      gl.uniformMatrix4fv(fu.u_mathToView, false, mathToView);
+      gl.uniformMatrix4fv(fu.u_projection, false, camera.projection);
+      gl.uniform3fv(fu.u_quad, corners);
+      gl.uniform3fv(fu.u_boxMin, box.min);
+      gl.uniform3fv(fu.u_boxMax, box.max);
+      gl.uniform1f(fu.u_speedScale, Math.max(1e-9, s.speedScale));
+      gl.uniform1i(fu.u_colorMode, s.colorMode === "fixed" ? 1 : 0);
+      gl.uniform3fv(fu.u_fixedColor, s.fixedColor);
+      gl.uniform1i(
+        fu.u_byDirection,
+        s.look === "cloud" && s.cloudByDirection ? 1 : 0
+      );
+      gl.uniform1f(fu.u_faceOpacity, s.faceOpacity);
+      uploadPalette(fu);
+      gl.drawArrays(gl.TRIANGLES, 0, (quads.length / 4) * 6);
+    }
+    const depthTested = occluding || facing;
 
     if (s.look !== "arrows") {
       // Thin, faint marks: they never write depth, so the near ones never
@@ -515,8 +660,7 @@ export class Overlay {
           depthRange: depthRange(camera, box),
           clip: s.clip,
           fog: s.fog,
-          cut: s.cutaway,
-          cutZ,
+          uploadCut,
           dpr: this.canvas.width / Math.max(1, camera.width),
           uploadPalette,
         },
@@ -525,12 +669,12 @@ export class Overlay {
       );
       gl.bindVertexArray(this.vao);
       gl.depthMask(false);
-      if (occluding && s.occlusion === "fade") {
+      if (depthTested && s.occlusion === "fade") {
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(gl.GREATER);
         look.draw(0.25);
       }
-      if (occluding) {
+      if (depthTested) {
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(gl.LEQUAL);
       } else {
@@ -549,8 +693,7 @@ export class Overlay {
 
     const u = this.arrowUniforms;
     gl.useProgram(this.arrowProgram);
-    gl.uniform1i(u.u_cut, s.cutaway ? 1 : 0);
-    gl.uniform1f(u.u_cutZ, cutZ);
+    uploadCut(u);
     gl.uniformMatrix4fv(u.u_mathToView, false, mathToView);
     gl.uniformMatrix4fv(u.u_projection, false, camera.projection);
     gl.uniform1i(u.u_ortho, camera.orthographic ? 1 : 0);
@@ -579,7 +722,7 @@ export class Overlay {
     const mode = s.shape === "lines" ? gl.LINES : gl.TRIANGLES;
     const drawAll = () => gl.drawArraysInstanced(mode, 0, perArrow, instances);
 
-    if (occluding && s.occlusion === "fade") {
+    if (depthTested && s.occlusion === "fade") {
       // What the surface hides, drawn faintly first: only fragments behind
       // our copy of the surface pass a GREATER test against its depth.
       gl.enable(gl.DEPTH_TEST);
@@ -589,7 +732,7 @@ export class Overlay {
       drawAll();
     }
     gl.uniform1f(u.u_alpha, 1);
-    if (occluding || s.selfDepth) {
+    if (depthTested || s.selfDepth) {
       gl.enable(gl.DEPTH_TEST);
       gl.depthFunc(gl.LEQUAL);
       gl.depthMask(s.selfDepth);
@@ -631,6 +774,51 @@ export class Overlay {
       gl.deleteQuery(query);
     }
   }
+}
+
+/**
+ * The corners of the cut faces, four per quad, in math coordinates. Each quad
+ * is drawn far larger than the box and clipped to it in the fragment shader,
+ * which is simpler than intersecting a plane with a box exactly.
+ */
+function cutFaces(
+  mode: "half" | "wedge",
+  angle: number,
+  azimuth: number,
+  centre: number[],
+  half: number[],
+  depthRow: number[]
+): number[][] {
+  const at = (x: number, y: number, z: number) => [
+    centre[0] + half[0] * x,
+    centre[1] + half[1] * y,
+    centre[2] + half[2] * z,
+  ];
+  if (mode === "wedge") {
+    const quads: number[][] = [];
+    for (const theta of [azimuth - angle / 2, azimuth + angle / 2]) {
+      const [c, s] = [Math.cos(theta) * 2, Math.sin(theta) * 2];
+      quads.push(at(0, 0, -1), at(c, s, -1), at(c, s, 1), at(0, 0, 1));
+    }
+    return quads;
+  }
+  // The plane through the centre that faces the camera: everything whose
+  // view depth equals the centre's. Two directions with no depth component
+  // span it, found from the depth row of math-to-view.
+  const n = depthRow;
+  const other = Math.abs(n[0]) < 0.9 * Math.hypot(...n) ? [1, 0, 0] : [0, 1, 0];
+  const cross = (a: number[], b: number[]) => [
+    a[1] * b[2] - a[2] * b[1],
+    a[2] * b[0] - a[0] * b[2],
+    a[0] * b[1] - a[1] * b[0],
+  ];
+  const unit = (v: number[]) => v.map((x) => x / Math.hypot(...v));
+  const reach = 4 * Math.hypot(...half);
+  const u = unit(cross(n, other)).map((x) => x * reach);
+  const v = unit(cross(n, u)).map((x) => x * reach);
+  const corner = (a: number, b: number) =>
+    centre.map((c, i) => c + a * u[i] + b * v[i]);
+  return [corner(-1, -1), corner(1, -1), corner(1, 1), corner(-1, 1)];
 }
 
 /** The nearest and farthest the box's corners are from the camera. */

@@ -17,7 +17,14 @@
 import { GLSL_PRELUDE } from "../../../src/field-rendering/latexToGLSL";
 import { PALETTE_GLSL } from "../../../src/field-rendering/palettes";
 import type { Box } from "./camera";
-import { CLIP_GLSL, HASH_GLSL, program, uniforms, type Uniforms } from "./gl";
+import {
+  CLIP_GLSL,
+  CUT_GLSL,
+  HASH_GLSL,
+  program,
+  uniforms,
+  type Uniforms,
+} from "./gl";
 
 function fieldSource(field: string[], helpers: string) {
   return `
@@ -228,8 +235,7 @@ precision highp int;
 uniform vec3 u_boxMin;
 uniform vec3 u_boxMax;
 uniform int u_clip;
-uniform int u_cut;
-uniform float u_cutZ;
+${CUT_GLSL}
 uniform int u_round;
 uniform float u_fog;
 uniform float u_alpha;
@@ -241,7 +247,7 @@ out vec4 outColor;
 ${CLIP_GLSL}
 void main() {
   if (u_clip == 1 && vtOutsideBox(v_math)) discard;
-  if (u_cut == 1 && v_view.z > u_cutZ) discard;
+  if (vtCutAway(v_math, v_view)) discard;
   float a = 1.0;
   if (u_round == 1) {
     float r = length(gl_PointCoord - 0.5);
@@ -286,8 +292,7 @@ export interface GlowFrame {
   depthRange: [number, number];
   clip: boolean;
   fog: boolean;
-  cut: boolean;
-  cutZ: number;
+  uploadCut: (u: Uniforms) => void;
   dpr: number;
   uploadPalette: (u: Uniforms) => void;
 }
@@ -418,8 +423,7 @@ export class VolumeLooks {
     gl.uniform1f(u.u_opacity, opacity);
     gl.uniform2fv(u.u_depthRange, f.depthRange);
     gl.uniform1i(u.u_clip, f.clip ? 1 : 0);
-    gl.uniform1i(u.u_cut, f.cut ? 1 : 0);
-    gl.uniform1f(u.u_cutZ, f.cutZ);
+    f.uploadCut(u);
     gl.uniform1f(u.u_fog, f.fog ? 1 : 0);
     gl.uniform1f(u.u_alpha, 1);
     f.uploadPalette(u);
