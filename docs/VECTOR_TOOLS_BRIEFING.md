@@ -208,6 +208,44 @@ meaning. `/geometry` is the same 2D graph paper and works unchanged.
 
 ---
 
+### 3.4 On Desmos 3D — live arrows, streamlines and the glow cloud
+
+Built 2026-10-06 from the step-1 mock-up
+(`docs/mockups/vector-3d-arrows/`) by the order in
+`VECTOR_TOOLS_3D_BUILD_PLAN.md`. On `/3d` the live arrows do not refuse any
+more; the 2D flow still does.
+
+- **`Overlay3D`** lays one canvas straight after `grapher3d.webglCanvas` and
+  draws inside Desmos's `onRedraw3dResults`, from the camera in that call's
+  argument (§5.5). One overlay, one WebGL context, whatever the look.
+- **`Arrow3DRenderer`**: the 2D model (field in the vertex shader, glyph from
+  `gl_VertexID`/`gl_InstanceID`, one draw call), with tips placed in math
+  coordinates so they land on `start + F` in any box and bodies built in
+  camera space so they stay round. Shaded 3D glyphs up to 3,000 arrows, flat
+  past that, by Auto.
+- **`Volume3DRenderer`**: streamlines traced on the GPU into a history
+  texture array (RK4, unit speed in box units, every other line backwards),
+  kept until the field, box, settings or a slider change, and optionally
+  animated with 3dstreamlines' moving lit stretch; and the glow cloud, points
+  kept with a probability rising with |F|, by strength or by direction.
+- **`FieldScale3D`**: the colour scale's Auto rule is the field's median |F|
+  ÷ ln 2, read back from the GPU's own evaluation. The 2D rule (a third of
+  the width) left 97% of a point charge's arrows in the first tenth of the
+  ramp in 3D, so it is a chip, not the default. See §6.1 for why a measured
+  min/max is still not used.
+- **`surfaces3d` + `SurfaceDepth`**: "Hidden", the default, redraws each
+  graphed surface depth-only — Desmos's own depth cannot be read — found by
+  `formula.expression_type`. Implicit surfaces have no copy yet; the field
+  shows through them and the status line names them.
+- **Cutaway**: the near half, or a cake slice that is empty (arrows dropped
+  whole), facing the viewer or fixed in the box.
+- **Config**: `components.zLatex` (R, default 0, so a 2D field lies flat on
+  3D) and a `space3d` block holding every setting. No migration: each is
+  normalised on its own.
+
+Not yet: gradient fields in 3D, arrows placed on a surface, generated
+Desmos-native 3D vectors, and the 3D particle flow.
+
 ## 4. Shared libraries
 
 ### 4.1 `palettes.ts`
@@ -437,7 +475,7 @@ as a panic popover on load and is **not** caused by Vector Tools, which has no
 replacements of its own. Verified by reproducing it on a commit predating the
 plugin.
 
-### 5.5 Desmos 3D (verified 2026-10-02)
+### 5.5 Desmos 3D (verified 2026-10-02, extended 2026-10-06)
 
 Full write-up, with measurements and evidence: `DESMOS_3D_CAMERA.md`. In short:
 
@@ -458,6 +496,23 @@ Full write-up, with measurements and evidence: `DESMOS_3D_CAMERA.md`. In short:
 - **Desmos clips everything to the box,** and the z = 0 plane is translucent.
 
 ---
+
+- **The overlay goes after `grapher3d.webglCanvas`.** Desmos 3D draws on that
+  canvas, an absolutely positioned later sibling of the 2D graph canvas, and
+  it paints over anything placed beside the 2D one, where the 2D overlays
+  go.
+- **Place it from bounding rectangles, not offsets.** The 3D canvas's
+  `offsetLeft`/`offsetTop` are measured from a different ancestor; using them
+  put an overlay 400 px right and 377 px down. Drawn from the hook's camera
+  and placed from rectangles, a ring sat on Desmos's own point to 0.28 px
+  median through a continuous rotation.
+- **Graphed surfaces name themselves**: `formula.expression_type` is
+  `SURFACE` (`z=f(x,y)`, a bare `f(x,y)`, a definition `f(x,y)=…`),
+  `SURFACE_AMBIGUOUS` (`x=y²`), `SURFACE_xyz_uv` (with `formula.domains`),
+  `IMPLICIT_SURFACE`, or `CURVE3D_xyz_t`.
+- **Showing or hiding an item is its own event**, not an evaluator change, so
+  on 3D anything that depends on which surfaces are visible has to listen to
+  every event (coalesced).
 
 ## 6. Decisions that look like bugs and are not
 

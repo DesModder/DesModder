@@ -175,3 +175,29 @@ he answers.
   produced timeouts and `Target closed` on this machine. Run the suite
   serially (`--runInBand`) when it matters; the repo's 28 suites pass that
   way.
+
+## 7. Progress
+
+| Step | Commit      | What it is                                                       | Evidence                                                                                      |
+| ---- | ----------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 1    | `0baf7828`  | `Overlay3D`: the canvas after Desmos's, drawn in its redraw      | `Overlay3D.unit.test.ts`                                                                      |
+| 2    | `dd6312ec`  | Live arrows, field-rule colour scale, R and the `space3d` config | `plugin-charge.png`, `plugin-one-arrow.png` (an arrow within 2 px of `camera3d`'s projection) |
+| 3    | `f4e65009`  | Hidden and Faded behind graphed surfaces                         | `plugin-occlusion-*.png`                                                                      |
+| 4    | `852607ef`  | Cutaway: near half, cake slice facing you or fixed               | `plugin-cutaway-*.png`                                                                        |
+| 5    | `4183775b`  | Streamlines (animated) and the glow cloud                        | `plugin-streamlines.png`, `plugin-cloud.png`                                                  |
+| 6    | `87b5a03f`  | Every 3D setting in the panel, stored with the field             | `plugin-panel-3d.png`                                                                         |
+| 7    | this commit | The briefing (§3.4, §5.5) and this record                        | —                                                                                             |
+
+Pictures are in `docs/assets/vector-3d/`; `vector3d.int.test.ts` drives the
+real Desmos 3D for all of them.
+
+Left from this plan, and why:
+
+- **Gradient fields in 3D** say so instead of drawing: the GPU differentiates
+  by central differences, and the step has to follow the box, which the
+  field prelude does not see yet.
+- **Arrows on a surface** (the mock-up's fourth placement) need a chosen
+  surface compiled into the arrow shader's `vtSurface`.
+- **A real-GPU drag by eye** is still the last check of the alignment; every
+  measurement so far is headless.
+- Open decisions (§5) keep their defaults until answered.
