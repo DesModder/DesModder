@@ -52,6 +52,8 @@ import {
   Look3D,
   Occlusion3D,
   Space3DConfig,
+  type FlowLook3D,
+  MAX_FLOW_COUNT_3D,
 } from "../model";
 import {
   COLOR_CONTRAST_MAXIMUM,
@@ -575,8 +577,11 @@ function arrowSections2D(vectorTools: VectorTools, config: ConfigGetter) {
 
 const LOOKS_3D: readonly Choice<Look3D>[] = [
   { value: "arrows", label: "Arrows" },
-  { value: "streamlines", label: "Streamlines" },
   { value: "cloud", label: "Glow cloud" },
+];
+const FLOW_LOOKS_3D: readonly Choice<FlowLook3D>[] = [
+  { value: "particles", label: "Particles" },
+  { value: "traced", label: "Traced streamlines" },
 ];
 const SHAPES_3D: readonly Choice<Space3DConfig["shape"]>[] = [
   { value: "auto", label: "Auto" },
@@ -645,10 +650,8 @@ function space3dSections(vectorTools: VectorTools, config: ConfigGetter) {
         <div class="dsm-vector-tools-note">
           {() =>
             look() === "arrows"
-              ? "Arrows at points through the box. Opaque, so the front ones hide the middle; the cutaway below opens it up."
-              : look() === "streamlines"
-                ? "Thin lines traced along the field, faint enough to see the middle through the edges."
-                : "Dots kept more often where the field is stronger: its shape drawn as density, like an orbital."
+              ? "Arrows at points through the box. Opaque, so the front ones hide the middle; the cutaway below opens it up. Streamlines and flowing particles are on the Flow tab."
+              : "Dots kept more often where the field is stronger: its shape drawn as density, like an orbital."
           }
         </div>
       </section>
@@ -753,67 +756,6 @@ function space3dSections(vectorTools: VectorTools, config: ConfigGetter) {
               () => s().selfDepth,
               (v) => set("selfDepth", v)
             )}
-          </section>
-        )}
-      </If>
-
-      <If predicate={() => look() === "streamlines"}>
-        {() => (
-          <section class="dsm-vector-tools-section">
-            {checkboxControl(
-              "Auto number of lines",
-              () => s().linesAuto,
-              (v) => set("linesAuto", v)
-            )}
-            <div class="dsm-vector-tools-number-grid">
-              {numberControl(
-                "dsm-vector-tools-3d-lines",
-                "Lines",
-                () =>
-                  s().linesAuto ? (volume()?.count ?? s().lines) : s().lines,
-                (v) => set("lines", Math.max(1, Math.round(v))),
-                () => s().linesAuto
-              )}
-            </div>
-            {sliderControl(
-              "dsm-vector-tools-3d-line-length",
-              "Line length (of the box)",
-              () => s().lineLength,
-              { minimum: 0.1, maximum: 2, step: 0.05, decimals: 2 },
-              (v) => set("lineLength", v)
-            )}
-            {sliderControl(
-              "dsm-vector-tools-3d-line-opacity",
-              "Opacity",
-              () => s().lineOpacity,
-              { minimum: 0.05, maximum: 1, step: 0.05, decimals: 2 },
-              (v) => set("lineOpacity", v)
-            )}
-            {checkboxControl(
-              "Animate along the flow",
-              () => s().animate,
-              (v) => set("animate", v)
-            )}
-            <If predicate={() => s().animate}>
-              {() => (
-                <div>
-                  {sliderControl(
-                    "dsm-vector-tools-3d-flow-speed",
-                    "Lines per second",
-                    () => s().flowSpeed,
-                    { minimum: 0.02, maximum: 1, step: 0.02, decimals: 2 },
-                    (v) => set("flowSpeed", v)
-                  )}
-                  {sliderControl(
-                    "dsm-vector-tools-3d-flow-window",
-                    "Lit stretch (of a line)",
-                    () => s().flowWindow,
-                    { minimum: 0.05, maximum: 1, step: 0.05, decimals: 2 },
-                    (v) => set("flowWindow", v)
-                  )}
-                </div>
-              )}
-            </If>
           </section>
         )}
       </If>
@@ -1435,7 +1377,263 @@ function curveInput(vectorTools: VectorTools, label: string, axis: "x" | "y") {
   );
 }
 
+/** Lines traced once through the field, on the Flow tab on Desmos 3D. */
+function tracedSection(vectorTools: VectorTools, config: ConfigGetter) {
+  const s = () => config().space3d;
+  const set = vectorTools.setSpace3D.bind(vectorTools);
+  const tracedCount = () => {
+    const frame = vectorTools.flow3dFrame;
+    return frame !== undefined && "count" in frame ? frame.count : undefined;
+  };
+  return (
+    <section class="dsm-vector-tools-section">
+      {checkboxControl(
+        "Auto number of lines",
+        () => s().linesAuto,
+        (v) => set("linesAuto", v)
+      )}
+      <div class="dsm-vector-tools-number-grid">
+        {numberControl(
+          "dsm-vector-tools-3d-lines",
+          "Lines",
+          () => (s().linesAuto ? (tracedCount() ?? s().lines) : s().lines),
+          (v) => set("lines", Math.max(1, Math.round(v))),
+          () => s().linesAuto
+        )}
+      </div>
+      {sliderControl(
+        "dsm-vector-tools-3d-line-length",
+        "Line length (of the box)",
+        () => s().lineLength,
+        { minimum: 0.1, maximum: 2, step: 0.05, decimals: 2 },
+        (v) => set("lineLength", v)
+      )}
+      {sliderControl(
+        "dsm-vector-tools-3d-line-opacity",
+        "Opacity",
+        () => s().lineOpacity,
+        { minimum: 0.05, maximum: 1, step: 0.05, decimals: 2 },
+        (v) => set("lineOpacity", v)
+      )}
+      {checkboxControl(
+        "Animate along the flow",
+        () => s().animate,
+        (v) => set("animate", v)
+      )}
+      <If predicate={() => s().animate}>
+        {() => (
+          <div>
+            {sliderControl(
+              "dsm-vector-tools-3d-flow-speed",
+              "Lines per second",
+              () => s().flowSpeed,
+              { minimum: 0.02, maximum: 1, step: 0.02, decimals: 2 },
+              (v) => set("flowSpeed", v)
+            )}
+            {sliderControl(
+              "dsm-vector-tools-3d-flow-window",
+              "Lit stretch (of a line)",
+              () => s().flowWindow,
+              { minimum: 0.05, maximum: 1, step: 0.05, decimals: 2 },
+              (v) => set("flowWindow", v)
+            )}
+          </div>
+        )}
+      </If>
+    </section>
+  );
+}
+
+/**
+ * The Flow tab on Desmos 3D: the field as a flowing fluid. Particles carried
+ * by it, each trailing the path it has just come along, as a fluid or gas
+ * simulation draws them (fieldplay's method in 3D); or lines traced once.
+ */
+function flow3dTab(vectorTools: VectorTools, config: ConfigGetter) {
+  const s = () => config().space3d;
+  const set = vectorTools.setSpace3D.bind(vectorTools);
+  const compilation = () => vectorTools.field3dCompilation;
+  const particleCount = () => {
+    const frame = vectorTools.flow3dFrame;
+    return frame !== undefined && "particles" in frame
+      ? frame.particles
+      : undefined;
+  };
+  return (
+    <div>
+      <section class="dsm-vector-tools-section dsm-vector-tools-flow">
+        <p class="dsm-vector-tools-hint">
+          The field as a flowing fluid through the box: particles carried by it,
+          each trailing the path it just came along.
+        </p>
+        <div class="dsm-vector-tools-actions">
+          <Button
+            color={() => (vectorTools.isFlowRunning ? "light-gray" : "blue")}
+            class="dsm-vector-tools-visualize"
+            disabled={() => !compilation().ok}
+            onTap={() => vectorTools.toggleFlow()}
+          >
+            {() =>
+              vectorTools.isFlowRunning ? "Stop visualization" : "Visualize"
+            }
+          </Button>
+        </div>
+        <If predicate={() => !compilation().ok}>
+          {() => (
+            <div class="dsm-vector-tools-warning">
+              {() => {
+                const result = compilation();
+                return result.ok ? "" : result.error;
+              }}
+            </div>
+          )}
+        </If>
+        <div class="dsm-vector-tools-status dsm-vector-tools-flow-status">
+          {() => vectorTools.flowStatus}
+        </div>
+        {chipGroup(
+          "Look",
+          () => s().flowLook,
+          FLOW_LOOKS_3D,
+          (v) => set("flowLook", v),
+          "dsm-vector-tools-3d-flow-look"
+        )}
+      </section>
+
+      <If predicate={() => s().flowLook === "particles"}>
+        {() => (
+          <section class="dsm-vector-tools-section">
+            {checkboxControl(
+              "Auto number of particles",
+              () => s().particlesAuto,
+              (v) => set("particlesAuto", v)
+            )}
+            <div class="dsm-vector-tools-number-grid">
+              {numberControl(
+                "dsm-vector-tools-3d-particles",
+                "Particles (up to 200,000)",
+                () =>
+                  s().particlesAuto
+                    ? (particleCount() ?? s().particles)
+                    : s().particles,
+                (v) =>
+                  set(
+                    "particles",
+                    Math.min(MAX_FLOW_COUNT_3D, Math.max(1, Math.round(v)))
+                  ),
+                () => s().particlesAuto
+              )}
+            </div>
+            {sliderControl(
+              "dsm-vector-tools-3d-particle-speed",
+              "Speed (box per second)",
+              () => s().particleSpeed,
+              { minimum: 0.02, maximum: 2, step: 0.01, decimals: 2 },
+              (v) => set("particleSpeed", v)
+            )}
+            {checkboxControl(
+              "Same speed everywhere (keeps slow regions moving)",
+              () => s().particleNormalize,
+              (v) => set("particleNormalize", v)
+            )}
+            {checkboxControl(
+              "Sinks absorb particles (off: they pile up there)",
+              () => s().particleAbsorb,
+              (v) => set("particleAbsorb", v)
+            )}
+            {sliderControl(
+              "dsm-vector-tools-3d-particle-trail",
+              "Trail (frames)",
+              () => s().particleTrail,
+              { minimum: 2, maximum: 64, step: 1, decimals: 0 },
+              (v) => set("particleTrail", Math.round(v))
+            )}
+            {sliderControl(
+              "dsm-vector-tools-3d-particle-lifetime",
+              "Lifetime (seconds)",
+              () => s().particleLifetime,
+              { minimum: 0.5, maximum: 20, step: 0.5, decimals: 1 },
+              (v) => set("particleLifetime", v)
+            )}
+            {sliderControl(
+              "dsm-vector-tools-3d-particle-opacity",
+              "Opacity",
+              () => s().particleOpacity,
+              { minimum: 0.05, maximum: 1, step: 0.05, decimals: 2 },
+              (v) => set("particleOpacity", v)
+            )}
+            {sliderControl(
+              "dsm-vector-tools-3d-particle-glow",
+              "Glow",
+              () => s().particleGlow,
+              { minimum: 0, maximum: 1, step: 0.05, decimals: 2 },
+              (v) => set("particleGlow", v)
+            )}
+            {sliderControl(
+              "dsm-vector-tools-3d-particle-size",
+              "Dot size (px)",
+              () => s().particlePx,
+              { minimum: 0.5, maximum: 6, step: 0.5, decimals: 1 },
+              (v) => set("particlePx", v)
+            )}
+          </section>
+        )}
+      </If>
+
+      <If predicate={() => s().flowLook === "traced"}>
+        {() => tracedSection(vectorTools, config)}
+      </If>
+
+      <section class="dsm-vector-tools-section">
+        {checkboxControl(
+          "Dark backdrop, as a simulation is drawn on",
+          () => s().backdrop,
+          (v) => set("backdrop", v)
+        )}
+        <If predicate={() => s().backdrop}>
+          {() => (
+            <div>
+              {textControl(
+                "dsm-vector-tools-3d-backdrop-color",
+                "Backdrop colour",
+                () => s().backdropColor,
+                (v) => {
+                  if (/^#[0-9a-f]{6}$/i.test(v)) set("backdropColor", v);
+                }
+              )}
+              {sliderControl(
+                "dsm-vector-tools-3d-backdrop-opacity",
+                "Backdrop opacity",
+                () => s().backdropOpacity,
+                { minimum: 0, maximum: 1, step: 0.05, decimals: 2 },
+                (v) => set("backdropOpacity", v)
+              )}
+            </div>
+          )}
+        </If>
+        <p class="dsm-vector-tools-hint">
+          Colours come from the flow's palette on the Colour tab. Hidden, Faded,
+          the cutaway and the colour scale are shared with the Arrows tab.
+        </p>
+      </section>
+    </div>
+  );
+}
+
 function flowTab(vectorTools: VectorTools, config: ConfigGetter) {
+  return (
+    <div>
+      <If predicate={() => vectorTools.is3d}>
+        {() => flow3dTab(vectorTools, config)}
+      </If>
+      <If predicate={() => !vectorTools.is3d}>
+        {() => flowTab2D(vectorTools, config)}
+      </If>
+    </div>
+  );
+}
+
+function flowTab2D(vectorTools: VectorTools, config: ConfigGetter) {
   const flow = () => config().flow;
   const compilation = () => vectorTools.flowAvailability;
   return (
@@ -2344,7 +2542,9 @@ function gallerySection(vectorTools: VectorTools) {
               role="button"
               tabIndex={0}
               data-preset={() => getPreset().id}
-              title={() => getPreset().blurb}
+              title={() =>
+                vectorTools.is3d ? getPreset().space.blurb : getPreset().blurb
+              }
               class="dsm-vector-tools-chip dsm-vector-tools-gallery-chip"
               onTap={() =>
                 vectorTools.applyGalleryPreset(getPreset().id, withLook())

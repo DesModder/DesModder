@@ -584,7 +584,7 @@ testWithPageAndOpts(
 );
 
 testWithPageAndOpts(
-  "Vector Tools refuses to flow over the 3D calculator",
+  "Vector Tools flows over the 3D calculator on a canvas of its own",
   { path: "/3d", timeout: 90000 },
   async (driver) => {
     await driver.enablePlugin("vector-tools");
@@ -592,23 +592,21 @@ testWithPageAndOpts(
     await driver.click(BUTTON);
     await openTab(driver, "flow");
 
-    // The overlay maps math coordinates linearly onto the graph paper's rect,
-    // which the 3D product's rotatable x/y/z box does not support — and the 3D
-    // canvas paints over the overlay anyway. Say so instead of animating a
-    // wrong, invisible field.
-    const state = await driver.evaluate(() => ({
-      disabled: document
+    // The 2D flow maps math coordinates onto the graph paper's rect, which a
+    // rotatable box does not have; on 3D the Flow tab runs the 3D flow
+    // instead, over Desmos's own 3D canvas, and the 2D one never mounts.
+    const disabled = await driver.evaluate(() =>
+      document
         .querySelector(".dsm-vector-tools-visualize")
-        ?.classList.contains("dsm-btn-disabled"),
-      warning: document.querySelector(
-        ".dsm-vector-tools-flow .dsm-vector-tools-warning"
-      )?.textContent,
-    }));
-    expect(state.disabled).toBe(true);
-    expect(state.warning).toContain("3D calculator");
-
+        ?.classList.contains("dsm-btn-disabled")
+    );
+    expect(disabled).toBe(false);
     await driver.click(VISUALIZE);
+    await driver.assertSelectorEventually("#dsm-vector-tools-3d-flow-canvas");
     await driver.assertSelectorNot(FLOW_CANVAS);
+    await driver.click(VISUALIZE);
+    await driver.assertSelectorNot("#dsm-vector-tools-3d-flow-canvas");
+
     // Generation is unaffected: the field is ordinary Desmos expressions.
     await driver.click(GENERATE);
     await driver.waitForSync();

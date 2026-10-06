@@ -113,6 +113,10 @@ import {
   type Volume3DOptions,
 } from "../../field-rendering/Volume3DRenderer";
 import {
+  Flow3DRenderer,
+  type Flow3DOptions,
+} from "../../field-rendering/Flow3DRenderer";
+import {
   sameSurfaces,
   scanSurfaces3D,
   type SurfaceItem,
@@ -140,6 +144,14 @@ export { TEST_FOLDER_ID, TEST_LINE_ID, TEST_NAMESPACE } from "./ids";
 
 interface VectorToolsSettings {
   serializedFieldConfig: string;
+  /**
+   * The fields saved on Desmos 3D. A library of their own, because a field
+   * built for a rotatable box and one built for flat graph paper are
+   * different fields: a 3D one opened in 2D loses R, and a 2D one opened in
+   * 3D lies flat. Keeping them apart means neither product's saves turn up in
+   * the other's chooser.
+   */
+  serializedFieldConfig3D: string;
 }
 
 type GenerationTarget = "production" | "test";
@@ -168,6 +180,8 @@ interface ValueHelper {
   numericValue: number;
   observe: (event: string, callback: () => void) => void;
 }
+
+type StorageKey = "serializedFieldConfig" | "serializedFieldConfig3D";
 
 const FLOW_REFRESH_DELAY_MS = 300;
 const ENVIRONMENT_REFRESH_DELAY_MS = 80;
@@ -316,6 +330,13 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       key: "serializedFieldConfig",
       shouldShow: () => false,
     },
+    {
+      type: "string",
+      variant: "text",
+      default: JSON.stringify(cloneDefaultLibrary()),
+      key: "serializedFieldConfig3D",
+      shouldShow: () => false,
+    },
   ] satisfies readonly ConfigItem[];
 
   private readonly expressions = new CalculatorExpressionAdapter(this.calc);
@@ -363,11 +384,13 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
         this.arrowMessage = "";
         this.util.tick();
       },
+      // Over the flow, as the 2D arrows are read over the particles.
+      order: 2,
     },
     (canvas) => {
-      // Arrows and the two volume looks are different renderers on the same
-      // overlay; which one is built follows the look, and switching between
-      // them remounts the overlay (see refreshArrows3D).
+      // Arrows and the cloud are different renderers on the same overlay;
+      // which one is built follows the look, and switching between them
+      // remounts the overlay (see refreshArrows3D).
       const { look } = this.getConfig().space3d;
       let renderer: Arrow3DRenderer | Volume3DRenderer;
       if (look === "arrows") {
@@ -383,6 +406,40 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
   );
   private arrow3d?: Arrow3DRenderer;
   private volume3d?: Volume3DRenderer;
+  /**
+   * The Flow tab on Desmos 3D: particles carried by the field, as a fluid
+   * simulation draws them (fieldplay's method in 3D), or lines traced once.
+   * A canvas of its own under the arrows', as in 2D.
+   */
+  private readonly flowOverlay3d = new Overlay3D(
+    this.calc,
+    {
+      onError: (message) => {
+        this.flowMessage = message;
+        this.util.tick();
+      },
+      onRecovered: () => {
+        this.flowMessage = "";
+        this.util.tick();
+      },
+      canvasId: "dsm-vector-tools-3d-flow-canvas",
+      order: 1,
+    },
+    (canvas) => {
+      let renderer: Flow3DRenderer | Volume3DRenderer;
+      if (this.getConfig().space3d.flowLook === "particles") {
+        renderer = this.flow3d = new Flow3DRenderer(canvas);
+        this.traced3d = undefined;
+      } else {
+        renderer = this.traced3d = new Volume3DRenderer(canvas);
+        this.flow3d = undefined;
+      }
+      this.configureFlow3D();
+      return renderer;
+    }
+  );
+  private flow3d?: Flow3DRenderer;
+  private traced3d?: Volume3DRenderer;
   private field3dCache?: {
     source: FieldSource;
     xLatex: string;
@@ -417,7 +474,11 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
    * to parse the persisted JSON. Cache it against the raw string so a render
    * pass costs one parse rather than dozens.
    */
-  private configCache?: { serialized: string; library: VectorFieldLibrary };
+  private configCache?: {
+    key: StorageKey;
+    serialized: string;
+    library: VectorFieldLibrary;
+  };
   private dispatcherID?: string;
   private panelElement?: HTMLElement;
   private panelResizeObserver?: ResizeObserver;
@@ -612,6 +673,8 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.flowOverlay.setTime(0);
     this.arrow3d?.setTime(0);
     this.volume3d?.setTime(0);
+    this.flow3d?.setTime(0);
+    this.traced3d?.setTime(0);
     this.overlay3d.requestFrame();
     this.util.tick();
   }
@@ -654,6 +717,8 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.flowOverlay.setTime(this.clockSeconds);
     this.arrow3d?.setTime(this.clockSeconds);
     this.volume3d?.setTime(this.clockSeconds);
+    this.flow3d?.setTime(this.clockSeconds);
+    this.traced3d?.setTime(this.clockSeconds);
     this.overlay3d.requestFrame();
   };
 
@@ -709,6 +774,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.syncParameterValues();
     if (surfacesChanged && !changed) {
       this.configureArrow3D();
+      this.configureFlow3D();
       this.overlay3d.requestFrame();
       this.util.tick();
     }
@@ -778,7 +844,10 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.flowOverlay.setParameters(values);
     this.arrow3d?.setParameters(values);
     this.volume3d?.setParameters(values);
+    this.flow3d?.setParameters(values);
+    this.traced3d?.setParameters(values);
     this.overlay3d.requestFrame();
+    this.flowOverlay3d.requestFrame();
   }
 
   /**
@@ -834,11 +903,9 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       const drawing =
         arrows !== undefined
           ? `Drawing ${arrows.instances} arrows live in 3D.`
-          : volume?.look === "streamlines"
-            ? `Drawing ${volume.count} streamlines live in 3D.`
-            : volume !== undefined
-              ? `Drawing a cloud from ${volume.count} points in 3D.`
-              : "";
+          : volume !== undefined
+            ? `Drawing a cloud from ${volume.count} points in 3D.`
+            : "";
       if (drawing === "") return "";
       // Say which surfaces the arrows show through despite Hidden, rather than
       // leave someone wondering why an arrow is in front of a sphere.
@@ -968,12 +1035,105 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     renderer.setTime(this.clockSeconds);
   }
 
-  /** What the streamlines or the cloud are told, from the field's settings. */
+  /**
+   * The flow on Desmos 3D, to match the configuration: running only while
+   * the user has it running, rebuilt when its look changes renderer, and
+   * otherwise told the new settings.
+   */
+  refreshFlow3D() {
+    if (!this.flowOverlay3d.isRunning) return;
+    const compiled = this.field3dCompilation;
+    if (!compiled.ok) {
+      this.stopFlow3D();
+      this.flowMessage = compiled.error;
+      return;
+    }
+    const wantsParticles = this.getConfig().space3d.flowLook === "particles";
+    if (wantsParticles !== (this.flow3d !== undefined)) {
+      this.stopFlow3D();
+      this.flowOverlay3d.start();
+      return;
+    }
+    try {
+      this.configureFlow3D();
+    } catch (error) {
+      this.stopFlow3D();
+      this.flowMessage =
+        error instanceof Error ? error.message : "The 3D flow stopped.";
+      return;
+    }
+    this.flowOverlay3d.requestFrame();
+  }
+
+  private stopFlow3D() {
+    this.flowOverlay3d.stop();
+    this.flow3d = undefined;
+    this.traced3d = undefined;
+  }
+
+  private configureFlow3D() {
+    const compiled = this.field3dCompilation;
+    if (!compiled.ok) return;
+    const renderer = this.flow3d ?? this.traced3d;
+    if (renderer === undefined) return;
+    renderer.setField(compiled.field);
+    renderer.setSurfaces(this.surfaces3d.surfaces);
+    if (this.flow3d !== undefined) this.flow3d.setOptions(this.flow3dOptions);
+    else this.traced3d?.setOptions(this.tracedOptions);
+    renderer.setParameters(this.parameterValues);
+    renderer.setTime(this.clockSeconds);
+  }
+
+  /** What the 3D particle flow is told, from the field's settings. */
+  get flow3dOptions(): Flow3DOptions {
+    const config = this.getConfig();
+    const s = config.space3d;
+    const shared = this.volume3dOptions;
+    return {
+      particles: s.particlesAuto ? "auto" : s.particles,
+      speed: s.particleSpeed,
+      normalizeSpeed: s.particleNormalize,
+      trail: s.particleTrail,
+      lifetime: s.particleLifetime,
+      opacity: s.particleOpacity,
+      glow: s.particleGlow,
+      absorb: s.particleAbsorb,
+      pointPx: s.particlePx,
+      backdrop: s.backdrop ? s.backdropColor : "",
+      backdropOpacity: s.backdropOpacity,
+      // The flow's own colours, as in 2D: its palette and scheme are the
+      // Colour tab's flow half.
+      colorMode: config.flow.colorMode,
+      palette: config.flow.palette,
+      fixedColor: config.color.fixedColor,
+      saturation: config.flow.saturation,
+      contrast: config.flow.contrast,
+      scale: shared.scale,
+      fog: s.fog,
+      clip: s.clip,
+      cut: shared.cut,
+      occlusion: s.occlusion,
+      surfaceResolution: shared.surfaceResolution,
+    };
+  }
+
+  /** What the traced streamlines are told: the volume options, as lines. */
+  get tracedOptions(): Volume3DOptions {
+    return { ...this.volume3dOptions, look: "streamlines" };
+  }
+
+  get flow3dFrame() {
+    return this.flowOverlay3d.isRunning
+      ? (this.flow3d?.last ?? this.traced3d?.last)
+      : undefined;
+  }
+
+  /** What the cloud is told, from the field's settings. */
   get volume3dOptions(): Volume3DOptions {
     const config = this.getConfig();
     const s = config.space3d;
     return {
-      look: s.look === "cloud" ? "cloud" : "streamlines",
+      look: "cloud",
       lines: s.linesAuto ? "auto" : s.lines,
       steps: 96,
       lineLength: s.lineLength,
@@ -1152,6 +1312,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.arrowOverlay.stop();
     this.flowOverlay.stop();
     this.stop3D();
+    this.stopFlow3D();
     this.fluid.dispose();
     this.dsm.pillboxMenus?.removePillboxButton("dsm-vector-tools-menu");
   }
@@ -1180,6 +1341,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     // also why the clock is synced here rather than at each call site that
     // might have made the field start or stop reading `t`.
     this.refreshArrows();
+    if (this.cc.is3dProduct()) this.refreshFlow3D();
     this.syncClock();
     this.syncContrast();
     this.syncLayer();
@@ -1247,8 +1409,12 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
 
   /** Every saved field, and which one the panel is editing. */
   getLibrary(): VectorFieldLibrary {
-    const serialized = this.settings.serializedFieldConfig;
-    if (this.configCache?.serialized === serialized) {
+    const key = this.storageKey;
+    const serialized = this.settings[key];
+    if (
+      this.configCache?.key === key &&
+      this.configCache.serialized === serialized
+    ) {
       return this.configCache.library;
     }
     let library: VectorFieldLibrary;
@@ -1257,8 +1423,19 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     } catch {
       library = cloneDefaultLibrary();
     }
-    this.configCache = { serialized, library };
+    this.configCache = { key, serialized, library };
     return library;
+  }
+
+  /**
+   * Which saved library this page reads and writes: one for the 2D graph
+   * paper (including /geometry), one for Desmos 3D. A page is one product for
+   * its whole life, so this never changes under a running panel.
+   */
+  private get storageKey(): StorageKey {
+    return this.cc.is3dProduct()
+      ? "serializedFieldConfig3D"
+      : "serializedFieldConfig";
   }
 
   /**
@@ -1455,9 +1632,10 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     const preset = galleryPreset(id);
     if (preset === undefined) return;
     this.updateConfig((config) => {
+      const dimensions = this.is3d ? 3 : 2;
       const loaded = withLook
-        ? configFromGallery(preset, config)
-        : colorsFromGallery(preset, config);
+        ? configFromGallery(preset, config, dimensions)
+        : colorsFromGallery(preset, config, dimensions);
       // The identity stays with the field: its id and token address
       // expressions already in the graph, and the chooser points at it.
       const { id: keepID, symbolToken } = config;
@@ -1466,7 +1644,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.lastActionMessage = `Loaded ${preset.name}.`;
     // These are flow pictures, so the flow is what has to be running for one
     // to be anything at all.
-    if (withLook && !this.flowOverlay.isRunning) this.toggleFlow();
+    if (withLook && !this.isFlowRunning) this.toggleFlow();
   }
 
   renameField(name: string) {
@@ -1509,6 +1687,8 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     const facing =
       this.arrow3d?.last?.cameraAzimuth ??
       this.volume3d?.last?.cameraAzimuth ??
+      this.flow3d?.last?.cameraAzimuth ??
+      this.traced3d?.last?.cameraAzimuth ??
       0;
     this.setSpace3D("cutTurn", fixed ? facing : null);
   }
@@ -2122,11 +2302,21 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
   // ---- flow visualizer ---------------------------------------------------
 
   get isFlowRunning() {
-    return this.flowOverlay.isRunning;
+    return this.cc.is3dProduct()
+      ? this.flowOverlay3d.isRunning
+      : this.flowOverlay.isRunning;
   }
 
   get flowStatus() {
     if (this.flowMessage !== "") return this.flowMessage;
+    if (this.cc.is3dProduct()) {
+      const frame = this.flow3dFrame;
+      if (frame === undefined)
+        return "Animate the field as a flowing fluid, drawn over the 3D graph.";
+      return "particles" in frame
+        ? `Flowing ${frame.particles} particles through the box.`
+        : `Drawing ${frame.count} streamlines through the box.`;
+    }
     return this.flowOverlay.isRunning
       ? "Streaming the field over the graph paper."
       : "Animate the field as flowing particles, drawn over the graph.";
@@ -2201,6 +2391,10 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
   }
 
   toggleFlow() {
+    if (this.cc.is3dProduct()) {
+      this.toggleFlow3D();
+      return;
+    }
     if (this.flowOverlay.isRunning) {
       this.flowOverlay.stop();
       this.flowMessage = "";
@@ -2211,6 +2405,25 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     }
     this.startFlow();
     this.refreshArrows();
+  }
+
+  /** Starts or stops the flow on Desmos 3D. */
+  toggleFlow3D() {
+    if (this.flowOverlay3d.isRunning) {
+      this.stopFlow3D();
+      this.flowMessage = "";
+      this.util.tick();
+      return;
+    }
+    const compiled = this.field3dCompilation;
+    if (!compiled.ok) {
+      this.flowMessage = compiled.error;
+      this.util.tick();
+      return;
+    }
+    this.flowMessage = "";
+    this.flowOverlay3d.start();
+    this.util.tick();
   }
 
   /**
@@ -2562,23 +2775,15 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     // number that rounds to what it already was. Writing anyway meant a
     // settings round trip, a panel render and an arrow refresh for a change
     // that was not one.
-    if (serialized === this.settings.serializedFieldConfig) return;
-    this.dsm.setPluginSetting(
-      "vector-tools",
-      "serializedFieldConfig",
-      serialized
-    );
+    if (serialized === this.settings[this.storageKey]) return;
+    this.dsm.setPluginSetting("vector-tools", this.storageKey, serialized);
   }
 
   private ensureStoredConfigIsCurrent() {
     const normalized = this.getLibrary();
     const serialized = JSON.stringify(normalized);
-    if (serialized !== this.settings.serializedFieldConfig) {
-      this.dsm.setPluginSetting(
-        "vector-tools",
-        "serializedFieldConfig",
-        serialized
-      );
+    if (serialized !== this.settings[this.storageKey]) {
+      this.dsm.setPluginSetting("vector-tools", this.storageKey, serialized);
     }
   }
 }

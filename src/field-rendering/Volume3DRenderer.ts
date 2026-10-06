@@ -618,7 +618,10 @@ export class Volume3DRenderer implements Overlay3DRenderer {
       this.state = [make2D(), make2D()];
       this.history = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.history);
-      gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.RGBA32F, width, height, steps);
+      // Half floats, as for the 3D flow's trails: to about one part in two
+      // thousand of the box, which no screen resolves, at half the memory —
+      // what lets 200,000 lines fit on an integrated GPU.
+      gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.RGBA16F, width, height, steps);
       gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       this.traceWidth = width;

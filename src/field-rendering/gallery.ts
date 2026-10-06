@@ -74,9 +74,23 @@ export interface GalleryPreset {
   timeSpeed?: number;
   /** The dark it is drawn on. Defaults to a near-black blue. */
   backdrop?: string;
+  /**
+   * The same picture on Desmos 3D: the field with a third component, and
+   * what is different about it in a box. Every preset has one, so loading a
+   * preset on /3d never gives a field that lies flat by accident.
+   */
+  space: {
+    blurb: string;
+    xLatex: string;
+    yLatex: string;
+    zLatex: string;
+    /** Half-width of the cube it is framed in, where it differs. */
+    extent?: number;
+  };
 }
 
 const r2 = String.raw`\left(x^{2}+y^{2}\right)`;
+const r3 = String.raw`\left(x^{2}+y^{2}+z^{2}\right)`;
 
 /** The dark these are drawn on where a preset does not name its own. */
 export const GALLERY_DEFAULT_BACKDROP = "#0d1020";
@@ -103,6 +117,13 @@ export const FIELD_GALLERY: readonly GalleryPreset[] = [
       speed: 0.8,
     },
     extent: 8,
+    space: {
+      blurb:
+        "An accretion disk: the inspiral orbits the z-axis while everything above and below it falls onto the disk's plane.",
+      xLatex: String.raw`\frac{-y-0.32x}{${r2}^{0.75}}`,
+      yLatex: String.raw`\frac{x-0.32y}{${r2}^{0.75}}`,
+      zLatex: String.raw`\frac{-0.6z}{${r3}^{0.75}}`,
+    },
   },
   {
     id: "spiral-galaxy",
@@ -123,6 +144,13 @@ export const FIELD_GALLERY: readonly GalleryPreset[] = [
       dropRate: 0.004,
     },
     extent: 10,
+    space: {
+      blurb:
+        "A thin rotating disk: the same differential rotation, with everything off the plane drawn back into it.",
+      xLatex: String.raw`\frac{-y}{1+\sqrt{${r2}}}`,
+      yLatex: String.raw`\frac{x}{1+\sqrt{${r2}}}`,
+      zLatex: String.raw`-0.3z`,
+    },
   },
   {
     id: "binary",
@@ -143,6 +171,13 @@ export const FIELD_GALLERY: readonly GalleryPreset[] = [
     },
     extent: 9,
     timeSpeed: 0.45,
+    space: {
+      blurb:
+        "Two vortex tubes circling their common axis, the flow along them rising and falling with the clock.",
+      xLatex: String.raw`\frac{-\left(y-3\sin t\right)}{\left(x-3\cos t\right)^{2}+\left(y-3\sin t\right)^{2}+0.6}+\frac{-\left(y+3\sin t\right)}{\left(x+3\cos t\right)^{2}+\left(y+3\sin t\right)^{2}+0.6}`,
+      yLatex: String.raw`\frac{x-3\cos t}{\left(x-3\cos t\right)^{2}+\left(y-3\sin t\right)^{2}+0.6}+\frac{x+3\cos t}{\left(x+3\cos t\right)^{2}+\left(y+3\sin t\right)^{2}+0.6}`,
+      zLatex: String.raw`0.4\cos t`,
+    },
   },
   {
     id: "aurora",
@@ -163,6 +198,13 @@ export const FIELD_GALLERY: readonly GalleryPreset[] = [
     },
     extent: 10,
     timeSpeed: 0.6,
+    space: {
+      blurb:
+        "The curtains drift and fold, and now they billow up and down as well.",
+      xLatex: String.raw`\cos\left(0.6y+t\right)`,
+      yLatex: String.raw`0.35\sin\left(0.9x-t\right)`,
+      zLatex: String.raw`0.5\sin\left(0.5x+0.4y+t\right)`,
+    },
   },
   {
     id: "pulsar",
@@ -181,6 +223,13 @@ export const FIELD_GALLERY: readonly GalleryPreset[] = [
     },
     extent: 8,
     timeSpeed: 0.8,
+    space: {
+      blurb:
+        "A radial field in every direction whose sign follows sin t, so the whole ball breathes in and out.",
+      xLatex: String.raw`\frac{x\sin t}{\sqrt{${r3}}+0.4}`,
+      yLatex: String.raw`\frac{y\sin t}{\sqrt{${r3}}+0.4}`,
+      zLatex: String.raw`\frac{z\sin t}{\sqrt{${r3}}+0.4}`,
+    },
   },
   {
     id: "star-cluster",
@@ -199,6 +248,13 @@ export const FIELD_GALLERY: readonly GalleryPreset[] = [
       dropRate: 0.03,
     },
     extent: 9,
+    space: {
+      blurb:
+        "Three attractors at different heights. Particles fall into them from all sides and pile up.",
+      xLatex: String.raw`\frac{-\left(x+4\right)}{\left(\left(x+4\right)^{2}+\left(y-2\right)^{2}+\left(z-1\right)^{2}+0.4\right)^{1.1}}+\frac{-\left(x-3\right)}{\left(\left(x-3\right)^{2}+\left(y-3\right)^{2}+\left(z+2\right)^{2}+0.4\right)^{1.1}}+\frac{-\left(x-1\right)}{\left(\left(x-1\right)^{2}+\left(y+4\right)^{2}+z^{2}+0.4\right)^{1.1}}`,
+      yLatex: String.raw`\frac{-\left(y-2\right)}{\left(\left(x+4\right)^{2}+\left(y-2\right)^{2}+\left(z-1\right)^{2}+0.4\right)^{1.1}}+\frac{-\left(y-3\right)}{\left(\left(x-3\right)^{2}+\left(y-3\right)^{2}+\left(z+2\right)^{2}+0.4\right)^{1.1}}+\frac{-\left(y+4\right)}{\left(\left(x-1\right)^{2}+\left(y+4\right)^{2}+z^{2}+0.4\right)^{1.1}}`,
+      zLatex: String.raw`\frac{-\left(z-1\right)}{\left(\left(x+4\right)^{2}+\left(y-2\right)^{2}+\left(z-1\right)^{2}+0.4\right)^{1.1}}+\frac{-\left(z+2\right)}{\left(\left(x-3\right)^{2}+\left(y-3\right)^{2}+\left(z+2\right)^{2}+0.4\right)^{1.1}}+\frac{-z}{\left(\left(x-1\right)^{2}+\left(y+4\right)^{2}+z^{2}+0.4\right)^{1.1}}`,
+    },
   },
   {
     id: "cellular",
@@ -219,6 +275,13 @@ export const FIELD_GALLERY: readonly GalleryPreset[] = [
       normalizeSpeed: false,
     },
     extent: 9,
+    space: {
+      blurb:
+        "The 3D Taylor–Green vortex, the standard start of a turbulence simulation: cells that turn one way above and the other way below.",
+      xLatex: String.raw`\sin\left(x\right)\cos\left(y\right)\cos\left(z\right)`,
+      yLatex: String.raw`-\cos\left(x\right)\sin\left(y\right)\cos\left(z\right)`,
+      zLatex: String.raw`0`,
+    },
   },
   {
     id: "dipole",
@@ -240,6 +303,13 @@ export const FIELD_GALLERY: readonly GalleryPreset[] = [
       dropRate: 0.004,
     },
     extent: 6,
+    space: {
+      blurb:
+        "A bar magnet along the z-axis: field lines leave the north pole, loop round in every direction, and come back in at the south.",
+      xLatex: String.raw`\frac{3xz}{${r3}^{2.5}}`,
+      yLatex: String.raw`\frac{3yz}{${r3}^{2.5}}`,
+      zLatex: String.raw`\frac{2z^{2}-x^{2}-y^{2}}{${r3}^{2.5}}`,
+    },
   },
 ];
 

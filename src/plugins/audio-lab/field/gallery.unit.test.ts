@@ -118,6 +118,7 @@ describe("the clock speed, baked in", () => {
       yLatex: String.raw`\cot\left(y\right)`,
       palette: "spectral",
       timeSpeed: 0.5,
+      space: { blurb: "", xLatex: "0", yLatex: "0", zLatex: "0" },
     });
     expect(config.p).toContain("\\tan");
     expect(config.p).toContain("T_{audio}");

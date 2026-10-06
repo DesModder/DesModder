@@ -62,6 +62,13 @@ export interface Overlay3DCallbacks {
   onRecovered: () => void;
   /** Overrides the canvas id, for a second overlay on the same page. */
   canvasId?: string;
+  /**
+   * Where this canvas sits among the other 3D overlays, all of which go
+   * straight after Desmos's canvas: lower is nearer Desmos, so drawn under.
+   * The flow is 1 and the arrows 2, as in 2D, where arrows are read over the
+   * particles; without an order, whichever mounted last would decide.
+   */
+  order?: number;
 }
 
 const DEFAULT_CANVAS_ID = "dsm-vector-tools-3d-canvas";
@@ -238,11 +245,26 @@ export class Overlay3D {
     const graphCanvas = webglCanvasOf(this.grapher);
     const parent = graphCanvas?.parentElement;
     if (canvas === undefined || graphCanvas == null || parent == null) return;
+    // After Desmos's canvas and after any of ours that sit lower.
+    const order = this.callbacks.order ?? 0;
+    canvas.dataset.dsmOverlayOrder = String(order);
+    let after: Element = graphCanvas;
+    for (
+      let next = graphCanvas.nextElementSibling;
+      next !== null &&
+      next !== canvas &&
+      next instanceof HTMLCanvasElement &&
+      next.dataset.dsmOverlayOrder !== undefined &&
+      Number(next.dataset.dsmOverlayOrder) <= order;
+      next = next.nextElementSibling
+    ) {
+      after = next;
+    }
     if (
       canvas.parentElement !== parent ||
-      canvas.previousElementSibling !== graphCanvas
+      canvas.previousElementSibling !== after
     ) {
-      parent.insertBefore(canvas, graphCanvas.nextSibling);
+      parent.insertBefore(canvas, after.nextSibling);
     }
     const at = graphCanvas.getBoundingClientRect();
     const origin = parent.getBoundingClientRect();

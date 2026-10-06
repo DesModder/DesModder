@@ -47,13 +47,14 @@ export type { GalleryPreset };
  */
 export function colorsFromGallery(
   preset: GalleryPreset,
-  base: VectorFieldConfig
+  base: VectorFieldConfig,
+  dimensions: 2 | 3 = 2
 ): VectorFieldConfig {
   return {
     ...base,
     name: preset.name,
     source: "components",
-    components: { xLatex: preset.xLatex, yLatex: preset.yLatex, zLatex: "0" },
+    components: componentsFor(preset, dimensions),
     color: { ...base.color, palette: preset.palette },
     time: { ...base.time, speed: preset.timeSpeed ?? base.time.speed },
     flow: {
@@ -67,9 +68,11 @@ export function colorsFromGallery(
 
 export function configFromGallery(
   preset: GalleryPreset,
-  base: VectorFieldConfig = cloneDefaultConfig()
+  base: VectorFieldConfig = cloneDefaultConfig(),
+  dimensions: 2 | 3 = 2
 ): VectorFieldConfig {
-  const extent = preset.extent ?? 8;
+  const extent =
+    (dimensions === 3 ? preset.space.extent : undefined) ?? preset.extent ?? 8;
   const axis = (from: SamplingAxisConfig): SamplingAxisConfig => ({
     ...from,
     min: -extent,
@@ -81,7 +84,7 @@ export function configFromGallery(
     ...base,
     name: preset.name,
     source: "components",
-    components: { xLatex: preset.xLatex, yLatex: preset.yLatex, zLatex: "0" },
+    components: componentsFor(preset, dimensions),
     domain: { x: axis(base.domain.x), y: axis(base.domain.y) },
     // These are flow pictures. An arrow grid samples a field at fixed points,
     // which is how you read one rather than how you watch one.
@@ -103,4 +106,21 @@ export function configFromGallery(
       ...preset.flow,
     },
   };
+}
+
+/**
+ * A preset's field for the product it is loaded on: its 3D form on Desmos 3D,
+ * so it never lies flat there by accident, and its 2D form everywhere else.
+ */
+export function componentsFor(
+  preset: GalleryPreset,
+  dimensions: 2 | 3
+): VectorFieldConfig["components"] {
+  return dimensions === 3
+    ? {
+        xLatex: preset.space.xLatex,
+        yLatex: preset.space.yLatex,
+        zLatex: preset.space.zLatex,
+      }
+    : { xLatex: preset.xLatex, yLatex: preset.yLatex, zLatex: "0" };
 }

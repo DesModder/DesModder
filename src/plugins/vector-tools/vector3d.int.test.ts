@@ -161,16 +161,37 @@ testWithPageAndOpts(
         "cloud",
       { timeout: 5000 }
     );
-    // Stored with the field, so a reload draws the same picture.
+    // Stored with the field, so a reload draws the same picture — in the 3D
+    // library, and only there: the 2D saves never see it.
     const stored = await driver.page.evaluate(() => {
-      const library = JSON.parse(
-        DSM.pluginSettings["vector-tools"]!.serializedFieldConfig as string
-      );
-      return library.fields.find(
-        (field: { id: string }) => field.id === library.activeId
-      ).space3d.look;
+      // A library never written, or replaced wholesale by an earlier test,
+      // reads as the default, as the plugin reads it.
+      const look = (key: string) => {
+        const raw = (DSM.pluginSettings["vector-tools"] as any)[key] as
+          | string
+          | undefined;
+        if (raw === undefined || raw === "") return "arrows";
+        const library = JSON.parse(raw) as {
+          activeId: string;
+          fields: { id: string; space3d?: { look?: string } }[];
+        };
+        const field = library.fields.find((f) => f.id === library.activeId);
+        return field?.space3d?.look ?? "arrows";
+      };
+      return {
+        threeD: look("serializedFieldConfig3D"),
+        twoD: look("serializedFieldConfig"),
+      };
     });
-    expect(stored).toBe("cloud");
+    expect(stored).toEqual({ threeD: "cloud", twoD: "arrows" });
+
+    // A gallery preset loads its 3D form here, never a field lying flat.
+    const loaded = await driver.page.evaluate(() => {
+      const vt = DSM.enabledPlugins["vector-tools"] as any;
+      vt.applyGalleryPreset("dipole", false);
+      return vt.getConfig().components.zLatex as string;
+    });
+    expect(loaded).toContain("2z^{2}");
     // R is offered on 3D, beside P and Q.
     const fieldIndex = PANEL_TABS.findIndex((tab) => tab.id === "field");
     await driver.click(
@@ -316,15 +337,22 @@ testWithPageAndOpts(
       `config.components.xLatex = ${quoted(dipole("x", "x"))};
        config.components.yLatex = ${quoted(dipole("y", "y"))};
        config.components.zLatex = ${quoted(dipole("z-1", "z+1"))};
-       config.space3d.look = "streamlines";
-       config.space3d.animate = false;`
+       config.arrowMode = "off";
+       config.space3d.flowLook = "traced";
+       config.space3d.animate = false;
+       config.space3d.backdrop = false;`
     );
-    const volume = async () =>
+    // Streamlines are the Flow tab's now, on a canvas of their own.
+    await driver.page.evaluate(() =>
+      (DSM.enabledPlugins["vector-tools"] as any).toggleFlow()
+    );
+    await waitForRedraw(driver);
+    const flowFrame = async () =>
       await driver.page.evaluate(
-        () => (DSM.enabledPlugins["vector-tools"] as any).volume3dFrame
+        () => (DSM.enabledPlugins["vector-tools"] as any).flow3dFrame
       );
-    expect((await volume())?.look).toBe("streamlines");
-    expect((await volume())?.count).toBeGreaterThan(100);
+    expect((await flowFrame())?.look).toBe("streamlines");
+    expect((await flowFrame())?.count).toBeGreaterThan(100);
     const still = await capture(driver);
     writeFileSync(
       join(ASSETS, "plugin-streamlines.png"),
@@ -337,6 +365,46 @@ testWithPageAndOpts(
     await new Promise((resolve) => setTimeout(resolve, 400));
     const second = (await capture(driver)).png;
     expect(second).not.toBe(first);
+
+    // The flow as a simulation draws it: particles with trails on the dark.
+    await configure(
+      driver,
+      `config.space3d.flowLook = "particles"; config.space3d.backdrop = true;`
+    );
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const particles = await flowFrame();
+    expect(particles?.particles).toBeGreaterThan(1000);
+    expect(particles?.steps).toBeGreaterThan(10);
+    const sim = await capture(driver);
+    writeFileSync(
+      join(ASSETS, "plugin-flow-particles.png"),
+      Buffer.from(sim.png, "base64")
+    );
+    expect(await coloured(sim.png)).toBeGreaterThan(2000);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect((await capture(driver)).png).not.toBe(sim.png);
+    // Each particle lives in its own frame of the same flow, so the flow
+    // canvas sits under the arrows' when both are on.
+    await configure(driver, `config.arrowMode = "live";`);
+    const order = await driver.page.evaluate(() => {
+      const flow = document.getElementById("dsm-vector-tools-3d-flow-canvas");
+      const arrows = document.getElementById("dsm-vector-tools-3d-canvas");
+      return (
+        flow !== null &&
+        arrows !== null &&
+        (flow.compareDocumentPosition(arrows) &
+          Node.DOCUMENT_POSITION_FOLLOWING) !==
+          0
+      );
+    });
+    expect(order).toBe(true);
+    await driver.page.evaluate(() =>
+      (DSM.enabledPlugins["vector-tools"] as any).toggleFlow()
+    );
+    const volume = async () =>
+      await driver.page.evaluate(
+        () => (DSM.enabledPlugins["vector-tools"] as any).volume3dFrame
+      );
     await configure(
       driver,
       `config.space3d.look = "cloud"; config.space3d.cloudByDirection = true;`

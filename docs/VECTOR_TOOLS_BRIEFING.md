@@ -243,8 +243,25 @@ more; the 2D flow still does.
   3D) and a `space3d` block holding every setting. No migration: each is
   normalised on its own.
 
-Not yet: gradient fields in 3D, arrows placed on a surface, generated
-Desmos-native 3D vectors, and the 3D particle flow.
+- **The 3D flow** (Flow tab, `Flow3DRenderer`): fieldplay's method carried
+  into 3D. Particle state in float textures, an RK4 step per frame scaled by
+  real time (so, unlike the 2D flow, it does not run faster at 144 Hz),
+  random respawn by a per-second probability, and each particle's last N
+  positions kept in world space in a ring of half-float texture layers,
+  drawn as a fading trail with the current camera so rotation never smears
+  it. On a dark backdrop by default, screen-blended so crowded trails glow
+  without clipping to white; sinks absorb particles that reach a pole's core
+  (a checkbox) rather than collecting them into one knot. Up to 200,000
+  particles; Auto is about one per 30 square pixels of the box. The traced
+  streamlines moved here from the Arrows tab, their cap raised to 200,000 on
+  half-float history. A canvas of its own under the arrows', as in 2D.
+- **Saves**: Desmos 3D keeps its own library (`serializedFieldConfig3D`),
+  so a 3D field never appears among the 2D ones or the reverse.
+- **Presets**: every gallery preset has a 3D form (`GalleryPreset.space`),
+  loaded on /3d; a test compiles each and checks it does not lie flat.
+
+Not yet: gradient fields in 3D, arrows placed on a surface, and generated
+Desmos-native 3D vectors.
 
 ## 4. Shared libraries
 

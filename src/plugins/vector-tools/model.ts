@@ -343,9 +343,37 @@ export interface Space3DConfig {
   cloudOpacity: number;
   cloudContrast: number;
   cloudByDirection: boolean;
+  flowLook: FlowLook3D;
+  particlesAuto: boolean;
+  particles: number;
+  /** Box half-widths per second. */
+  particleSpeed: number;
+  particleNormalize: boolean;
+  /** Frames of trail. */
+  particleTrail: number;
+  /** Mean seconds a particle lives before starting again elsewhere. */
+  particleLifetime: number;
+  particleOpacity: number;
+  particleGlow: number;
+  particlePx: number;
+  /** Whether sinks absorb the particles that reach them. */
+  particleAbsorb: boolean;
+  /** The dark the flow is drawn on, as a simulation is; off shows the graph. */
+  backdrop: boolean;
+  backdropColor: string;
+  backdropOpacity: number;
 }
 
-export type Look3D = "arrows" | "streamlines" | "cloud";
+/** What the Arrows tab draws on Desmos 3D. */
+export type Look3D = "arrows" | "cloud";
+/**
+ * What the Flow tab draws on Desmos 3D: particles carried by the field with
+ * trails, as a fluid simulation draws it, or lines traced through it once.
+ */
+export type FlowLook3D = "particles" | "traced";
+
+/** How many particles, or traced lines, the 3D flow may draw at most. */
+export const MAX_FLOW_COUNT_3D = 200_000;
 export type Occlusion3D = "hide" | "fade" | "over";
 
 /** Auto's arrow length, as a multiple of the spacing; see the plan's §5. */
@@ -390,6 +418,22 @@ export const DEFAULT_SPACE_3D: Space3DConfig = {
   cloudOpacity: 0.35,
   cloudContrast: 3,
   cloudByDirection: false,
+  flowLook: "particles",
+  particlesAuto: true,
+  particles: 30_000,
+  particleSpeed: 0.35,
+  particleNormalize: false,
+  particleTrail: 48,
+  particleLifetime: 4,
+  particleOpacity: 0.6,
+  particleGlow: 0.3,
+  particlePx: 2,
+  particleAbsorb: true,
+  // A simulation's look is light on dark; the backdrop is what makes the
+  // trails glow. It is a setting, and off draws on the graph as it is.
+  backdrop: true,
+  backdropColor: "#05070d",
+  backdropOpacity: 0.9,
 };
 
 export const TIME_SPEED_MINIMUM = 0.05;
@@ -1360,7 +1404,9 @@ export function normalizeSpace3D(
   const axis = v?.sliceAxis;
   const turn = v?.cutTurn;
   return {
-    look: oneOf("look", ["arrows", "streamlines", "cloud"]),
+    // "streamlines" was an Arrows-tab look before the 3D flow existed; those
+    // are on the Flow tab now, and a field saved with it shows arrows.
+    look: oneOf("look", ["arrows", "cloud"]),
     shape: oneOf("shape", ["auto", "lines", "flat", "solid"]),
     placement: oneOf("placement", ["jitter", "grid", "slice", "surface"]),
     countAuto: flag("countAuto"),
@@ -1395,7 +1441,7 @@ export function normalizeSpace3D(
         ? turn
         : fallback.cutTurn,
     linesAuto: flag("linesAuto"),
-    lines: Math.round(num("lines", 1, 40_000)),
+    lines: Math.round(num("lines", 1, MAX_FLOW_COUNT_3D)),
     lineLength: num("lineLength", 0.02, 4),
     lineOpacity: num("lineOpacity", 0.01, 1),
     animate: flag("animate"),
@@ -1407,6 +1453,24 @@ export function normalizeSpace3D(
     cloudOpacity: num("cloudOpacity", 0.01, 1),
     cloudContrast: num("cloudContrast", 0.1, 12),
     cloudByDirection: flag("cloudByDirection"),
+    flowLook: oneOf("flowLook", ["particles", "traced"]),
+    particlesAuto: flag("particlesAuto"),
+    particles: Math.round(num("particles", 1, MAX_FLOW_COUNT_3D)),
+    particleSpeed: num("particleSpeed", 0.01, 5),
+    particleNormalize: flag("particleNormalize"),
+    particleTrail: Math.round(num("particleTrail", 2, 64)),
+    particleLifetime: num("particleLifetime", 0.2, 60),
+    particleOpacity: num("particleOpacity", 0.02, 1),
+    particleGlow: num("particleGlow", 0, 1),
+    particlePx: num("particlePx", 0.5, 12),
+    particleAbsorb: flag("particleAbsorb"),
+    backdrop: flag("backdrop"),
+    backdropColor:
+      typeof v?.backdropColor === "string" &&
+      /^#[0-9a-f]{6}$/i.test(v.backdropColor)
+        ? v.backdropColor
+        : fallback.backdropColor,
+    backdropOpacity: num("backdropOpacity", 0, 1),
   };
 }
 
