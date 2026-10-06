@@ -108,6 +108,12 @@ import {
   type Arrow3DOptions,
 } from "../../field-rendering/Arrow3DRenderer";
 import type { Field3D } from "../../field-rendering/field3d";
+import {
+  sameSurfaces,
+  scanSurfaces3D,
+  type SurfaceItem,
+  type SurfaceScan,
+} from "../../field-rendering/surfaces3d";
 import type { ConfigItem } from "..";
 
 /** The divergence and curl of a field, and whether it has a potential. */
@@ -370,6 +376,12 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     revision: number;
     result: Field3DCompilation;
   };
+  /**
+   * The surfaces graphed in Desmos 3D that the field is hidden behind, and
+   * those it cannot be: rescanned with the environment, on the same
+   * coalesced timer and for the same reasons.
+   */
+  private surfaces3d: SurfaceScan = { surfaces: [], skipped: [] };
   /** The values last read for the names the field uses, for a renderer made later. */
   private parameterValues: ReadonlyMap<string, number> = new Map();
   private arrowMessage = "";
@@ -482,6 +494,11 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
         // A component may reference anything the list defines, so an edit
         // anywhere in it — not just to this field's own expressions — can
         // change what the field means.
+        this.scheduleEnvironmentRefresh();
+      } else if (this.cc.is3dProduct()) {
+        // Showing or hiding a surface, or recolouring one, arrives as an event
+        // of its own; on 3D what hides the field depends on it. The rescan
+        // coalesces, so this costs one timer however many events arrive.
         this.scheduleEnvironmentRefresh();
       }
       // Reverse contrast is a graph setting changed elsewhere entirely, and
@@ -671,13 +688,34 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       this.flowCompilationCache = undefined;
       this.field3dCache = undefined;
     }
+    const surfacesChanged = this.rescanSurfaces3D();
     this.syncParameterValues();
+    if (surfacesChanged && !changed) {
+      this.configureArrow3D();
+      this.overlay3d.requestFrame();
+      this.util.tick();
+    }
     if (changed) {
       this.refreshArrows();
       this.refreshFlow();
       this.syncClock();
       this.util.tick();
     }
+  }
+
+  /**
+   * Finds the graph's surfaces again, on Desmos 3D. True if what the field is
+   * hidden behind changed.
+   */
+  private rescanSurfaces3D() {
+    if (!this.cc.is3dProduct()) return false;
+    const scan = scanSurfaces3D(
+      this.cc.getAllItemModels() as unknown as SurfaceItem[],
+      this.environment
+    );
+    if (sameSurfaces(scan, this.surfaces3d)) return false;
+    this.surfaces3d = scan;
+    return true;
   }
 
   /**
@@ -692,7 +730,13 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     const compiled = this.cc.is3dProduct()
       ? this.field3dCompilation
       : this.flowCompilation;
-    const names = compiled.ok ? (compiled.field.params ?? []) : [];
+    // On 3D the surfaces the field hides behind may read sliders too.
+    const names = [
+      ...new Set([
+        ...(compiled.ok ? (compiled.field.params ?? []) : []),
+        ...this.surfaces3d.surfaces.flatMap((surface) => surface.params),
+      ]),
+    ];
     const values = new Map<string, number>();
     for (const name of names) {
       let helper = this.parameterHelpers.get(name);
@@ -768,7 +812,14 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     if (this.cc.is3dProduct()) {
       const frame = this.arrow3d?.last;
       if (!this.overlay3d.isRunning || frame === undefined) return "";
-      return `Drawing ${frame.instances} arrows live in 3D.`;
+      const drawing = `Drawing ${frame.instances} arrows live in 3D.`;
+      // Say which surfaces the arrows show through despite Hidden, rather than
+      // leave someone wondering why an arrow is in front of a sphere.
+      const { skipped } = this.surfaces3d;
+      if (this.getConfig().space3d.occlusion === "over" || skipped.length === 0)
+        return drawing;
+      const names = skipped.map((s) => `${s.latex} (${s.reason})`).join("; ");
+      return `${drawing} They show through ${names}.`;
     }
     if (!this.arrowOverlay.isRunning) return "";
     const grid = this.arrowGrid;
@@ -873,6 +924,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     const compiled = this.field3dCompilation;
     if (renderer === undefined || !compiled.ok) return;
     renderer.setField(compiled.field);
+    renderer.setSurfaces(this.surfaces3d.surfaces);
     renderer.setOptions(this.arrow3dOptions);
     renderer.setParameters(this.parameterValues);
     renderer.setTime(this.clockSeconds);
@@ -907,6 +959,8 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
         angle: s.cutAngle,
         turn: s.cutTurn ?? undefined,
       },
+      occlusion: s.occlusion,
+      surfaceResolution: s.meshAuto ? "auto" : s.mesh,
     };
   }
 

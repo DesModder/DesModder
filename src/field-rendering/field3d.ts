@@ -69,7 +69,7 @@ vec3 vtField(vec3 p) {
 export function uploadField3DParameters(
   gl: WebGL2RenderingContext,
   uniforms: Record<string, WebGLUniformLocation | null>,
-  field: Field3D,
+  field: Pick<Field3D, "params" | "usesTime">,
   values: ReadonlyMap<string, number>,
   time: number
 ) {

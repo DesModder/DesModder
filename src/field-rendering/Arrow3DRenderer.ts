@@ -37,6 +37,9 @@ import {
   type Placement3D,
 } from "./glsl3d";
 import type { Box3D, Overlay3DRenderer } from "./Overlay3D";
+import { linkProgram3D, uniformsOf, type Uniforms } from "./program3d";
+import { AUTO_SURFACE_RESOLUTION, SurfaceDepth } from "./SurfaceDepth";
+import type { Surface3D } from "./surfaces3d";
 import { PALETTE_GLSL, paletteUniforms, type PaletteID } from "./palettes";
 
 export type ArrowShape3D = "lines" | "flat" | "solid";
@@ -82,7 +85,16 @@ export interface Arrow3DOptions {
   /** Whether anything outside the box is cut off, as Desmos does. */
   clip: boolean;
   cut: CutSettings;
+  /**
+   * What happens to what a graphed surface covers: hidden (the default, by
+   * Rafael's call), faded, or drawn over everything (X-ray).
+   */
+  occlusion: Occlusion3D;
+  /** Cells a side of each surface's depth copy, or Auto. */
+  surfaceResolution: number | "auto";
 }
+
+export type Occlusion3D = "hide" | "fade" | "over";
 
 export const DEFAULT_ARROW_3D_OPTIONS: Arrow3DOptions = {
   shape: "auto",
@@ -105,6 +117,8 @@ export const DEFAULT_ARROW_3D_OPTIONS: Arrow3DOptions = {
   selfDepth: true,
   clip: true,
   cut: { cutaway: "off", angle: Math.PI / 2, turn: undefined },
+  occlusion: "hide",
+  surfaceResolution: "auto",
 };
 
 /** Sides of the shaded glyph's cylinder and cone. */
@@ -165,6 +179,8 @@ export interface Arrow3DFrame {
   boxPx: number;
   /** The camera's direction round z, for fixing a cake slice in place. */
   cameraAzimuth: number;
+  /** Surfaces whose depth copy the field was drawn against. */
+  hidingSurfaces: number;
 }
 
 const SHAPE_INDEX: Record<ArrowShape3D, number> = {
@@ -427,8 +443,6 @@ out vec4 outColor;
 void main() { outColor = vec4(v_m, 0.0, 0.0, 1.0); }
 `;
 
-type Uniforms = Record<string, WebGLUniformLocation | null>;
-
 export class Arrow3DRenderer implements Overlay3DRenderer {
   private readonly gl: WebGL2RenderingContext;
   private readonly vao: WebGLVertexArrayObject;
@@ -441,6 +455,7 @@ export class Arrow3DRenderer implements Overlay3DRenderer {
     texture: WebGLTexture;
   };
   private readonly canReadBack: boolean;
+  private readonly surfaceDepth: SurfaceDepth;
   private field?: Field3D;
   private options: Arrow3DOptions = DEFAULT_ARROW_3D_OPTIONS;
   private parameters: ReadonlyMap<string, number> = new Map();
@@ -465,6 +480,12 @@ export class Arrow3DRenderer implements Overlay3DRenderer {
     this.gl = gl;
     this.vao = gl.createVertexArray()!;
     this.canReadBack = gl.getExtension("EXT_color_buffer_float") !== null;
+    this.surfaceDepth = new SurfaceDepth(gl);
+  }
+
+  /** The surfaces the field is hidden or faded behind. */
+  setSurfaces(surfaces: readonly Surface3D[]) {
+    this.surfaceDepth.setSurfaces(surfaces);
   }
 
   get isContextLost() {
@@ -478,14 +499,14 @@ export class Arrow3DRenderer implements Overlay3DRenderer {
   setField(field: Field3D) {
     if (sameField3D(this.field, field) && this.program !== undefined) return;
     const { gl } = this;
-    const program = link(gl, arrowVertexSource(field), ARROW_FRAGMENT);
+    const program = linkProgram3D(gl, arrowVertexSource(field), ARROW_FRAGMENT);
     if (this.program !== undefined) gl.deleteProgram(this.program);
     this.program = program;
     this.uniforms = uniformsOf(gl, program);
     if (this.magnitudeProgram !== undefined)
       gl.deleteProgram(this.magnitudeProgram);
     this.magnitudeProgram = this.canReadBack
-      ? link(gl, magnitudeVertexSource(field), MAGNITUDE_FRAGMENT)
+      ? linkProgram3D(gl, magnitudeVertexSource(field), MAGNITUDE_FRAGMENT)
       : undefined;
     this.magnitudeUniforms =
       this.magnitudeProgram !== undefined
@@ -576,19 +597,49 @@ export class Arrow3DRenderer implements Overlay3DRenderer {
     gl.uniform1f(u.u_saturation, o.saturation);
     gl.uniform1f(u.u_contrast, o.contrast);
 
-    if (o.selfDepth) {
+    const drawArrows = () =>
+      gl.drawArraysInstanced(
+        shape === "lines" ? gl.LINES : gl.TRIANGLES,
+        0,
+        verticesPerArrow3D(shape),
+        instances
+      );
+    // The user's surfaces, depth only, first: Desmos's own depth is in
+    // another context, and this copy is the only way an arrow can know it is
+    // behind one.
+    const occluding = o.occlusion !== "over" && this.surfaceDepth.count > 0;
+    if (occluding) {
+      this.surfaceDepth.draw(
+        mathToView,
+        camera.projection,
+        box,
+        o.surfaceResolution === "auto"
+          ? AUTO_SURFACE_RESOLUTION
+          : o.surfaceResolution,
+        this.parameters,
+        this.time
+      );
+      gl.useProgram(program);
+    }
+    if (occluding && o.occlusion === "fade") {
+      // What a surface covers, drawn faintly first: only fragments behind
+      // the copy pass a GREATER test against its depth.
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.GREATER);
+      gl.depthMask(false);
+      gl.uniform1f(u.u_alpha, 0.22);
+      drawArrows();
+      gl.uniform1f(u.u_alpha, 1);
+    }
+    if (occluding || o.selfDepth) {
       gl.enable(gl.DEPTH_TEST);
       gl.depthFunc(gl.LEQUAL);
-      gl.depthMask(true);
+      gl.depthMask(o.selfDepth);
     } else {
       gl.disable(gl.DEPTH_TEST);
     }
-    gl.drawArraysInstanced(
-      shape === "lines" ? gl.LINES : gl.TRIANGLES,
-      0,
-      verticesPerArrow3D(shape),
-      instances
-    );
+    drawArrows();
+    gl.depthMask(true);
     gl.bindVertexArray(null);
     this.last = {
       instances,
@@ -598,6 +649,7 @@ export class Arrow3DRenderer implements Overlay3DRenderer {
       scaleSource,
       boxPx,
       cameraAzimuth: cut.facing,
+      hidingSurfaces: occluding ? this.surfaceDepth.count : 0,
     };
   }
 
@@ -708,6 +760,7 @@ export class Arrow3DRenderer implements Overlay3DRenderer {
       gl.deleteFramebuffer(this.magnitudeTarget.framebuffer);
       gl.deleteTexture(this.magnitudeTarget.texture);
     }
+    this.surfaceDepth.dispose();
     gl.deleteVertexArray(this.vao);
     this.program = undefined;
     this.magnitudeProgram = undefined;
@@ -735,50 +788,6 @@ export function boxScreenSize(camera: Camera3D, box: Box3D) {
     y1 = Math.max(y1, p.y);
   }
   return Number.isFinite(x0) ? Math.hypot(x1 - x0, y1 - y0) : 0;
-}
-
-function link(gl: WebGL2RenderingContext, vertex: string, fragment: string) {
-  const compile = (type: number, source: string) => {
-    const shader = gl.createShader(type)!;
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      const log = gl.getShaderInfoLog(shader) ?? "";
-      gl.deleteShader(shader);
-      throw new FlowRendererError(
-        `The 3D field's shader did not compile: ${log}`
-      );
-    }
-    return shader;
-  };
-  const vs = compile(gl.VERTEX_SHADER, vertex);
-  const fs = compile(gl.FRAGMENT_SHADER, fragment);
-  const program = gl.createProgram();
-  gl.attachShader(program, vs);
-  gl.attachShader(program, fs);
-  gl.linkProgram(program);
-  gl.deleteShader(vs);
-  gl.deleteShader(fs);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    const log = gl.getProgramInfoLog(program) ?? "";
-    gl.deleteProgram(program);
-    throw new FlowRendererError(`The 3D field's shader did not link: ${log}`);
-  }
-  return program;
-}
-
-function uniformsOf(gl: WebGL2RenderingContext, program: WebGLProgram) {
-  const out: Uniforms = {};
-  const count = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS) as number;
-  for (let i = 0; i < count; i++) {
-    const info = gl.getActiveUniform(program, i);
-    if (info === null) continue;
-    out[info.name.replace(/\[0\]$/, "")] = gl.getUniformLocation(
-      program,
-      info.name
-    );
-  }
-  return out;
 }
 
 function hexToUnitRGB(hex: string): [number, number, number] {

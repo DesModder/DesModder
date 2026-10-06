@@ -251,6 +251,68 @@ testWithPageAndOpts(
     expect(Math.min(...along)).toBeGreaterThan(-2);
     expect(Math.max(...along)).toBeLessThan(length + 2);
 
+    // Hidden, faded, X-ray: a black plane above the arrow, seen from above.
+    // Desmos's depth cannot be read, so this works only through our own
+    // depth copy of the plane, found in the expression list.
+    await driver.page.evaluate(() => {
+      Calc.setExpression({ id: "roof", latex: "z=2", color: "#000000" });
+    });
+    const greenish = async (png: string) =>
+      await driver.page.evaluate(async (b64: string) => {
+        const img = await createImageBitmap(
+          await (await fetch("data:image/png;base64," + b64)).blob()
+        );
+        const c = new OffscreenCanvas(img.width, img.height);
+        const x = c.getContext("2d")!;
+        x.drawImage(img, 0, 0);
+        const { data } = x.getImageData(0, 0, img.width, img.height);
+        let n = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i + 1] > data[i] + 30 && data[i + 1] > data[i + 2] + 30) n++;
+        }
+        return n;
+      }, png);
+    const looks: Record<string, number> = {};
+    for (const occlusion of ["hide", "fade", "over"]) {
+      await configure(driver, `config.space3d.occlusion = "${occlusion}";`);
+      // The rescan that finds the roof is coalesced; give it its turn.
+      await driver.page.waitForFunction(
+        () =>
+          ((DSM.enabledPlugins["vector-tools"] as any).arrow3dFrame
+            ?.hidingSurfaces ?? 0) > 0 ||
+          (DSM.enabledPlugins["vector-tools"] as any).space3d.occlusion ===
+            "over",
+        { timeout: 5000 }
+      );
+      await waitForRedraw(driver);
+      const { png: shot } = await capture(driver);
+      writeFileSync(
+        join(ASSETS, `plugin-occlusion-${occlusion}.png`),
+        Buffer.from(shot, "base64")
+      );
+      looks[occlusion] = await greenish(shot);
+    }
+    expect(looks.hide).toBe(0);
+    expect(looks.over).toBeGreaterThan(10);
+    expect(looks.fade).toBeGreaterThan(5);
+
+    // A surface the copy cannot be made of is named, not silently ignored.
+    await driver.page.evaluate(() => {
+      Calc.setExpression({ id: "ball", latex: "x^{2}+y^{2}+z^{2}=9" });
+    });
+    await configure(driver, `config.space3d.occlusion = "hide";`);
+    await driver.page.waitForFunction(
+      () =>
+        (DSM.enabledPlugins["vector-tools"] as any).arrowStatus.includes(
+          "show through"
+        ),
+      { timeout: 5000 }
+    );
+    await driver.page.evaluate(() => {
+      Calc.removeExpression({ id: "roof" });
+      Calc.removeExpression({ id: "ball" });
+    });
+
     await driver.disablePlugin("vector-tools");
     const gone = await driver.page.evaluate(
       () => document.getElementById("dsm-vector-tools-3d-canvas") === null
