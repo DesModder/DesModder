@@ -452,6 +452,147 @@
       </section>
 
       <section>
+        <div class="label">Look</div>
+        <div class="chips" data-key="look">
+          <button class="chip" data-value="arrows">Arrows</button>
+          <button class="chip" data-value="streamlines">Streamlines</button>
+          <button class="chip" data-value="cloud">Glow cloud</button>
+        </div>
+        <p class="hint" data-look="streamlines">
+          Thin lines traced along the field from seeds scattered through the
+          box. Faint enough to see the middle through the edges.
+        </p>
+        <p class="hint" data-look="cloud">
+          Dots scattered through the box, kept more often where the field is
+          stronger: the field's shape drawn as density, like an orbital.
+        </p>
+        <div class="row" data-look="streamlines">
+          <button class="chip" id="linesAuto">Auto</button>
+          <input
+            type="number"
+            id="lines"
+            min="1"
+            max="40000"
+            step="100"
+            aria-label="Number of streamlines"
+          />
+          <span class="hint">lines; Auto now <b id="autoLines"></b></span>
+        </div>
+        <div class="sub" data-look="streamlines">
+          <span>Line length</span><b id="lineLengthValue"></b>
+        </div>
+        <input
+          data-look="streamlines"
+          type="range"
+          id="lineLength"
+          min="0.1"
+          max="2"
+          step="0.05"
+          value="0.6"
+          aria-label="Streamline length"
+        />
+        <div class="sub" data-look="streamlines">
+          <span>Opacity</span><b id="lineOpacityValue"></b>
+        </div>
+        <input
+          data-look="streamlines"
+          type="range"
+          id="lineOpacity"
+          min="0.05"
+          max="1"
+          step="0.05"
+          value="0.4"
+          aria-label="Streamline opacity"
+        />
+        <div class="row" data-look="cloud">
+          <button class="chip" id="pointsAuto">Auto</button>
+          <input
+            type="number"
+            id="points"
+            min="1"
+            max="2000000"
+            step="1000"
+            aria-label="Number of points tried"
+          />
+          <span class="hint"
+            >points tried; Auto now <b id="autoPoints"></b
+          ></span>
+        </div>
+        <div class="sub" data-look="cloud">
+          <span>Dot size</span><b id="pointPxValue"></b>
+        </div>
+        <button class="chip" id="animate" data-look="streamlines">
+          Animate along the flow
+        </button>
+        <div class="sub" data-look="streamlines">
+          <span>Flow speed</span><b id="flowSpeedValue"></b>
+        </div>
+        <input
+          data-look="streamlines"
+          type="range"
+          id="flowSpeed"
+          min="0.02"
+          max="1"
+          step="0.02"
+          value="0.25"
+          aria-label="Flow speed"
+        />
+        <div class="sub" data-look="streamlines">
+          <span>Lit stretch</span><b id="flowWindowValue"></b>
+        </div>
+        <input
+          data-look="streamlines"
+          type="range"
+          id="flowWindow"
+          min="0.05"
+          max="1"
+          step="0.05"
+          value="0.4"
+          aria-label="How much of each line is lit"
+        />
+        <input
+          data-look="cloud"
+          type="range"
+          id="pointPx"
+          min="1"
+          max="6"
+          step="0.5"
+          value="2"
+          aria-label="Dot size"
+        />
+        <div class="sub" data-look="cloud">
+          <span>Opacity</span><b id="cloudOpacityValue"></b>
+        </div>
+        <input
+          data-look="cloud"
+          type="range"
+          id="cloudOpacity"
+          min="0.05"
+          max="1"
+          step="0.05"
+          value="0.35"
+          aria-label="Cloud opacity"
+        />
+        <div class="sub" data-look="cloud">
+          <span>Edge sharpness</span><b id="cloudContrastValue"></b>
+        </div>
+        <input
+          data-look="cloud"
+          type="range"
+          id="cloudContrast"
+          min="0.3"
+          max="8"
+          step="0.1"
+          value="3"
+          aria-label="How sharply the cloud thins out"
+        />
+        <button class="chip" id="cloudByDirection" data-look="cloud">
+          Colour by direction
+        </button>
+        <button class="chip" id="cutaway">Cut away the near half</button>
+      </section>
+
+      <section data-look="arrows">
         <div class="label">Arrow shape</div>
         <div class="chips" data-key="shape">
           <button class="chip" data-value="auto">Auto</button>
@@ -472,7 +613,7 @@
         />
       </section>
 
-      <section>
+      <section data-look="arrows">
         <div class="label">Where arrows go</div>
         <div class="chips" data-key="sampling">
           <button class="chip" data-value="grid">Whole box</button>
@@ -514,7 +655,7 @@
         </div>
       </section>
 
-      <section>
+      <section data-look="arrows">
         <div class="label">Length</div>
         <div class="chips" data-key="lengthMode">
           <button class="chip" data-value="normalized">All equal</button>
@@ -573,10 +714,16 @@
       <section>
         <div class="label">Depth cues</div>
         <div class="chips">
-          <button class="chip" id="cueShading">Shading</button>
+          <button class="chip" id="cueShading" data-look="arrows">
+            Shading
+          </button>
           <button class="chip" id="cueFog">Fade with distance</button>
-          <button class="chip" id="cueOutline">Outline</button>
-          <button class="chip" id="cueDepth">Arrows hide each other</button>
+          <button class="chip" id="cueOutline" data-look="arrows">
+            Outline
+          </button>
+          <button class="chip" id="cueDepth" data-look="arrows">
+            Arrows hide each other
+          </button>
         </div>
         <p class="hint">
           Shading only applies to Shaded 3D. Try Spin below: motion is the
@@ -585,7 +732,7 @@
       </section>
 
       <section>
-        <div class="label">Arrows behind the surface</div>
+        <div class="label">Behind the surface</div>
         <div class="chips" data-key="occlusion">
           <button class="chip" data-value="over">X-ray</button>
           <button class="chip" data-value="hide">Hidden</button>
@@ -602,8 +749,8 @@
         </div>
         <button class="chip" id="clip">Clip to the box</button>
         <p class="hint">
-          This is your decision. Hidden and Faded work by redrawing the surface
-          ourselves; see the notes below.
+          Hidden by default. Hidden and Faded work by redrawing the surface
+          ourselves; see the notes below. They apply to every look.
         </p>
       </section>
 
@@ -662,7 +809,7 @@
       <section>
         <div class="label">Measured</div>
         <dl>
-          <dt>Arrows asked for</dt>
+          <dt id="mAskedLabel">Arrows asked for</dt>
           <dd id="mInstances"></dd>
           <dt>Arrows drawn</dt>
           <dd id="mDrawn"></dd>

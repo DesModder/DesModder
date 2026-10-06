@@ -18,10 +18,27 @@
       "fog": false,
       "outline": false,
       "selfDepth": true,
-      "occlusion": "over",
+      "occlusion": "hide",
       "meshResolution": 32,
       "clip": true,
+      "look": "arrows",
+      "cutaway": false,
+      "lines": 4018,
+      "steps": 96,
+      "lineLength": 0.6,
+      "lineOpacity": 0.55,
+      "points": 162716,
+      "pointPx": 2,
+      "cloudOpacity": 0.35,
+      "cloudContrast": 3,
+      "cloudByDirection": false,
+      "animate": true,
+      "flowSpeed": 0.25,
+      "flowWindow": 0.4,
+      "time": 1.7763999999761582,
       "autoNotes": {
+        "lines": "4,018",
+        "points": "162,716",
         "count": "8 per axis",
         "shape": "Shaded 3D",
         "length": "0.8 × spacing",
@@ -283,51 +300,51 @@
   "cost": {
     "10³ lines": {
       "vertices": "6,000",
-      "result": "1,000 arrows, lines: GPU 0.16 ms median, 60 fps (both layers redrawn every frame)."
+      "result": "1,000 arrows, lines: GPU 0.17 ms median, 60 fps (both layers redrawn every frame)."
     },
     "10³ flat": {
       "vertices": "9,000",
-      "result": "1,000 arrows, flat: GPU 0.18 ms median, 60 fps (both layers redrawn every frame)."
+      "result": "1,000 arrows, flat: GPU 0.21 ms median, 60 fps (both layers redrawn every frame)."
     },
     "10³ solid": {
       "vertices": "120,000",
-      "result": "1,000 arrows, shaded 3D: GPU 1.83 ms median, 60 fps (both layers redrawn every frame)."
+      "result": "1,000 arrows, shaded 3D: GPU 1.84 ms median, 60 fps (both layers redrawn every frame)."
     },
     "15³ lines": {
       "vertices": "20,250",
-      "result": "3,375 arrows, lines: GPU 0.42 ms median, 60 fps (both layers redrawn every frame)."
+      "result": "3,375 arrows, lines: GPU 0.39 ms median, 60 fps (both layers redrawn every frame)."
     },
     "15³ flat": {
       "vertices": "30,375",
-      "result": "3,375 arrows, flat: GPU 0.37 ms median, 60 fps (both layers redrawn every frame)."
+      "result": "3,375 arrows, flat: GPU 0.42 ms median, 60 fps (both layers redrawn every frame)."
     },
     "15³ solid": {
       "vertices": "405,000",
-      "result": "3,375 arrows, shaded 3D: GPU 5.12 ms median, 60 fps (both layers redrawn every frame)."
+      "result": "3,375 arrows, shaded 3D: GPU 5.15 ms median, 60 fps (both layers redrawn every frame)."
     },
     "20³ lines": {
       "vertices": "48,000",
-      "result": "8,000 arrows, lines: GPU 0.69 ms median, 60 fps (both layers redrawn every frame)."
+      "result": "8,000 arrows, lines: GPU 0.83 ms median, 60 fps (both layers redrawn every frame)."
     },
     "20³ flat": {
       "vertices": "72,000",
-      "result": "8,000 arrows, flat: GPU 0.67 ms median, 60 fps (both layers redrawn every frame)."
+      "result": "8,000 arrows, flat: GPU 0.78 ms median, 60 fps (both layers redrawn every frame)."
     },
     "20³ solid": {
       "vertices": "960,000",
-      "result": "8,000 arrows, shaded 3D: GPU 6.48 ms median, 60 fps (both layers redrawn every frame)."
+      "result": "8,000 arrows, shaded 3D: GPU 9.10 ms median, 60 fps (both layers redrawn every frame)."
     },
     "30³ lines": {
       "vertices": "162,000",
-      "result": "27,000 arrows, lines: GPU 1.87 ms median, 60 fps (both layers redrawn every frame)."
+      "result": "27,000 arrows, lines: GPU 1.99 ms median, 60 fps (both layers redrawn every frame)."
     },
     "30³ flat": {
       "vertices": "243,000",
-      "result": "27,000 arrows, flat: GPU 1.79 ms median, 60 fps (both layers redrawn every frame)."
+      "result": "27,000 arrows, flat: GPU 2.06 ms median, 60 fps (both layers redrawn every frame)."
     },
     "30³ solid": {
       "vertices": "3,240,000",
-      "result": "27,000 arrows, shaded 3D: GPU 16.06 ms median, 60 fps (both layers redrawn every frame)."
+      "result": "27,000 arrows, shaded 3D: GPU 16.47 ms median, 60 fps (both layers redrawn every frame)."
     }
   }
 }

@@ -87,3 +87,34 @@ Differences from GPT, which are left for Rafael to judge on the page:
   plugin step, not this mock-up.
 - Its 8-sided glyph without a base disc is 72 vertices. Ours is 10-sided
   with a disc, 120 vertices, so the cone does not look hollow from behind.
+
+## Seeing the middle as well as the edges (2026-10-06)
+
+Rafael asked for Hidden as the default (X-ray and Faded stay as options), and
+for a look like a 3D streamlines picture and an atomic-orbital cloud, where
+the inside of the field shows through its edges. Opaque arrows cannot do that:
+the front layer hides the middle. Three additions, all under **Look**:
+
+- **Streamlines** (`looks.ts`). Seeds scattered through the box, each traced
+  with RK4 at unit speed in box units, on the GPU, into a history texture
+  array. The trace depends on the field, the box and the settings, never on
+  the camera, so rotating only redraws it. Every other line is traced
+  backwards. Traced forwards only, every line ended in a sink and the
+  negative charge of a dipole drew as a red pile.
+- **Animate along the flow.** The look of
+  [3dstreamlines](https://github.com/JamesRunnalls/3dstreamlines) (James
+  Runnalls, MIT): a lit stretch travels along each line, its tail fading by
+  `exp(1 − 1/c²)`, each line at its own phase. That library runs on the CPU,
+  with one three.js `Line` per stream (10,000 objects re-uploaded every frame),
+  Euler steps and nearest-grid-point lookup, on gridded data only. Here the
+  same look is a moving window over the trace already on the GPU, so
+  animating costs one instanced draw and integrates nothing.
+- **Glow cloud.** Random points, each kept with probability `ramp(|F|)^k`,
+  so density follows the field's strength. For a dipole, strength alone is a
+  featureless blob. **Colour by direction** (|F̂| as RGB, the map used in 3D
+  flow and diffusion imaging) separates its lobes, which is what makes orbital
+  pictures read.
+- **Cut away the near half.** This discards everything nearer the camera than
+  the plane through the box's centre, for every look.
+
+Evidence: `docs/assets/vector-3d/looks.png`.

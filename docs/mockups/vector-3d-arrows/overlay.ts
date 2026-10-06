@@ -29,18 +29,24 @@ import {
 import type { Box } from "./camera";
 import {
   CLIP_GLSL,
+  HASH_GLSL,
   program,
   surfaceVertexSource,
   uniforms,
   type Uniforms,
 } from "./gl";
+import { VolumeLooks, type LookSettings } from "./looks";
 
 export type Shape = "lines" | "flat" | "solid";
 export type Sampling = "grid" | "slice" | "jitter" | "surface";
 export type LengthMode = "normalized" | "saturating" | "clamped" | "actual";
 export type Occlusion = "over" | "hide" | "fade";
+export type Look = "arrows" | "streamlines" | "cloud";
 
-export interface ArrowSettings {
+export interface ArrowSettings extends LookSettings {
+  look: Look;
+  /** Remove the half of the box nearer the camera, to see its middle. */
+  cutaway: boolean;
   shape: Shape;
   sampling: Sampling;
   /** Arrows per axis; slices and surfaces use the first two. */
@@ -99,18 +105,6 @@ const LENGTH_INDEX: Record<LengthMode, number> = {
   clamped: 2,
   actual: 3,
 };
-
-/** The PCG hash, so a jittered sample is the same point on the CPU and GPU. */
-export const HASH_GLSL = `
-uint vtPcg(uint v) {
-  uint state = v * 747796405u + 2891336453u;
-  uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
-  return (word >> 22u) ^ word;
-}
-vec3 vtHash3(uint i) {
-  return vec3(vtPcg(i), vtPcg(i ^ 0x9e3779b9u), vtPcg(i ^ 0x85ebca6bu)) / 4294967295.0;
-}
-`;
 
 function arrowVertexSource(
   field: string[],
@@ -324,6 +318,8 @@ uniform int u_shading;
 uniform int u_outline;
 uniform float u_fog;
 uniform float u_alpha;
+uniform int u_cut;
+uniform float u_cutZ;
 in vec4 v_color;
 in vec3 v_normal;
 in vec3 v_view;
@@ -334,6 +330,7 @@ out vec4 outColor;
 ${CLIP_GLSL}
 void main() {
   if (u_clip == 1 && vtOutsideBox(v_math)) discard;
+  if (u_cut == 1 && v_view.z > u_cutZ) discard;
   vec3 c = v_color.rgb;
   vec3 n = normalize(v_normal);
   vec3 V = u_ortho == 1 ? vec3(0.0, 0.0, 1.0) : normalize(-v_view);
@@ -392,6 +389,7 @@ export class Overlay {
     GPU_DISJOINT_EXT: number;
   } | null;
   private readonly pending: WebGLQuery[] = [];
+  private readonly looks: VolumeLooks;
   gpuMs: number[] = [];
 
   constructor(readonly canvas: HTMLCanvasElement) {
@@ -406,6 +404,12 @@ export class Overlay {
     this.gl = gl;
     this.vao = gl.createVertexArray()!;
     this.timer = gl.getExtension("EXT_disjoint_timer_query_webgl2");
+    this.looks = new VolumeLooks(gl, this.vao);
+  }
+
+  /** Whether streamlines can be traced: they need float render targets. */
+  get canTrace() {
+    return this.looks.canTrace;
   }
 
   get hasTimer() {
@@ -426,6 +430,7 @@ export class Overlay {
       ARROW_FRAGMENT
     );
     this.arrowUniforms = uniforms(gl, this.arrowProgram);
+    this.looks.setField(field, fieldHelpers);
     this.depthProgram = undefined;
     if (surface !== undefined) {
       this.depthProgram = program(
@@ -478,8 +483,74 @@ export class Overlay {
       gl.colorMask(true, true, true, true);
     }
 
+    // The cutaway plane passes through the box's centre, facing the camera.
+    const centre = [0, 1, 2].map((i) => (box.min[i] + box.max[i]) / 2);
+    const cutZ =
+      mathToView[2] * centre[0] +
+      mathToView[6] * centre[1] +
+      mathToView[10] * centre[2] +
+      mathToView[14];
+    const palette = paletteUniforms(s.palette);
+    const uploadPalette = (pu: Uniforms) => {
+      gl.uniform1fv(pu.u_paletteAt, palette.positions);
+      gl.uniform3fv(pu.u_paletteRGB, palette.colors);
+      gl.uniform1i(pu.u_paletteCount, palette.count);
+      gl.uniform1i(pu.u_paletteIsHue, s.palette === "direction-hue" ? 1 : 0);
+      gl.uniform1f(pu.u_saturation, 1);
+      gl.uniform1f(pu.u_contrast, 1);
+    };
+
+    if (s.look !== "arrows") {
+      // Thin, faint marks: they never write depth, so the near ones never
+      // hide the far ones, and the whole volume shows at once.
+      const look = this.looks.prepare(
+        s.look,
+        {
+          mathToView,
+          projection: camera.projection,
+          box,
+          speedScale: s.speedScale,
+          colorMode: s.colorMode === "fixed" ? 1 : 0,
+          fixedColor: s.fixedColor,
+          depthRange: depthRange(camera, box),
+          clip: s.clip,
+          fog: s.fog,
+          cut: s.cutaway,
+          cutZ,
+          dpr: this.canvas.width / Math.max(1, camera.width),
+          uploadPalette,
+        },
+        s,
+        () => gl.viewport(0, 0, this.canvas.width, this.canvas.height)
+      );
+      gl.bindVertexArray(this.vao);
+      gl.depthMask(false);
+      if (occluding && s.occlusion === "fade") {
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.GREATER);
+        look.draw(0.25);
+      }
+      if (occluding) {
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LEQUAL);
+      } else {
+        gl.disable(gl.DEPTH_TEST);
+      }
+      look.draw(1);
+      gl.depthMask(true);
+      gl.bindVertexArray(null);
+      this.endTimer(query);
+      return {
+        instances: look.count,
+        vertices: look.vertices,
+        gpuMs: this.gpuMs.length > 0 ? median(this.gpuMs) : undefined,
+      };
+    }
+
     const u = this.arrowUniforms;
     gl.useProgram(this.arrowProgram);
+    gl.uniform1i(u.u_cut, s.cutaway ? 1 : 0);
+    gl.uniform1f(u.u_cutZ, cutZ);
     gl.uniformMatrix4fv(u.u_mathToView, false, mathToView);
     gl.uniformMatrix4fv(u.u_projection, false, camera.projection);
     gl.uniform1i(u.u_ortho, camera.orthographic ? 1 : 0);
@@ -503,13 +574,7 @@ export class Overlay {
     gl.uniform1i(u.u_shading, s.shading ? 1 : 0);
     gl.uniform1i(u.u_outline, s.outline ? 1 : 0);
     gl.uniform1f(u.u_fog, s.fog ? 1 : 0);
-    const palette = paletteUniforms(s.palette);
-    gl.uniform1fv(u.u_paletteAt, palette.positions);
-    gl.uniform3fv(u.u_paletteRGB, palette.colors);
-    gl.uniform1i(u.u_paletteCount, palette.count);
-    gl.uniform1i(u.u_paletteIsHue, s.palette === "direction-hue" ? 1 : 0);
-    gl.uniform1f(u.u_saturation, 1);
-    gl.uniform1f(u.u_contrast, 1);
+    uploadPalette(u);
 
     const mode = s.shape === "lines" ? gl.LINES : gl.TRIANGLES;
     const drawAll = () => gl.drawArraysInstanced(mode, 0, perArrow, instances);
@@ -534,16 +599,18 @@ export class Overlay {
     drawAll();
     gl.depthMask(true);
     gl.bindVertexArray(null);
-
-    if (query !== null && this.timer !== null) {
-      gl.endQuery(this.timer.TIME_ELAPSED_EXT);
-      this.pending.push(query);
-    }
+    this.endTimer(query);
     return {
       instances,
       vertices: instances * perArrow,
       gpuMs: this.gpuMs.length > 0 ? median(this.gpuMs) : undefined,
     };
+  }
+
+  private endTimer(query: WebGLQuery | null) {
+    if (query === null || this.timer === null) return;
+    this.gl.endQuery(this.timer.TIME_ELAPSED_EXT);
+    this.pending.push(query);
   }
 
   private collectTimer() {

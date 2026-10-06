@@ -99,3 +99,15 @@ bool vtOutsideBox(vec3 m) {
     || any(isnan(m));
 }
 `;
+
+/** The PCG hash, so a jittered sample is the same point on the CPU and GPU. */
+export const HASH_GLSL = `
+uint vtPcg(uint v) {
+  uint state = v * 747796405u + 2891336453u;
+  uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+  return (word >> 22u) ^ word;
+}
+vec3 vtHash3(uint i) {
+  return vec3(vtPcg(i), vtPcg(i ^ 0x9e3779b9u), vtPcg(i ^ 0x85ebca6bu)) / 4294967295.0;
+}
+`;

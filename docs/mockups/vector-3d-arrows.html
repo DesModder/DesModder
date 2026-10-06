@@ -452,6 +452,147 @@
       </section>
 
       <section>
+        <div class="label">Look</div>
+        <div class="chips" data-key="look">
+          <button class="chip" data-value="arrows">Arrows</button>
+          <button class="chip" data-value="streamlines">Streamlines</button>
+          <button class="chip" data-value="cloud">Glow cloud</button>
+        </div>
+        <p class="hint" data-look="streamlines">
+          Thin lines traced along the field from seeds scattered through the
+          box. Faint enough to see the middle through the edges.
+        </p>
+        <p class="hint" data-look="cloud">
+          Dots scattered through the box, kept more often where the field is
+          stronger: the field's shape drawn as density, like an orbital.
+        </p>
+        <div class="row" data-look="streamlines">
+          <button class="chip" id="linesAuto">Auto</button>
+          <input
+            type="number"
+            id="lines"
+            min="1"
+            max="40000"
+            step="100"
+            aria-label="Number of streamlines"
+          />
+          <span class="hint">lines; Auto now <b id="autoLines"></b></span>
+        </div>
+        <div class="sub" data-look="streamlines">
+          <span>Line length</span><b id="lineLengthValue"></b>
+        </div>
+        <input
+          data-look="streamlines"
+          type="range"
+          id="lineLength"
+          min="0.1"
+          max="2"
+          step="0.05"
+          value="0.6"
+          aria-label="Streamline length"
+        />
+        <div class="sub" data-look="streamlines">
+          <span>Opacity</span><b id="lineOpacityValue"></b>
+        </div>
+        <input
+          data-look="streamlines"
+          type="range"
+          id="lineOpacity"
+          min="0.05"
+          max="1"
+          step="0.05"
+          value="0.4"
+          aria-label="Streamline opacity"
+        />
+        <div class="row" data-look="cloud">
+          <button class="chip" id="pointsAuto">Auto</button>
+          <input
+            type="number"
+            id="points"
+            min="1"
+            max="2000000"
+            step="1000"
+            aria-label="Number of points tried"
+          />
+          <span class="hint"
+            >points tried; Auto now <b id="autoPoints"></b
+          ></span>
+        </div>
+        <div class="sub" data-look="cloud">
+          <span>Dot size</span><b id="pointPxValue"></b>
+        </div>
+        <button class="chip" id="animate" data-look="streamlines">
+          Animate along the flow
+        </button>
+        <div class="sub" data-look="streamlines">
+          <span>Flow speed</span><b id="flowSpeedValue"></b>
+        </div>
+        <input
+          data-look="streamlines"
+          type="range"
+          id="flowSpeed"
+          min="0.02"
+          max="1"
+          step="0.02"
+          value="0.25"
+          aria-label="Flow speed"
+        />
+        <div class="sub" data-look="streamlines">
+          <span>Lit stretch</span><b id="flowWindowValue"></b>
+        </div>
+        <input
+          data-look="streamlines"
+          type="range"
+          id="flowWindow"
+          min="0.05"
+          max="1"
+          step="0.05"
+          value="0.4"
+          aria-label="How much of each line is lit"
+        />
+        <input
+          data-look="cloud"
+          type="range"
+          id="pointPx"
+          min="1"
+          max="6"
+          step="0.5"
+          value="2"
+          aria-label="Dot size"
+        />
+        <div class="sub" data-look="cloud">
+          <span>Opacity</span><b id="cloudOpacityValue"></b>
+        </div>
+        <input
+          data-look="cloud"
+          type="range"
+          id="cloudOpacity"
+          min="0.05"
+          max="1"
+          step="0.05"
+          value="0.35"
+          aria-label="Cloud opacity"
+        />
+        <div class="sub" data-look="cloud">
+          <span>Edge sharpness</span><b id="cloudContrastValue"></b>
+        </div>
+        <input
+          data-look="cloud"
+          type="range"
+          id="cloudContrast"
+          min="0.3"
+          max="8"
+          step="0.1"
+          value="3"
+          aria-label="How sharply the cloud thins out"
+        />
+        <button class="chip" id="cloudByDirection" data-look="cloud">
+          Colour by direction
+        </button>
+        <button class="chip" id="cutaway">Cut away the near half</button>
+      </section>
+
+      <section data-look="arrows">
         <div class="label">Arrow shape</div>
         <div class="chips" data-key="shape">
           <button class="chip" data-value="auto">Auto</button>
@@ -472,7 +613,7 @@
         />
       </section>
 
-      <section>
+      <section data-look="arrows">
         <div class="label">Where arrows go</div>
         <div class="chips" data-key="sampling">
           <button class="chip" data-value="grid">Whole box</button>
@@ -514,7 +655,7 @@
         </div>
       </section>
 
-      <section>
+      <section data-look="arrows">
         <div class="label">Length</div>
         <div class="chips" data-key="lengthMode">
           <button class="chip" data-value="normalized">All equal</button>
@@ -573,10 +714,16 @@
       <section>
         <div class="label">Depth cues</div>
         <div class="chips">
-          <button class="chip" id="cueShading">Shading</button>
+          <button class="chip" id="cueShading" data-look="arrows">
+            Shading
+          </button>
           <button class="chip" id="cueFog">Fade with distance</button>
-          <button class="chip" id="cueOutline">Outline</button>
-          <button class="chip" id="cueDepth">Arrows hide each other</button>
+          <button class="chip" id="cueOutline" data-look="arrows">
+            Outline
+          </button>
+          <button class="chip" id="cueDepth" data-look="arrows">
+            Arrows hide each other
+          </button>
         </div>
         <p class="hint">
           Shading only applies to Shaded 3D. Try Spin below: motion is the
@@ -585,7 +732,7 @@
       </section>
 
       <section>
-        <div class="label">Arrows behind the surface</div>
+        <div class="label">Behind the surface</div>
         <div class="chips" data-key="occlusion">
           <button class="chip" data-value="over">X-ray</button>
           <button class="chip" data-value="hide">Hidden</button>
@@ -602,8 +749,8 @@
         </div>
         <button class="chip" id="clip">Clip to the box</button>
         <p class="hint">
-          This is your decision. Hidden and Faded work by redrawing the surface
-          ourselves; see the notes below.
+          Hidden by default. Hidden and Faded work by redrawing the surface
+          ourselves; see the notes below. They apply to every look.
         </p>
       </section>
 
@@ -662,7 +809,7 @@
       <section>
         <div class="label">Measured</div>
         <dl>
-          <dt>Arrows asked for</dt>
+          <dt id="mAskedLabel">Arrows asked for</dt>
           <dd id="mInstances"></dd>
           <dt>Arrows drawn</dt>
           <dd id="mDrawn"></dd>
@@ -793,7 +940,7 @@
   </div>
 </div>
 <script>
-  "use strict";(()=>{function A(e,t){let i=new Array(16);for(let n=0;n<4;n++)for(let r=0;r<4;r++){let a=0;for(let u=0;u<4;u++)a+=e[u*4+r]*t[n*4+u];i[n*4+r]=a}return i}function nt(e){return A(e.projection,A(e.view,e.world))}function z(e,t,i,n,r=nt(e)){let a=r[0]*t+r[4]*i+r[8]*n+r[12],u=r[1]*t+r[5]*i+r[9]*n+r[13],s=r[2]*t+r[6]*i+r[10]*n+r[14],m=r[3]*t+r[7]*i+r[11]*n+r[15];if(m>0)return{x:(a/m+1)*e.width/2,y:(1-u/m)*e.height/2,depth:s/m}}var de=String.raw`[A-Za-z](?:_(?:\{[A-Za-z0-9]*\}|[A-Za-z0-9]))?`,jt=new RegExp(`^${de}`);var me=e=>e.replace(/_\{([A-Za-z0-9]*)\}/,"_$1");var ge={functions:new Map,scalars:new Set},Ae=12,ve=e=>e.replace(/[^A-Za-z0-9]/g,"_"),rt=new RegExp(`^${de}`),Ce="t",it="u_time",at=e=>`u_vp_${ve(e)}`,ot=e=>`vtu_${ve(e)}`,Le=e=>`vl_${ve(e)}`,H=`
+  "use strict";(()=>{function A(t,n){let i=new Array(16);for(let r=0;r<4;r++)for(let e=0;e<4;e++){let a=0;for(let u=0;u<4;u++)a+=t[u*4+e]*n[r*4+u];i[r*4+e]=a}return i}function ct(t){return A(t.projection,A(t.view,t.world))}function j(t,n,i,r,e=ct(t)){let a=e[0]*n+e[4]*i+e[8]*r+e[12],u=e[1]*n+e[5]*i+e[9]*r+e[13],s=e[2]*n+e[6]*i+e[10]*r+e[14],d=e[3]*n+e[7]*i+e[11]*r+e[15];if(d>0)return{x:(a/d+1)*t.width/2,y:(1-u/d)*t.height/2,depth:s/d}}var he=String.raw`[A-Za-z](?:_(?:\{[A-Za-z0-9]*\}|[A-Za-z0-9]))?`,Kt=new RegExp(`^${he}`);var ge=t=>t.replace(/_\{([A-Za-z0-9]*)\}/,"_$1");var xe={functions:new Map,scalars:new Set},Pe=12,_e=t=>t.replace(/[^A-Za-z0-9]/g,"_"),dt=new RegExp(`^${he}`),Re="t",pt="u_time",mt=t=>`u_vp_${_e(t)}`,ft=t=>`vtu_${_e(t)}`,$e=t=>`vl_${_e(t)}`,D=`
 float vtPow(float base, float power) {
   if (base > 0.0) return exp(power * log(base));
   if (base == 0.0) return power == 0.0 ? 1.0 : 0.0;
@@ -814,9 +961,9 @@ float vtMod(float a, float b) { return b == 0.0 ? 0.0 : mod(a, b); }
 float vtUndefined() { return uintBitsToFloat(0x7fc00000u); }
 float vtCoth(float a) { float t = tanh(a); return 1.0 / (abs(t) < 1e-12 ? 1e-12 : t); }
 float vtCsch(float a) { float s = sinh(a); return 1.0 / (abs(s) < 1e-12 ? 1e-12 : s); }
-`,he="3.1415926535897932",Ie={sin:{arity:[1],emit:([e])=>`sin(${e})`},cos:{arity:[1],emit:([e])=>`cos(${e})`},tan:{arity:[1],emit:([e])=>`tan(${e})`},cot:{arity:[1],emit:([e])=>`vtCot(${e})`},sec:{arity:[1],emit:([e])=>`vtSec(${e})`},csc:{arity:[1],emit:([e])=>`vtCsc(${e})`},arcsin:{arity:[1],emit:([e])=>`asin(clamp(${e}, -1.0, 1.0))`},arccos:{arity:[1],emit:([e])=>`acos(clamp(${e}, -1.0, 1.0))`},arctan:{arity:[1,2],emit:e=>e.length===1?`atan(${e[0]})`:`atan(${e[0]}, ${e[1]})`},arccot:{arity:[1],emit:([e])=>`(${he} / 2.0 - atan(${e}))`},arcsec:{arity:[1],emit:([e])=>`acos(clamp(vtDiv(1.0, ${e}), -1.0, 1.0))`},arccsc:{arity:[1],emit:([e])=>`asin(clamp(vtDiv(1.0, ${e}), -1.0, 1.0))`},sinh:{arity:[1],emit:([e])=>`sinh(${e})`},cosh:{arity:[1],emit:([e])=>`cosh(${e})`},tanh:{arity:[1],emit:([e])=>`tanh(${e})`},coth:{arity:[1],emit:([e])=>`vtCoth(${e})`},sech:{arity:[1],emit:([e])=>`(1.0 / cosh(${e}))`},csch:{arity:[1],emit:([e])=>`vtCsch(${e})`},arcsinh:{arity:[1],emit:([e])=>`asinh(${e})`},arccosh:{arity:[1],emit:([e])=>`acosh(max(${e}, 1.0))`},arctanh:{arity:[1],emit:([e])=>`atanh(clamp(${e}, -0.999999, 0.999999))`},exp:{arity:[1],emit:([e])=>`exp(${e})`},ln:{arity:[1],emit:([e])=>`log(max(${e}, 1e-12))`},log:{arity:[1],emit:([e])=>`vtLog10(max(${e}, 1e-12))`},sqrt:{arity:[1],emit:([e])=>`sqrt(max(${e}, 0.0))`},abs:{arity:[1],emit:([e])=>`abs(${e})`},sign:{arity:[1],emit:([e])=>`sign(${e})`},floor:{arity:[1],emit:([e])=>`floor(${e})`},ceil:{arity:[1],emit:([e])=>`ceil(${e})`},round:{arity:[1],emit:([e])=>`floor(${e} + 0.5)`},mod:{arity:[2],emit:([e,t])=>`vtMod(${e}, ${t})`},min:{arity:[1,2,3,4],emit:Pe("min")},max:{arity:[1,2,3,4],emit:Pe("max")}};function Pe(e){return t=>t.length===1?t[0]:t.reduce((i,n)=>`${e}(${i}, ${n})`)}function be(e,t=ge){try{let i=new fe(t),n=new ne(De(e),i,new Map),r=n.parseExpression();return n.expectEnd(),{ok:!0,glsl:r,helpers:i.helpers,params:[...i.params],usesTime:i.usesTime}}catch(i){return{ok:!1,error:i instanceof x?i.message:"Could not read this expression."}}}var x=class extends Error{},fe=class{constructor(t){this.env=t;this.params=new Set;this.usesTime=!1;this.helpers=[];this.compiled=new Map;this.expanding=[]}declare(t,i){let n=this.compiled.get(t);if(n!==void 0)return n;if(this.expanding.includes(t))throw new x(`"${t}" is defined in terms of itself, and a shader cannot evaluate a recursive definition.`);if(this.expanding.length>=Ae)throw new x(`Definitions starting at "${t}" nest more than ${Ae} deep.`);this.expanding.push(t);let r=new Map(i.params.map(f=>[f,Le(f)])),a=new ne(De(i.latex),this,r),u=a.parseExpression();a.expectEnd(),this.expanding.pop();let s=ot(t),m=[this.env.dimensions===3?"vec3 p":"vec2 p",...i.params.map(f=>`float ${Le(f)}`)].join(", ");return this.helpers.push({name:t,glsl:`float ${s}(${m}) { return ${u}; }`}),this.compiled.set(t,s),s}},$e={le:"<=",leq:"<=",ge:">=",geq:">="},Re={cdot:"*",times:"*",div:"/"};function st(e,t,i){let n=(s,m,f)=>{if(e[s]?.kind!==m)return;let c=0;for(let g=s;g<e.length;g++)if(e[g].kind===m)c++;else if(e[g].kind===f&&--c===0)return g+1},r=s=>{let m=e[s];if(m?.kind==="openBrace")return n(s,"openBrace","closeBrace");if(m?.kind==="op"&&m.value==="-")return r(s+1);if(m?.kind==="number"||m?.kind==="variable")return s+1},a=t,u=!1;for(;;){switch(e[a]?.kind){case"number":a++,u=!1;break;case"variable":a++,u=!0;break;case"frac":if(a=n(a+1,"openBrace","closeBrace"),a===void 0)return;a=n(a,"openBrace","closeBrace"),u=!1;break;case"open":if(u)return;a=n(a,"open","close"),u=!1;break;default:return}if(a===void 0)return;let m=e[a];if(m?.kind==="op"&&m.value==="^"){if(a=r(a+1),a===void 0)return;u=!1}let f=e[a];switch(f?.kind){case"op":if(f.value==="*"||f.value==="/"){a++,u=!1;continue}return a;case"number":case"variable":case"frac":case"open":continue;case"bar":return i?a:void 0;case"function":case"sqrt":case"pieceOpen":return;default:return a}}}function De(e){let t=[],i=0,n=()=>t.push({kind:"bar"});for(;i<e.length;){let r=e[i];if(/\s/.test(r)){i++;continue}if(/[\d.]/.test(r)){let a=/^\d*\.?\d+|^\d+\./.exec(e.slice(i));if(a===null)throw new x(`Could not read the number near "${e.slice(i,i+8)}".`);t.push({kind:"number",value:a[0]}),i+=a[0].length;continue}if(r==="\\"){let a=/^\\([A-Za-z]+)/.exec(e.slice(i));if(a===null){if(e[i+1]===" "){i+=2;continue}throw new x(`"${e.slice(i,i+2)}" is not supported.`)}let[u,s]=a;if(i+=u.length,s==="left"||s==="right"){let m=e[i];if(i++,m==="(")t.push({kind:s==="left"?"open":"close"});else if(m===")")t.push({kind:s==="left"?"open":"close"});else if(m==="|")n();else if(m==="\\"&&e[i]==="{")i++,t.push({kind:s==="left"?"pieceOpen":"pieceClose"});else if(m==="\\"&&e[i]==="}")i++,t.push({kind:s==="left"?"pieceOpen":"pieceClose"});else throw new x(`The "${m}" bracket is not supported.`);continue}if(s==="operatorname"){let m=/^\{([A-Za-z]+)\}/.exec(e.slice(i));if(m===null)throw new x("Could not read an operator name.");i+=m[0].length,t.push({kind:"function",value:m[1]});continue}if(s==="frac"||s==="dfrac"||s==="tfrac"){t.push({kind:"frac"});continue}if(s==="sqrt"){t.push({kind:"sqrt"});continue}if(s==="pi"){t.push({kind:"number",value:he});continue}if(s==="tau"){t.push({kind:"number",value:`(2.0*${he})`});continue}if(s in Re){t.push({kind:"op",value:Re[s]});continue}if(s in Ie){t.push({kind:"function",value:s});continue}if(s in $e){t.push({kind:"cmp",value:$e[s]});continue}throw new x(`\\${s} is not supported by the flow visualizer.`)}if(/[A-Za-z]/.test(r)){let[a]=rt.exec(e.slice(i));t.push({kind:"variable",value:me(a)}),i+=a.length;continue}switch(i++,r){case"(":t.push({kind:"open"});continue;case")":t.push({kind:"close"});continue;case"{":t.push({kind:"openBrace"});continue;case"}":t.push({kind:"closeBrace"});continue;case"[":t.push({kind:"openBracket"});continue;case"]":t.push({kind:"closeBracket"});continue;case"|":n();continue;case",":t.push({kind:"comma"});continue;case"+":case"-":case"*":case"/":case"^":t.push({kind:"op",value:r});continue;case"=":case"<":case">":t.push({kind:"cmp",value:r});continue;case":":t.push({kind:"colon"});continue;default:throw new x(`"${r}" is not supported.`)}}return t}var ne=class e{constructor(t,i,n){this.tokens=t;this.context=i;this.scope=n;this.index=0;this.barDepth=0}expectEnd(){let t=this.peek();if(t?.kind==="cmp"&&t.value==="=")throw new x("A field component must be an expression, not an equation.");if(this.index<this.tokens.length)throw new x("There is leftover input after the expression.")}parseExpression(){let t=this.parseTerm();for(;;){let i=this.peek();if(i?.kind!=="op"||i.value!=="+"&&i.value!=="-")break;this.index++;let n=this.parseTerm();t=`(${t} ${i.value} ${n})`}return t}parseTerm(){let t=this.parseUnary();for(;;){let i=this.peek();if(i?.kind==="op"&&(i.value==="*"||i.value==="/")){this.index++;let n=this.parseUnary();t=i.value==="*"?`(${t} * ${n})`:`vtDiv(${t}, ${n})`;continue}if(this.startsPrimary(i)){let n=this.parseUnary();t=`(${t} * ${n})`;continue}break}return t}parseUnary(){let t=this.peek();return t?.kind==="op"&&t.value==="-"?(this.index++,`(-${this.parseUnary()})`):t?.kind==="op"&&t.value==="+"?(this.index++,this.parseUnary()):this.parsePower()}parsePower(){let t=this.parsePrimary(),i=this.peek();if(i?.kind==="op"&&i.value==="^"){this.index++;let n=this.parseGroupOrAtom();return ut(t,n)}return t}parseGroupOrAtom(){let t=this.peek();if(t?.kind==="openBrace"){this.index++;let i=this.parseExpression();return this.expect("closeBrace","a closing }"),i}return t?.kind==="op"&&t.value==="-"?(this.index++,`(-${this.parseGroupOrAtom()})`):this.parsePrimary()}parsePrimary(){let t=this.peek();if(t===void 0)throw new x("The expression ends too early.");switch(t.kind){case"number":return this.index++,ct(t.value);case"variable":{this.index++;let i=this.context.env.functions.get(t.value);return i!==void 0&&this.peek()?.kind==="open"?this.parseDefinedCall(t.value,i):this.variableToGLSL(t.value)}case"open":{this.index++;let i=this.parseExpression();return this.expect("close","a closing parenthesis"),`(${i})`}case"openBrace":{this.index++;let i=this.parseExpression();return this.expect("closeBrace","a closing }"),`(${i})`}case"bar":{this.index++,this.barDepth++;let i=this.parseExpression();return this.barDepth--,this.expect("bar","a closing |"),`abs(${i})`}case"frac":{this.index++;let i=this.parseBracedGroup(),n=this.parseBracedGroup();return`vtDiv(${i}, ${n})`}case"sqrt":{if(this.index++,this.peek()?.kind==="openBracket"){this.index++;let i=this.parseExpression();return this.expect("closeBracket","a closing ]"),`vtPow(${this.parseBracedGroup()}, vtDiv(1.0, ${i}))`}return`sqrt(max(${this.parseBracedGroup()}, 0.0))`}case"function":return this.index++,this.parseFunctionCall(t.value);case"pieceOpen":return this.index++,this.parsePiecewise();default:throw new x("The expression has a bracket or symbol in an unexpected place.")}}variableToGLSL(t){let i=this.scope.get(t);if(i!==void 0)return i;switch(t){case"x":return"p.x";case"y":return"p.y";case"e":return"2.7182818284590452";default:break}if(t==="z"&&this.context.env.dimensions===3)return"p.z";if(t===Ce&&!this.context.env.scalars.has(Ce))return this.context.usesTime=!0,it;if(this.context.env.scalars.has(t))return this.context.params.add(t),at(t);throw new x(`"${t}" is not defined. ${this.context.env.unknownNameHint??"The flow visualizer knows x and y, and anything the expression list defines as a number or a function of numbers."}`)}parseDefinedCall(t,i){this.index++;let n=[this.parseExpression()];for(;this.peek()?.kind==="comma";)this.index++,n.push(this.parseExpression());if(this.expect("close","a closing parenthesis"),n.length!==i.params.length)throw new x(`"${t}" takes ${i.params.length} argument${i.params.length===1?"":"s"}, but was given ${n.length}.`);return`${this.context.declare(t,i)}(p${n.map(a=>`, ${a}`).join("")})`}parseFunctionCall(t){let i=Ie[t];if(i===void 0)throw new x(`The function "${t}" is not supported by the flow visualizer.`);let n;if(this.peek()?.kind==="open"){for(this.index++,n=[this.parseExpression()];this.peek()?.kind==="comma";)this.index++,n.push(this.parseExpression());this.expect("close","a closing parenthesis")}else n=[this.parseBareArgument(t)];if(!i.arity.includes(n.length))throw new x(`"${t}" cannot take ${n.length} argument${n.length===1?"":"s"}.`);return i.emit(n)}parseBareArgument(t){let i=this.index,n=st(this.tokens,i,this.barDepth>0);if(n===void 0)throw new x(`Use parentheses around the argument of "${t}".`);let r=new e(this.tokens.slice(i,n),this.context,this.scope).parseExpression();return this.index=n,r}parsePiecewise(){let t=[],i="vtUndefined()";if(this.peek()?.kind==="pieceClose")return this.index++,"1.0";for(;;){let n=this.parseExpression();if(this.peek()?.kind==="cmp"){let a=this.parseConditionFrom(n),u="1.0";this.peek()?.kind==="colon"&&(this.index++,u=this.parseExpression()),t.push({condition:a,value:u})}else if(i=n,this.peek()?.kind!=="pieceClose")throw new x("Only the last branch of a piecewise can have no condition.");if(this.peek()?.kind==="comma"){this.index++;continue}this.expect("pieceClose","a closing \\}");break}return t.reduceRight((n,{condition:r,value:a})=>`((${r}) ? (${a}) : ${n})`,i)}parseConditionFrom(t){let i=[],n=t;for(;this.peek()?.kind==="cmp";){let r=this.peek();this.index++;let a=this.parseExpression(),u=r.value==="="?"==":r.value;i.push(`(${n} ${u} ${a})`),n=a}return i.join(" && ")}parseBracedGroup(){if(this.peek()?.kind!=="openBrace")throw new x("Expected a braced group.");this.index++;let t=this.parseExpression();return this.expect("closeBrace","a closing }"),`(${t})`}startsPrimary(t){return t===void 0?!1:t.kind==="bar"?this.barDepth===0:t.kind==="number"||t.kind==="variable"||t.kind==="open"||t.kind==="frac"||t.kind==="sqrt"||t.kind==="function"||t.kind==="pieceOpen"}expect(t,i){if(this.peek()?.kind!==t)throw new x(`Expected ${i}.`);this.index++}peek(){return this.tokens[this.index]}};function ut(e,t){let i=/^\(?-?\d+\.\d+\)?$/.test(t)?Number(t.replace(/[()]/g,"")):NaN;if(i===0)return"1.0";if(Number.isInteger(i)&&i>=-4&&i<=4&&e.length<=24){let n=Math.abs(i),r=n===1?e:`(${Array.from({length:n},()=>e).join(" * ")})`;return i>0?r:`vtDiv(1.0, ${r})`}return`vtPow(${e}, ${t})`}function ct(e){return e.startsWith("(")||e.includes(".")?e:`${e}.0`}var P={spectral:{name:"Spectral",group:"sequential",stops:[{at:0,rgb:[38,77,173]},{at:.35,rgb:[41,173,158]},{at:.7,rgb:[242,179,51]},{at:1,rgb:[217,61,56]}]},"sequential-a":{name:"Viridis",group:"sequential",stops:[{at:0,rgb:[68,1,84]},{at:.25,rgb:[59,82,139]},{at:.5,rgb:[33,145,140]},{at:.75,rgb:[94,201,98]},{at:1,rgb:[253,231,37]}]},"sequential-b":{name:"Blue",group:"sequential",stops:[{at:0,rgb:[8,29,88]},{at:.5,rgb:[34,94,168]},{at:1,rgb:[127,205,255]}]},turbo:{name:"Turbo",group:"sequential",stops:[{at:0,rgb:[48,18,59]},{at:.14,rgb:[66,120,240]},{at:.29,rgb:[39,181,225]},{at:.43,rgb:[49,231,153]},{at:.57,rgb:[149,255,64]},{at:.71,rgb:[231,222,38]},{at:.86,rgb:[253,141,39]},{at:1,rgb:[122,4,3]}]},plasma:{name:"Plasma",group:"sequential",stops:[{at:0,rgb:[13,8,135]},{at:.25,rgb:[126,3,168]},{at:.5,rgb:[204,71,120]},{at:.75,rgb:[248,149,64]},{at:1,rgb:[240,249,33]}]},magma:{name:"Magma",group:"sequential",stops:[{at:0,rgb:[0,0,4]},{at:.25,rgb:[81,18,124]},{at:.5,rgb:[183,55,121]},{at:.75,rgb:[252,137,97]},{at:1,rgb:[252,253,191]}]},cividis:{name:"Cividis",group:"sequential",stops:[{at:0,rgb:[0,32,76]},{at:.25,rgb:[28,71,117]},{at:.5,rgb:[96,109,116]},{at:.75,rgb:[158,150,109]},{at:1,rgb:[253,231,55]}]},jet:{name:"Jet (classic)",group:"sequential",stops:[{at:0,rgb:[0,0,131]},{at:.125,rgb:[0,60,170]},{at:.375,rgb:[5,255,255]},{at:.625,rgb:[255,255,0]},{at:.875,rgb:[250,0,0]},{at:1,rgb:[128,0,0]}]},"blue-red":{name:"Blue to red",group:"diverging",stops:[{at:0,rgb:[33,102,172]},{at:.5,rgb:[247,247,247]},{at:1,rgb:[178,24,43]}]},coolwarm:{name:"Cool to warm",group:"diverging",stops:[{at:0,rgb:[59,76,192]},{at:.5,rgb:[221,221,221]},{at:1,rgb:[180,4,38]}]},grayscale:{name:"Grayscale",group:"sequential",stops:[{at:0,rgb:[30,30,30]},{at:1,rgb:[240,240,240]}]},sunset:{name:"Sunset",group:"expressive",stops:[{at:0,rgb:[35,17,72]},{at:.3,rgb:[129,41,110]},{at:.6,rgb:[226,90,86]},{at:.85,rgb:[249,163,80]},{at:1,rgb:[255,232,150]}]},ocean:{name:"Ocean",group:"expressive",stops:[{at:0,rgb:[2,18,54]},{at:.35,rgb:[3,80,120]},{at:.7,rgb:[38,160,167]},{at:1,rgb:[160,231,206]}]},ember:{name:"Ember",group:"expressive",stops:[{at:0,rgb:[10,4,8]},{at:.3,rgb:[120,20,20]},{at:.6,rgb:[230,90,15]},{at:.85,rgb:[250,190,60]},{at:1,rgb:[255,247,214]}]},neon:{name:"Neon",group:"expressive",stops:[{at:0,rgb:[15,2,40]},{at:.3,rgb:[120,10,180]},{at:.6,rgb:[240,30,140]},{at:.8,rgb:[60,240,220]},{at:1,rgb:[230,255,120]}]},nebula:{name:"Nebula",group:"expressive",stops:[{at:0,rgb:[46,44,78]},{at:.3,rgb:[96,76,118]},{at:.55,rgb:[152,110,132]},{at:.78,rgb:[204,156,140]},{at:.92,rgb:[236,208,186]},{at:1,rgb:[250,244,238]}]},aurora:{name:"Aurora",group:"expressive",stops:[{at:0,rgb:[30,58,68]},{at:.32,rgb:[52,104,106]},{at:.58,rgb:[96,156,136]},{at:.8,rgb:[160,200,172]},{at:1,rgb:[230,242,230]}]},starfield:{name:"Starfield",group:"expressive",stops:[{at:0,rgb:[46,58,96]},{at:.4,rgb:[96,118,166]},{at:.72,rgb:[166,190,224]},{at:1,rgb:[246,249,253]}]},"direction-hue":{name:"Hue wheel",group:"cyclic",cyclic:!0},twilight:{name:"Twilight",group:"cyclic",cyclic:!0,stops:[{at:0,rgb:[226,217,226]},{at:.15,rgb:[140,160,215]},{at:.3,rgb:[70,95,175]},{at:.45,rgb:[48,45,100]},{at:.6,rgb:[95,38,78]},{at:.75,rgb:[175,75,88]},{at:.9,rgb:[216,152,152]},{at:1,rgb:[226,217,226]}]},phase:{name:"Phase",group:"cyclic",cyclic:!0,stops:[{at:0,rgb:[255,64,64]},{at:.17,rgb:[255,214,51]},{at:.33,rgb:[77,219,84]},{at:.5,rgb:[58,217,217]},{at:.67,rgb:[72,94,240]},{at:.83,rgb:[219,71,219]},{at:1,rgb:[255,64,64]}]}},Qt=Object.keys(P),R=8;function Oe(e){return P[e].stops??P.spectral.stops}var Be={saturation:1,contrast:1};var I=[.2126,.7152,.0722];function lt(e,t=Be){let i=e[0]*I[0]+e[1]*I[1]+e[2]*I[2],n=r=>{let u=(i+(r-i)*t.saturation-127.5)*t.contrast+127.5;return Math.round(Math.min(255,Math.max(0,u)))};return[n(e[0]),n(e[1]),n(e[2])]}function pt(e){let t=i=>{let n=((e*6+i)%6+6)%6;return Math.round(255*Math.min(Math.max(Math.min(n,4-n),0),1))};return[t(0),t(4),t(2)]}function Fe(e,t=Be){let i=(r,a)=>{let[u,s,m]=lt(r,t);return`rgb(${u},${s},${m}) ${Math.round(a*100)}%`};return`linear-gradient(to right, ${(P[e].stops===void 0?Array.from({length:13},(r,a)=>{let u=a/12;return i(pt(u),u)}):Oe(e).map(r=>i(r.rgb,r.at))).join(", ")})`}var Ne=new Map;function Ue(e){let t=Ne.get(e);if(t!==void 0)return t;let i=dt(e);return Ne.set(e,i),i}function dt(e){let t=Oe(e),i=new Float32Array(R),n=new Float32Array(R*3);for(let r=0;r<R;r++){let a=t[Math.min(r,t.length-1)];i[r]=a.at,n[r*3]=a.rgb[0]/255,n[r*3+1]=a.rgb[1]/255,n[r*3+2]=a.rgb[2]/255}return{positions:i,colors:n,count:t.length}}var ze=`
-uniform float u_paletteAt[${R}];
-uniform vec3 u_paletteRGB[${R}];
+`,ve="3.1415926535897932",Ne={sin:{arity:[1],emit:([t])=>`sin(${t})`},cos:{arity:[1],emit:([t])=>`cos(${t})`},tan:{arity:[1],emit:([t])=>`tan(${t})`},cot:{arity:[1],emit:([t])=>`vtCot(${t})`},sec:{arity:[1],emit:([t])=>`vtSec(${t})`},csc:{arity:[1],emit:([t])=>`vtCsc(${t})`},arcsin:{arity:[1],emit:([t])=>`asin(clamp(${t}, -1.0, 1.0))`},arccos:{arity:[1],emit:([t])=>`acos(clamp(${t}, -1.0, 1.0))`},arctan:{arity:[1,2],emit:t=>t.length===1?`atan(${t[0]})`:`atan(${t[0]}, ${t[1]})`},arccot:{arity:[1],emit:([t])=>`(${ve} / 2.0 - atan(${t}))`},arcsec:{arity:[1],emit:([t])=>`acos(clamp(vtDiv(1.0, ${t}), -1.0, 1.0))`},arccsc:{arity:[1],emit:([t])=>`asin(clamp(vtDiv(1.0, ${t}), -1.0, 1.0))`},sinh:{arity:[1],emit:([t])=>`sinh(${t})`},cosh:{arity:[1],emit:([t])=>`cosh(${t})`},tanh:{arity:[1],emit:([t])=>`tanh(${t})`},coth:{arity:[1],emit:([t])=>`vtCoth(${t})`},sech:{arity:[1],emit:([t])=>`(1.0 / cosh(${t}))`},csch:{arity:[1],emit:([t])=>`vtCsch(${t})`},arcsinh:{arity:[1],emit:([t])=>`asinh(${t})`},arccosh:{arity:[1],emit:([t])=>`acosh(max(${t}, 1.0))`},arctanh:{arity:[1],emit:([t])=>`atanh(clamp(${t}, -0.999999, 0.999999))`},exp:{arity:[1],emit:([t])=>`exp(${t})`},ln:{arity:[1],emit:([t])=>`log(max(${t}, 1e-12))`},log:{arity:[1],emit:([t])=>`vtLog10(max(${t}, 1e-12))`},sqrt:{arity:[1],emit:([t])=>`sqrt(max(${t}, 0.0))`},abs:{arity:[1],emit:([t])=>`abs(${t})`},sign:{arity:[1],emit:([t])=>`sign(${t})`},floor:{arity:[1],emit:([t])=>`floor(${t})`},ceil:{arity:[1],emit:([t])=>`ceil(${t})`},round:{arity:[1],emit:([t])=>`floor(${t} + 0.5)`},mod:{arity:[2],emit:([t,n])=>`vtMod(${t}, ${n})`},min:{arity:[1,2,3,4],emit:De("min")},max:{arity:[1,2,3,4],emit:De("max")}};function De(t){return n=>n.length===1?n[0]:n.reduce((i,r)=>`${t}(${i}, ${r})`)}function we(t,n=xe){try{let i=new be(n),r=new ie(Ue(t),i,new Map),e=r.parseExpression();return r.expectEnd(),{ok:!0,glsl:e,helpers:i.helpers,params:[...i.params],usesTime:i.usesTime}}catch(i){return{ok:!1,error:i instanceof y?i.message:"Could not read this expression."}}}var y=class extends Error{},be=class{constructor(n){this.env=n;this.params=new Set;this.usesTime=!1;this.helpers=[];this.compiled=new Map;this.expanding=[]}declare(n,i){let r=this.compiled.get(n);if(r!==void 0)return r;if(this.expanding.includes(n))throw new y(`"${n}" is defined in terms of itself, and a shader cannot evaluate a recursive definition.`);if(this.expanding.length>=Pe)throw new y(`Definitions starting at "${n}" nest more than ${Pe} deep.`);this.expanding.push(n);let e=new Map(i.params.map(p=>[p,$e(p)])),a=new ie(Ue(i.latex),this,e),u=a.parseExpression();a.expectEnd(),this.expanding.pop();let s=ft(n),d=[this.env.dimensions===3?"vec3 p":"vec2 p",...i.params.map(p=>`float ${$e(p)}`)].join(", ");return this.helpers.push({name:n,glsl:`float ${s}(${d}) { return ${u}; }`}),this.compiled.set(n,s),s}},Ie={le:"<=",leq:"<=",ge:">=",geq:">="},Fe={cdot:"*",times:"*",div:"/"};function ht(t,n,i){let r=(s,d,p)=>{if(t[s]?.kind!==d)return;let g=0;for(let h=s;h<t.length;h++)if(t[h].kind===d)g++;else if(t[h].kind===p&&--g===0)return h+1},e=s=>{let d=t[s];if(d?.kind==="openBrace")return r(s,"openBrace","closeBrace");if(d?.kind==="op"&&d.value==="-")return e(s+1);if(d?.kind==="number"||d?.kind==="variable")return s+1},a=n,u=!1;for(;;){switch(t[a]?.kind){case"number":a++,u=!1;break;case"variable":a++,u=!0;break;case"frac":if(a=r(a+1,"openBrace","closeBrace"),a===void 0)return;a=r(a,"openBrace","closeBrace"),u=!1;break;case"open":if(u)return;a=r(a,"open","close"),u=!1;break;default:return}if(a===void 0)return;let d=t[a];if(d?.kind==="op"&&d.value==="^"){if(a=e(a+1),a===void 0)return;u=!1}let p=t[a];switch(p?.kind){case"op":if(p.value==="*"||p.value==="/"){a++,u=!1;continue}return a;case"number":case"variable":case"frac":case"open":continue;case"bar":return i?a:void 0;case"function":case"sqrt":case"pieceOpen":return;default:return a}}}function Ue(t){let n=[],i=0,r=()=>n.push({kind:"bar"});for(;i<t.length;){let e=t[i];if(/\s/.test(e)){i++;continue}if(/[\d.]/.test(e)){let a=/^\d*\.?\d+|^\d+\./.exec(t.slice(i));if(a===null)throw new y(`Could not read the number near "${t.slice(i,i+8)}".`);n.push({kind:"number",value:a[0]}),i+=a[0].length;continue}if(e==="\\"){let a=/^\\([A-Za-z]+)/.exec(t.slice(i));if(a===null){if(t[i+1]===" "){i+=2;continue}throw new y(`"${t.slice(i,i+2)}" is not supported.`)}let[u,s]=a;if(i+=u.length,s==="left"||s==="right"){let d=t[i];if(i++,d==="(")n.push({kind:s==="left"?"open":"close"});else if(d===")")n.push({kind:s==="left"?"open":"close"});else if(d==="|")r();else if(d==="\\"&&t[i]==="{")i++,n.push({kind:s==="left"?"pieceOpen":"pieceClose"});else if(d==="\\"&&t[i]==="}")i++,n.push({kind:s==="left"?"pieceOpen":"pieceClose"});else throw new y(`The "${d}" bracket is not supported.`);continue}if(s==="operatorname"){let d=/^\{([A-Za-z]+)\}/.exec(t.slice(i));if(d===null)throw new y("Could not read an operator name.");i+=d[0].length,n.push({kind:"function",value:d[1]});continue}if(s==="frac"||s==="dfrac"||s==="tfrac"){n.push({kind:"frac"});continue}if(s==="sqrt"){n.push({kind:"sqrt"});continue}if(s==="pi"){n.push({kind:"number",value:ve});continue}if(s==="tau"){n.push({kind:"number",value:`(2.0*${ve})`});continue}if(s in Fe){n.push({kind:"op",value:Fe[s]});continue}if(s in Ne){n.push({kind:"function",value:s});continue}if(s in Ie){n.push({kind:"cmp",value:Ie[s]});continue}throw new y(`\\${s} is not supported by the flow visualizer.`)}if(/[A-Za-z]/.test(e)){let[a]=dt.exec(t.slice(i));n.push({kind:"variable",value:ge(a)}),i+=a.length;continue}switch(i++,e){case"(":n.push({kind:"open"});continue;case")":n.push({kind:"close"});continue;case"{":n.push({kind:"openBrace"});continue;case"}":n.push({kind:"closeBrace"});continue;case"[":n.push({kind:"openBracket"});continue;case"]":n.push({kind:"closeBracket"});continue;case"|":r();continue;case",":n.push({kind:"comma"});continue;case"+":case"-":case"*":case"/":case"^":n.push({kind:"op",value:e});continue;case"=":case"<":case">":n.push({kind:"cmp",value:e});continue;case":":n.push({kind:"colon"});continue;default:throw new y(`"${e}" is not supported.`)}}return n}var ie=class t{constructor(n,i,r){this.tokens=n;this.context=i;this.scope=r;this.index=0;this.barDepth=0}expectEnd(){let n=this.peek();if(n?.kind==="cmp"&&n.value==="=")throw new y("A field component must be an expression, not an equation.");if(this.index<this.tokens.length)throw new y("There is leftover input after the expression.")}parseExpression(){let n=this.parseTerm();for(;;){let i=this.peek();if(i?.kind!=="op"||i.value!=="+"&&i.value!=="-")break;this.index++;let r=this.parseTerm();n=`(${n} ${i.value} ${r})`}return n}parseTerm(){let n=this.parseUnary();for(;;){let i=this.peek();if(i?.kind==="op"&&(i.value==="*"||i.value==="/")){this.index++;let r=this.parseUnary();n=i.value==="*"?`(${n} * ${r})`:`vtDiv(${n}, ${r})`;continue}if(this.startsPrimary(i)){let r=this.parseUnary();n=`(${n} * ${r})`;continue}break}return n}parseUnary(){let n=this.peek();return n?.kind==="op"&&n.value==="-"?(this.index++,`(-${this.parseUnary()})`):n?.kind==="op"&&n.value==="+"?(this.index++,this.parseUnary()):this.parsePower()}parsePower(){let n=this.parsePrimary(),i=this.peek();if(i?.kind==="op"&&i.value==="^"){this.index++;let r=this.parseGroupOrAtom();return gt(n,r)}return n}parseGroupOrAtom(){let n=this.peek();if(n?.kind==="openBrace"){this.index++;let i=this.parseExpression();return this.expect("closeBrace","a closing }"),i}return n?.kind==="op"&&n.value==="-"?(this.index++,`(-${this.parseGroupOrAtom()})`):this.parsePrimary()}parsePrimary(){let n=this.peek();if(n===void 0)throw new y("The expression ends too early.");switch(n.kind){case"number":return this.index++,vt(n.value);case"variable":{this.index++;let i=this.context.env.functions.get(n.value);return i!==void 0&&this.peek()?.kind==="open"?this.parseDefinedCall(n.value,i):this.variableToGLSL(n.value)}case"open":{this.index++;let i=this.parseExpression();return this.expect("close","a closing parenthesis"),`(${i})`}case"openBrace":{this.index++;let i=this.parseExpression();return this.expect("closeBrace","a closing }"),`(${i})`}case"bar":{this.index++,this.barDepth++;let i=this.parseExpression();return this.barDepth--,this.expect("bar","a closing |"),`abs(${i})`}case"frac":{this.index++;let i=this.parseBracedGroup(),r=this.parseBracedGroup();return`vtDiv(${i}, ${r})`}case"sqrt":{if(this.index++,this.peek()?.kind==="openBracket"){this.index++;let i=this.parseExpression();return this.expect("closeBracket","a closing ]"),`vtPow(${this.parseBracedGroup()}, vtDiv(1.0, ${i}))`}return`sqrt(max(${this.parseBracedGroup()}, 0.0))`}case"function":return this.index++,this.parseFunctionCall(n.value);case"pieceOpen":return this.index++,this.parsePiecewise();default:throw new y("The expression has a bracket or symbol in an unexpected place.")}}variableToGLSL(n){let i=this.scope.get(n);if(i!==void 0)return i;switch(n){case"x":return"p.x";case"y":return"p.y";case"e":return"2.7182818284590452";default:break}if(n==="z"&&this.context.env.dimensions===3)return"p.z";if(n===Re&&!this.context.env.scalars.has(Re))return this.context.usesTime=!0,pt;if(this.context.env.scalars.has(n))return this.context.params.add(n),mt(n);throw new y(`"${n}" is not defined. ${this.context.env.unknownNameHint??"The flow visualizer knows x and y, and anything the expression list defines as a number or a function of numbers."}`)}parseDefinedCall(n,i){this.index++;let r=[this.parseExpression()];for(;this.peek()?.kind==="comma";)this.index++,r.push(this.parseExpression());if(this.expect("close","a closing parenthesis"),r.length!==i.params.length)throw new y(`"${n}" takes ${i.params.length} argument${i.params.length===1?"":"s"}, but was given ${r.length}.`);return`${this.context.declare(n,i)}(p${r.map(a=>`, ${a}`).join("")})`}parseFunctionCall(n){let i=Ne[n];if(i===void 0)throw new y(`The function "${n}" is not supported by the flow visualizer.`);let r;if(this.peek()?.kind==="open"){for(this.index++,r=[this.parseExpression()];this.peek()?.kind==="comma";)this.index++,r.push(this.parseExpression());this.expect("close","a closing parenthesis")}else r=[this.parseBareArgument(n)];if(!i.arity.includes(r.length))throw new y(`"${n}" cannot take ${r.length} argument${r.length===1?"":"s"}.`);return i.emit(r)}parseBareArgument(n){let i=this.index,r=ht(this.tokens,i,this.barDepth>0);if(r===void 0)throw new y(`Use parentheses around the argument of "${n}".`);let e=new t(this.tokens.slice(i,r),this.context,this.scope).parseExpression();return this.index=r,e}parsePiecewise(){let n=[],i="vtUndefined()";if(this.peek()?.kind==="pieceClose")return this.index++,"1.0";for(;;){let r=this.parseExpression();if(this.peek()?.kind==="cmp"){let a=this.parseConditionFrom(r),u="1.0";this.peek()?.kind==="colon"&&(this.index++,u=this.parseExpression()),n.push({condition:a,value:u})}else if(i=r,this.peek()?.kind!=="pieceClose")throw new y("Only the last branch of a piecewise can have no condition.");if(this.peek()?.kind==="comma"){this.index++;continue}this.expect("pieceClose","a closing \\}");break}return n.reduceRight((r,{condition:e,value:a})=>`((${e}) ? (${a}) : ${r})`,i)}parseConditionFrom(n){let i=[],r=n;for(;this.peek()?.kind==="cmp";){let e=this.peek();this.index++;let a=this.parseExpression(),u=e.value==="="?"==":e.value;i.push(`(${r} ${u} ${a})`),r=a}return i.join(" && ")}parseBracedGroup(){if(this.peek()?.kind!=="openBrace")throw new y("Expected a braced group.");this.index++;let n=this.parseExpression();return this.expect("closeBrace","a closing }"),`(${n})`}startsPrimary(n){return n===void 0?!1:n.kind==="bar"?this.barDepth===0:n.kind==="number"||n.kind==="variable"||n.kind==="open"||n.kind==="frac"||n.kind==="sqrt"||n.kind==="function"||n.kind==="pieceOpen"}expect(n,i){if(this.peek()?.kind!==n)throw new y(`Expected ${i}.`);this.index++}peek(){return this.tokens[this.index]}};function gt(t,n){let i=/^\(?-?\d+\.\d+\)?$/.test(n)?Number(n.replace(/[()]/g,"")):NaN;if(i===0)return"1.0";if(Number.isInteger(i)&&i>=-4&&i<=4&&t.length<=24){let r=Math.abs(i),e=r===1?t:`(${Array.from({length:r},()=>t).join(" * ")})`;return i>0?e:`vtDiv(1.0, ${e})`}return`vtPow(${t}, ${n})`}function vt(t){return t.startsWith("(")||t.includes(".")?t:`${t}.0`}var I={spectral:{name:"Spectral",group:"sequential",stops:[{at:0,rgb:[38,77,173]},{at:.35,rgb:[41,173,158]},{at:.7,rgb:[242,179,51]},{at:1,rgb:[217,61,56]}]},"sequential-a":{name:"Viridis",group:"sequential",stops:[{at:0,rgb:[68,1,84]},{at:.25,rgb:[59,82,139]},{at:.5,rgb:[33,145,140]},{at:.75,rgb:[94,201,98]},{at:1,rgb:[253,231,37]}]},"sequential-b":{name:"Blue",group:"sequential",stops:[{at:0,rgb:[8,29,88]},{at:.5,rgb:[34,94,168]},{at:1,rgb:[127,205,255]}]},turbo:{name:"Turbo",group:"sequential",stops:[{at:0,rgb:[48,18,59]},{at:.14,rgb:[66,120,240]},{at:.29,rgb:[39,181,225]},{at:.43,rgb:[49,231,153]},{at:.57,rgb:[149,255,64]},{at:.71,rgb:[231,222,38]},{at:.86,rgb:[253,141,39]},{at:1,rgb:[122,4,3]}]},plasma:{name:"Plasma",group:"sequential",stops:[{at:0,rgb:[13,8,135]},{at:.25,rgb:[126,3,168]},{at:.5,rgb:[204,71,120]},{at:.75,rgb:[248,149,64]},{at:1,rgb:[240,249,33]}]},magma:{name:"Magma",group:"sequential",stops:[{at:0,rgb:[0,0,4]},{at:.25,rgb:[81,18,124]},{at:.5,rgb:[183,55,121]},{at:.75,rgb:[252,137,97]},{at:1,rgb:[252,253,191]}]},cividis:{name:"Cividis",group:"sequential",stops:[{at:0,rgb:[0,32,76]},{at:.25,rgb:[28,71,117]},{at:.5,rgb:[96,109,116]},{at:.75,rgb:[158,150,109]},{at:1,rgb:[253,231,55]}]},jet:{name:"Jet (classic)",group:"sequential",stops:[{at:0,rgb:[0,0,131]},{at:.125,rgb:[0,60,170]},{at:.375,rgb:[5,255,255]},{at:.625,rgb:[255,255,0]},{at:.875,rgb:[250,0,0]},{at:1,rgb:[128,0,0]}]},"blue-red":{name:"Blue to red",group:"diverging",stops:[{at:0,rgb:[33,102,172]},{at:.5,rgb:[247,247,247]},{at:1,rgb:[178,24,43]}]},coolwarm:{name:"Cool to warm",group:"diverging",stops:[{at:0,rgb:[59,76,192]},{at:.5,rgb:[221,221,221]},{at:1,rgb:[180,4,38]}]},grayscale:{name:"Grayscale",group:"sequential",stops:[{at:0,rgb:[30,30,30]},{at:1,rgb:[240,240,240]}]},sunset:{name:"Sunset",group:"expressive",stops:[{at:0,rgb:[35,17,72]},{at:.3,rgb:[129,41,110]},{at:.6,rgb:[226,90,86]},{at:.85,rgb:[249,163,80]},{at:1,rgb:[255,232,150]}]},ocean:{name:"Ocean",group:"expressive",stops:[{at:0,rgb:[2,18,54]},{at:.35,rgb:[3,80,120]},{at:.7,rgb:[38,160,167]},{at:1,rgb:[160,231,206]}]},ember:{name:"Ember",group:"expressive",stops:[{at:0,rgb:[10,4,8]},{at:.3,rgb:[120,20,20]},{at:.6,rgb:[230,90,15]},{at:.85,rgb:[250,190,60]},{at:1,rgb:[255,247,214]}]},neon:{name:"Neon",group:"expressive",stops:[{at:0,rgb:[15,2,40]},{at:.3,rgb:[120,10,180]},{at:.6,rgb:[240,30,140]},{at:.8,rgb:[60,240,220]},{at:1,rgb:[230,255,120]}]},nebula:{name:"Nebula",group:"expressive",stops:[{at:0,rgb:[46,44,78]},{at:.3,rgb:[96,76,118]},{at:.55,rgb:[152,110,132]},{at:.78,rgb:[204,156,140]},{at:.92,rgb:[236,208,186]},{at:1,rgb:[250,244,238]}]},aurora:{name:"Aurora",group:"expressive",stops:[{at:0,rgb:[30,58,68]},{at:.32,rgb:[52,104,106]},{at:.58,rgb:[96,156,136]},{at:.8,rgb:[160,200,172]},{at:1,rgb:[230,242,230]}]},starfield:{name:"Starfield",group:"expressive",stops:[{at:0,rgb:[46,58,96]},{at:.4,rgb:[96,118,166]},{at:.72,rgb:[166,190,224]},{at:1,rgb:[246,249,253]}]},"direction-hue":{name:"Hue wheel",group:"cyclic",cyclic:!0},twilight:{name:"Twilight",group:"cyclic",cyclic:!0,stops:[{at:0,rgb:[226,217,226]},{at:.15,rgb:[140,160,215]},{at:.3,rgb:[70,95,175]},{at:.45,rgb:[48,45,100]},{at:.6,rgb:[95,38,78]},{at:.75,rgb:[175,75,88]},{at:.9,rgb:[216,152,152]},{at:1,rgb:[226,217,226]}]},phase:{name:"Phase",group:"cyclic",cyclic:!0,stops:[{at:0,rgb:[255,64,64]},{at:.17,rgb:[255,214,51]},{at:.33,rgb:[77,219,84]},{at:.5,rgb:[58,217,217]},{at:.67,rgb:[72,94,240]},{at:.83,rgb:[219,71,219]},{at:1,rgb:[255,64,64]}]}},on=Object.keys(I),H=8;function He(t){return I[t].stops??I.spectral.stops}var Be={saturation:1,contrast:1};var B=[.2126,.7152,.0722];function bt(t,n=Be){let i=t[0]*B[0]+t[1]*B[1]+t[2]*B[2],r=e=>{let u=(i+(e-i)*n.saturation-127.5)*n.contrast+127.5;return Math.round(Math.min(255,Math.max(0,u)))};return[r(t[0]),r(t[1]),r(t[2])]}function xt(t){let n=i=>{let r=((t*6+i)%6+6)%6;return Math.round(255*Math.min(Math.max(Math.min(r,4-r),0),1))};return[n(0),n(4),n(2)]}function Ge(t,n=Be){let i=(e,a)=>{let[u,s,d]=bt(e,n);return`rgb(${u},${s},${d}) ${Math.round(a*100)}%`};return`linear-gradient(to right, ${(I[t].stops===void 0?Array.from({length:13},(e,a)=>{let u=a/12;return i(xt(u),u)}):He(t).map(e=>i(e.rgb,e.at))).join(", ")})`}var Oe=new Map;function ze(t){let n=Oe.get(t);if(n!==void 0)return n;let i=_t(t);return Oe.set(t,i),i}function _t(t){let n=He(t),i=new Float32Array(H),r=new Float32Array(H*3);for(let e=0;e<H;e++){let a=n[Math.min(e,n.length-1)];i[e]=a.at,r[e*3]=a.rgb[0]/255,r[e*3+1]=a.rgb[1]/255,r[e*3+2]=a.rgb[2]/255}return{positions:i,colors:r,count:n.length}}var q=`
+uniform float u_paletteAt[${H}];
+uniform vec3 u_paletteRGB[${H}];
 uniform int u_paletteCount;
 uniform int u_paletteIsHue;
 uniform float u_saturation;
@@ -831,7 +978,7 @@ uniform float u_contrast;
  * knob that stopped working when you picked a flat colour would be a puzzle.
  */
 vec3 vtAdjust(vec3 rgb) {
-  float luma = dot(rgb, vec3(${I[0]}, ${I[1]}, ${I[2]}));
+  float luma = dot(rgb, vec3(${B[0]}, ${B[1]}, ${B[2]}));
   vec3 pushed = mix(vec3(luma), rgb, u_saturation);
   pushed = (pushed - 0.5) * u_contrast + 0.5;
   return clamp(pushed, 0.0, 1.0);
@@ -856,7 +1003,7 @@ vec3 vtHueRamp(float hue) {
 vec3 vtPalette(float t) {
   if (u_paletteIsHue == 1) return vtAdjust(vtHueRamp(fract(t)));
   vec3 rgb = vtAdjust(u_paletteRGB[0]);
-  for (int i = 1; i < ${R}; i++) {
+  for (int i = 1; i < ${H}; i++) {
     if (i >= u_paletteCount) break;
     float from = u_paletteAt[i - 1];
     float to = u_paletteAt[i];
@@ -865,13 +1012,13 @@ vec3 vtPalette(float t) {
   }
   return rgb;
 }
-`;var He=50,Ge=(e,t,i)=>[1,0,0,0,0,1,0,0,0,0,1,0,e,t,i,1],mt=(e,t,i)=>[e,0,0,0,0,t,0,0,0,0,i,0,0,0,0,1],ht=e=>{let t=Math.cos(e),i=Math.sin(e);return[1,0,0,0,0,t,i,0,0,-i,t,0,0,0,0,1]},ft=e=>{let t=Math.cos(e),i=Math.sin(e);return[t,0,-i,0,0,1,0,0,i,0,t,0,0,0,0,1]},gt=[1,0,0,0,0,0,-1,0,0,1,0,0,0,0,0,1],vt=(...e)=>e.reduce((t,i)=>A(t,i));function je(e,t,i,n){let r=i/n,a=2.3/t.zoom,u=1,s=200,m,f,c=t.perspective<=0;if(c)f=1,m=[1/(a*r),0,0,0,0,1/a,0,0,0,0,-2/(s-u),0,0,0,-(s+u)/(s-u),1];else{let p=2*Math.atan(.13*t.perspective),_=1/Math.tan(p/2);f=He/(_*a),m=[_/r,0,0,0,0,_,0,0,0,0,(s+u)/(u-s),-1,0,0,2*s*u/(u-s),0]}let g=[0,1,2].map(p=>(e.max[p]-e.min[p])/2),h=[0,1,2].map(p=>(e.max[p]+e.min[p])/2);return{world:vt(ht(t.tilt),ft(t.turn),gt,mt(f/g[0],f/g[1],f/g[2]),Ge(-h[0],-h[1],-h[2])),view:Ge(0,0,-He),projection:m,orthographic:c,width:i,height:n}}var Ve={sin:Math.sin,cos:Math.cos,tan:Math.tan,asin:Math.asin,acos:Math.acos,atan:(e,t)=>t===void 0?Math.atan(e):Math.atan2(e,t),sinh:Math.sinh,cosh:Math.cosh,tanh:Math.tanh,asinh:Math.asinh,acosh:Math.acosh,atanh:Math.atanh,exp:Math.exp,log:Math.log,sqrt:Math.sqrt,abs:Math.abs,sign:Math.sign,floor:Math.floor,ceil:Math.ceil,min:Math.min,max:Math.max,mod:(e,t)=>e-t*Math.floor(e/t),clamp:(e,t,i)=>Math.min(i,Math.max(t,e)),vtPow:(e,t)=>{if(e>0)return Math.exp(t*Math.log(e));if(e===0)return t===0?1:0;let i=Math.floor(t+.5);if(Math.abs(t-i)>1e-6)return 0;let n=Math.exp(t*Math.log(-e));return Math.abs(i)%2<.5?n:-n},vtDiv:(e,t)=>e/(Math.abs(t)<1e-12?t<0?-1e-12:1e-12:t),vtCot:e=>Math.cos(e)/(Math.abs(Math.sin(e))<1e-12?1e-12:Math.sin(e)),vtSec:e=>1/(Math.abs(Math.cos(e))<1e-12?1e-12:Math.cos(e)),vtCsc:e=>1/(Math.abs(Math.sin(e))<1e-12?1e-12:Math.sin(e)),vtLog10:Math.log10,vtMod:(e,t)=>t===0?0:e-t*Math.floor(e/t),vtUndefined:()=>NaN,vtCoth:e=>1/(Math.abs(Math.tanh(e))<1e-12?1e-12:Math.tanh(e)),vtCsch:e=>1/(Math.abs(Math.sinh(e))<1e-12?1e-12:Math.sinh(e))};function qe(e){return e.replace(/\bp\.x\b/g,"p[0]").replace(/\bp\.y\b/g,"p[1]").replace(/\bp\.z\b/g,"p[2]")}function bt(e){let t=/^float (\w+)\(([^)]*)\) \{ return ([\s\S]*); \}$/.exec(e);if(t===null)throw new Error(`Cannot run helper: ${e}`);let i=t[2].split(",").map(n=>n.trim().split(/\s+/)[1]);return`function ${t[1]}(${i.join(", ")}) { return ${qe(t[3])}; }`}function xe(e){if(!e.ok)return;let t=Object.keys(Ve),i=[...e.helpers.map(r=>bt(r.glsl)),`return (${qe(e.glsl)});`].join(`
-`);return new Function(...t,`return function (p) {
+`;var Ve=50,je=(t,n,i)=>[1,0,0,0,0,1,0,0,0,0,1,0,t,n,i,1],wt=(t,n,i)=>[t,0,0,0,0,n,0,0,0,0,i,0,0,0,0,1],yt=t=>{let n=Math.cos(t),i=Math.sin(t);return[1,0,0,0,0,n,i,0,0,-i,n,0,0,0,0,1]},Mt=t=>{let n=Math.cos(t),i=Math.sin(t);return[n,0,-i,0,0,1,0,0,i,0,n,0,0,0,0,1]},Et=[1,0,0,0,0,0,-1,0,0,1,0,0,0,0,0,1],Tt=(...t)=>t.reduce((n,i)=>A(n,i));function qe(t,n,i,r){let e=i/r,a=2.3/n.zoom,u=1,s=200,d,p,g=n.perspective<=0;if(g)p=1,d=[1/(a*e),0,0,0,0,1/a,0,0,0,0,-2/(s-u),0,0,0,-(s+u)/(s-u),1];else{let l=2*Math.atan(.13*n.perspective),w=1/Math.tan(l/2);p=Ve/(w*a),d=[w/e,0,0,0,0,w,0,0,0,0,(s+u)/(u-s),-1,0,0,2*s*u/(u-s),0]}let h=[0,1,2].map(l=>(t.max[l]-t.min[l])/2),f=[0,1,2].map(l=>(t.max[l]+t.min[l])/2);return{world:Tt(yt(n.tilt),Mt(n.turn),Et,wt(p/h[0],p/h[1],p/h[2]),je(-f[0],-f[1],-f[2])),view:je(0,0,-Ve),projection:d,orthographic:g,width:i,height:r}}var We={sin:Math.sin,cos:Math.cos,tan:Math.tan,asin:Math.asin,acos:Math.acos,atan:(t,n)=>n===void 0?Math.atan(t):Math.atan2(t,n),sinh:Math.sinh,cosh:Math.cosh,tanh:Math.tanh,asinh:Math.asinh,acosh:Math.acosh,atanh:Math.atanh,exp:Math.exp,log:Math.log,sqrt:Math.sqrt,abs:Math.abs,sign:Math.sign,floor:Math.floor,ceil:Math.ceil,min:Math.min,max:Math.max,mod:(t,n)=>t-n*Math.floor(t/n),clamp:(t,n,i)=>Math.min(i,Math.max(n,t)),vtPow:(t,n)=>{if(t>0)return Math.exp(n*Math.log(t));if(t===0)return n===0?1:0;let i=Math.floor(n+.5);if(Math.abs(n-i)>1e-6)return 0;let r=Math.exp(n*Math.log(-t));return Math.abs(i)%2<.5?r:-r},vtDiv:(t,n)=>t/(Math.abs(n)<1e-12?n<0?-1e-12:1e-12:n),vtCot:t=>Math.cos(t)/(Math.abs(Math.sin(t))<1e-12?1e-12:Math.sin(t)),vtSec:t=>1/(Math.abs(Math.cos(t))<1e-12?1e-12:Math.cos(t)),vtCsc:t=>1/(Math.abs(Math.sin(t))<1e-12?1e-12:Math.sin(t)),vtLog10:Math.log10,vtMod:(t,n)=>n===0?0:t-n*Math.floor(t/n),vtUndefined:()=>NaN,vtCoth:t=>1/(Math.abs(Math.tanh(t))<1e-12?1e-12:Math.tanh(t)),vtCsch:t=>1/(Math.abs(Math.sinh(t))<1e-12?1e-12:Math.sinh(t))};function Xe(t){return t.replace(/\bp\.x\b/g,"p[0]").replace(/\bp\.y\b/g,"p[1]").replace(/\bp\.z\b/g,"p[2]")}function kt(t){let n=/^float (\w+)\(([^)]*)\) \{ return ([\s\S]*); \}$/.exec(t);if(n===null)throw new Error(`Cannot run helper: ${t}`);let i=n[2].split(",").map(r=>r.trim().split(/\s+/)[1]);return`function ${n[1]}(${i.join(", ")}) { return ${Xe(n[3])}; }`}function ye(t){if(!t.ok)return;let n=Object.keys(We),i=[...t.helpers.map(e=>kt(e.glsl)),`return (${Xe(t.glsl)});`].join(`
+`);return new Function(...n,`return function (p) {
 ${i}
-};`)(...t.map(r=>Ve[r]))}function D(e,t,i){let n=(a,u)=>{let s=e.createShader(a);if(e.shaderSource(s,u),e.compileShader(s),!e.getShaderParameter(s,e.COMPILE_STATUS)){let m=e.getShaderInfoLog(s),f=u.split(`
-`).map((c,g)=>`${g+1}: ${c}`).join(`
-`);throw new Error(`${m}
-${f}`)}return s},r=e.createProgram();if(e.attachShader(r,n(e.VERTEX_SHADER,t)),e.attachShader(r,n(e.FRAGMENT_SHADER,i)),e.linkProgram(r),!e.getProgramParameter(r,e.LINK_STATUS))throw new Error(e.getProgramInfoLog(r)??"link failed");return r}function N(e,t){let i={},n=e.getProgramParameter(t,e.ACTIVE_UNIFORMS);for(let r=0;r<n;r++){let a=e.getActiveUniform(t,r),u=a.name.replace(/\[0\]$/,"");i[u]=e.getUniformLocation(t,a.name)}return new Proxy(i,{get:(r,a)=>r[a]??null})}function re(e,t){return`#version 300 es
+};`)(...n.map(e=>We[e]))}function C(t,n,i){let r=(a,u)=>{let s=t.createShader(a);if(t.shaderSource(s,u),t.compileShader(s),!t.getShaderParameter(s,t.COMPILE_STATUS)){let d=t.getShaderInfoLog(s),p=u.split(`
+`).map((g,h)=>`${h+1}: ${g}`).join(`
+`);throw new Error(`${d}
+${p}`)}return s},e=t.createProgram();if(t.attachShader(e,r(t.VERTEX_SHADER,n)),t.attachShader(e,r(t.FRAGMENT_SHADER,i)),t.linkProgram(e),!t.getProgramParameter(e,t.LINK_STATUS))throw new Error(t.getProgramInfoLog(e)??"link failed");return e}function P(t,n){let i={},r=t.getProgramParameter(n,t.ACTIVE_UNIFORMS);for(let e=0;e<r;e++){let a=t.getActiveUniform(n,e),u=a.name.replace(/\[0\]$/,"");i[u]=t.getUniformLocation(n,a.name)}return new Proxy(i,{get:(e,a)=>e[a]??null})}function oe(t,n){return`#version 300 es
 precision highp float;
 uniform mat4 u_mathToView;
 uniform mat4 u_projection;
@@ -881,8 +1028,8 @@ uniform int u_res;
 out vec3 v_math;
 out vec3 v_view;
 out vec3 v_normal;
-${t}
-float vtSurface(vec2 p) { return ${e}; }
+${n}
+float vtSurface(vec2 p) { return ${t}; }
 vec3 vtView(vec2 q) {
   return (u_mathToView * vec4(q, vtSurface(q), 1.0)).xyz;
 }
@@ -904,13 +1051,13 @@ void main() {
   ));
   gl_Position = u_projection * vec4(v_view, 1.0);
 }
-`}var G=`
+`}var F=`
 bool vtOutsideBox(vec3 m) {
   vec3 eps = (u_boxMax - u_boxMin) * 1.0e-4;
   return any(lessThan(m, u_boxMin - eps)) || any(greaterThan(m, u_boxMax + eps))
     || any(isnan(m));
 }
-`;var O=10;function we(e){return e==="lines"?6:e==="flat"?9:12*O}function ae(e){return e.sampling==="grid"||e.sampling==="jitter"?e.count**3:e.count**2}var xt={lines:0,flat:1,solid:2},wt={grid:0,jitter:1,slice:2,surface:3},yt={normalized:0,saturating:1,clamped:2,actual:3},_t=`
+`,W=`
 uint vtPcg(uint v) {
   uint state = v * 747796405u + 2891336453u;
   uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
@@ -919,7 +1066,220 @@ uint vtPcg(uint v) {
 vec3 vtHash3(uint i) {
   return vec3(vtPcg(i), vtPcg(i ^ 0x9e3779b9u), vtPcg(i ^ 0x85ebca6bu)) / 4294967295.0;
 }
-`;function Mt(e,t,i){return`#version 300 es
+`;function Qe(t,n){return`
+${D}
+${n}
+${W}
+vec3 vtField(vec3 p) {
+  vec3 v = vec3(${t[0]}, ${t[1]}, ${t[2]});
+  return any(isnan(v)) || any(isinf(v)) ? vec3(0.0) : v;
+}
+`}function St(t,n){return`#version 300 es
+precision highp float;
+precision highp int;
+uniform highp sampler2D u_state;
+uniform vec3 u_boxMin;
+uniform vec3 u_boxMax;
+uniform float u_step;
+uniform int u_init;
+uniform int u_count;
+uniform int u_seed;
+layout(location = 0) out vec4 o_state;
+layout(location = 1) out vec4 o_history;
+${Qe(t,n)}
+
+/**
+ * The direction of the line at p, at unit speed in box half-widths. A line
+ * at unit speed has the same length whatever the field's magnitude, so a
+ * line near a pole does not leave the box in one step and a line where the
+ * field is weak does not stall: magnitude is shown by colour instead.
+ */
+vec3 vtDirection(vec3 p) {
+  vec3 half_ = 0.5 * (u_boxMax - u_boxMin);
+  vec3 w = vtField(p) / half_;
+  float l = length(w);
+  return l < 1.0e-12 ? vec3(0.0) : half_ * (w / l);
+}
+
+bool vtInside(vec3 p) {
+  return all(greaterThanEqual(p, u_boxMin)) && all(lessThanEqual(p, u_boxMax));
+}
+
+void main() {
+  ivec2 q = ivec2(gl_FragCoord.xy);
+  int width = textureSize(u_state, 0).x;
+  int id = q.y * width + q.x;
+  vec4 s;
+  if (u_init == 1) {
+    vec3 t = vtHash3(uint(id) * 2654435761u + uint(u_seed));
+    s = vec4(mix(u_boxMin, u_boxMax, t), id < u_count ? 1.0 : -1.0);
+  } else {
+    s = texelFetch(u_state, q, 0);
+    if (s.w > 0.0) {
+      // Fourth-order Runge-Kutta, as the 2D flow integrates.
+      vec3 p = s.xyz;
+      // Every other line is traced backwards. Traced only forwards, lines
+      // start anywhere but all end in the sinks, and pile up there: a
+      // negative charge would look far busier than the positive one.
+      float h = id % 2 == 0 ? u_step : -u_step;
+      vec3 k1 = vtDirection(p);
+      vec3 k2 = vtDirection(p + 0.5 * h * k1);
+      vec3 k3 = vtDirection(p + 0.5 * h * k2);
+      vec3 k4 = vtDirection(p + h * k3);
+      vec3 next = p + h * (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
+      // A line that leaves the box, or reaches a point with no direction,
+      // ends there. Its position stays where it was, so the rest of the
+      // line collapses onto its last point instead of jumping anywhere.
+      if (length(k1) == 0.0 || !vtInside(next) || any(isnan(next))) s.w = -1.0;
+      else s.xyz = next;
+    }
+  }
+  o_state = s;
+  o_history = vec4(s.xyz, s.w > 0.0 ? length(vtField(s.xyz)) : -1.0);
+}
+`}var Lt=`#version 300 es
+const vec2 P[3] = vec2[3](vec2(-1.0, -1.0), vec2(3.0, -1.0), vec2(-1.0, 3.0));
+void main() { gl_Position = vec4(P[gl_VertexID], 0.0, 1.0); }
+`,Ze=`
+uniform mat4 u_mathToView;
+uniform mat4 u_projection;
+uniform vec3 u_boxMin;
+uniform vec3 u_boxMax;
+uniform float u_speedScale;
+uniform int u_colorMode;
+uniform vec3 u_fixedColor;
+uniform float u_opacity;
+uniform vec2 u_depthRange;
+`,Je=`
+vec3 vtColorFor(float m) {
+  return u_colorMode == 1 ? vtAdjust(u_fixedColor) : vtPalette(1.0 - exp(-m / u_speedScale));
+}
+float vtFogFor(vec3 view) {
+  return clamp((-view.z - u_depthRange.x) / max(u_depthRange.y - u_depthRange.x, 1.0e-6), 0.0, 1.0);
+}
+`,At=`#version 300 es
+precision highp float;
+precision highp int;
+${Ze}
+uniform highp sampler2DArray u_history;
+uniform int u_width;
+uniform int u_steps;
+uniform int u_animate;
+uniform float u_time;
+uniform float u_flowSpeed;
+uniform float u_window;
+out vec4 v_color;
+out vec3 v_view;
+out vec3 v_math;
+out float v_fog;
+${W}
+${q}
+${Je}
+void main() {
+  int id = gl_InstanceID;
+  vec4 h = texelFetch(u_history, ivec3(id % u_width, id / u_width, gl_VertexID), 0);
+  vec3 view = (u_mathToView * vec4(h.xyz, 1.0)).xyz;
+  v_view = view;
+  v_math = h.xyz;
+  v_fog = vtFogFor(view);
+  gl_Position = u_projection * vec4(view, 1.0);
+  // Each line fades in from its seed and out towards its end, so lines read
+  // as threads rather than as a lattice of hard-ended sticks.
+  // How far along the flow this vertex is, 0 at the upstream end. A line
+  // traced backwards was stored downstream-first, so it counts the other way.
+  float k = float(gl_VertexID);
+  float along = (id % 2 == 0 ? k : float(u_steps - 1) - k) / float(max(u_steps - 1, 1));
+  float taper;
+  if (u_animate == 1) {
+    // The animated look of 3dstreamlines (James Runnalls, MIT): a stretch of
+    // each line travels along it with the flow, its tail fading by
+    // exp(1 - 1/c^2), and every line starts at its own phase so the box
+    // always holds lines at every stage. Here it is a window moving over a
+    // trace already stored on the GPU, so animating integrates nothing.
+    float period = 1.0 + u_window;
+    float phase = vtHash3(uint(id) * 747796405u + 11u).x * period;
+    float head = mod(u_time * u_flowSpeed + phase, period);
+    float behind = head - along;
+    float c = 1.0 - behind / u_window;
+    taper = behind < 0.0 || behind > u_window ? 0.0 : exp(1.0 - 1.0 / max(c * c, 1.0e-3));
+  } else {
+    taper = smoothstep(0.0, 0.12, along) * (1.0 - smoothstep(0.75, 1.0, along));
+  }
+  float a = h.w < 0.0 ? 0.0 : u_opacity * taper;
+  v_color = vec4(vtColorFor(h.w) * a, a);
+}
+`,Ct=`#version 300 es
+precision highp float;
+precision highp int;
+${Ze}
+uniform float u_pointPx;
+uniform float u_contrast_;
+uniform int u_byDirection;
+out vec4 v_color;
+out vec3 v_view;
+out vec3 v_math;
+out float v_fog;
+FIELD_SOURCE
+${q}
+${Je}
+void main() {
+  uint id = uint(gl_VertexID);
+  vec3 p = mix(u_boxMin, u_boxMax, vtHash3(id * 2246822519u + 3u));
+  vec3 F = vtField(p);
+  float m = length(F);
+  float ramp = 1.0 - exp(-m / u_speedScale);
+  // Keep a point with probability rising with the ramp, so the cloud is
+  // dense where the field is strong and thins out to nothing where it is
+  // weak: the field's own shape, centre and edges, drawn as density. The
+  // exponent sharpens that edge without moving where it is.
+  float keep = pow(ramp, u_contrast_);
+  if (vtHash3(id ^ 0x68bc21ebu).x > keep) {
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    v_color = vec4(0.0);
+    return;
+  }
+  vec3 view = (u_mathToView * vec4(p, 1.0)).xyz;
+  v_view = view;
+  v_math = p;
+  v_fog = vtFogFor(view);
+  gl_Position = u_projection * vec4(view, 1.0);
+  gl_PointSize = u_pointPx;
+  // By direction: the absolute direction as red, green and blue, the map 3D
+  // flow and diffusion imaging use. Strength alone is a featureless blob for
+  // many fields (a dipole's is); direction is what separates its lobes.
+  vec3 rgb = u_byDirection == 1 ? abs(F) / max(m, 1.0e-12) : vtColorFor(m);
+  v_color = vec4(rgb * u_opacity, u_opacity);
+}
+`,Ye=`#version 300 es
+precision highp float;
+precision highp int;
+uniform vec3 u_boxMin;
+uniform vec3 u_boxMax;
+uniform int u_clip;
+uniform int u_cut;
+uniform float u_cutZ;
+uniform int u_round;
+uniform float u_fog;
+uniform float u_alpha;
+in vec4 v_color;
+in vec3 v_view;
+in vec3 v_math;
+in float v_fog;
+out vec4 outColor;
+${F}
+void main() {
+  if (u_clip == 1 && vtOutsideBox(v_math)) discard;
+  if (u_cut == 1 && v_view.z > u_cutZ) discard;
+  float a = 1.0;
+  if (u_round == 1) {
+    float r = length(gl_PointCoord - 0.5);
+    if (r > 0.5) discard;
+    a = 1.0 - smoothstep(0.3, 0.5, r);
+  }
+  a *= u_alpha * mix(1.0, 0.25, v_fog * u_fog);
+  outColor = v_color * a;
+}
+`,ae=class{constructor(n,i){this.gl=n;this.vao=i;this.state=[];this.traceKey="";this.width=0;this.fieldVersion=0;this.canTrace=n.getExtension("EXT_color_buffer_float")!==null,this.lineProgram=C(n,At,Ye),this.lineUniforms=P(n,this.lineProgram),this.framebuffer=n.createFramebuffer()}setField(n,i){let{gl:r}=this;this.traceProgram=C(r,Lt,St(n,i)),this.traceUniforms=P(r,this.traceProgram),this.cloudProgram=C(r,Ct.replace("FIELD_SOURCE",Qe(n,i)),Ye),this.cloudUniforms=P(r,this.cloudProgram),this.fieldVersion++}trace(n,i){let{gl:r}=this,e=`${this.fieldVersion}|${n.min}|${n.max}|${i.lines}|${i.steps}|${i.lineLength}`;if(e===this.traceKey||this.traceProgram===void 0)return;this.traceKey=e;let a=Math.ceil(Math.sqrt(i.lines)),u=Math.ceil(i.lines/a);this.width=a;for(let g of this.state)r.deleteTexture(g);this.history!==void 0&&r.deleteTexture(this.history);let s=()=>{let g=r.createTexture();return r.bindTexture(r.TEXTURE_2D,g),r.texStorage2D(r.TEXTURE_2D,1,r.RGBA32F,a,u),r.texParameteri(r.TEXTURE_2D,r.TEXTURE_MIN_FILTER,r.NEAREST),r.texParameteri(r.TEXTURE_2D,r.TEXTURE_MAG_FILTER,r.NEAREST),g};this.state=[s(),s()],this.history=r.createTexture(),r.bindTexture(r.TEXTURE_2D_ARRAY,this.history),r.texStorage3D(r.TEXTURE_2D_ARRAY,1,r.RGBA32F,a,u,i.steps),r.texParameteri(r.TEXTURE_2D_ARRAY,r.TEXTURE_MIN_FILTER,r.NEAREST),r.texParameteri(r.TEXTURE_2D_ARRAY,r.TEXTURE_MAG_FILTER,r.NEAREST);let d=this.traceUniforms;r.useProgram(this.traceProgram),r.bindVertexArray(this.vao),r.disable(r.BLEND),r.disable(r.DEPTH_TEST),r.bindFramebuffer(r.FRAMEBUFFER,this.framebuffer),r.drawBuffers([r.COLOR_ATTACHMENT0,r.COLOR_ATTACHMENT1]),r.viewport(0,0,a,u),r.uniform3fv(d.u_boxMin,n.min),r.uniform3fv(d.u_boxMax,n.max),r.uniform1i(d.u_count,i.lines),r.uniform1i(d.u_seed,7),r.uniform1f(d.u_step,i.lineLength*2*Math.sqrt(3)/Math.max(i.steps-1,1)),r.uniform1i(d.u_state,0),r.activeTexture(r.TEXTURE0);let p=0;for(let g=0;g<i.steps;g++){let h=1-p;r.framebufferTexture2D(r.FRAMEBUFFER,r.COLOR_ATTACHMENT0,r.TEXTURE_2D,this.state[h],0),r.framebufferTextureLayer(r.FRAMEBUFFER,r.COLOR_ATTACHMENT1,this.history,0,g),r.bindTexture(r.TEXTURE_2D,this.state[p]),r.uniform1i(d.u_init,g===0?1:0),r.drawArrays(r.TRIANGLES,0,3),p=h}r.bindFramebuffer(r.FRAMEBUFFER,null),r.enable(r.BLEND)}common(n,i,r){let{gl:e}=this;e.uniformMatrix4fv(n.u_mathToView,!1,i.mathToView),e.uniformMatrix4fv(n.u_projection,!1,i.projection),e.uniform3fv(n.u_boxMin,i.box.min),e.uniform3fv(n.u_boxMax,i.box.max),e.uniform1f(n.u_speedScale,Math.max(1e-9,i.speedScale)),e.uniform1i(n.u_colorMode,i.colorMode),e.uniform3fv(n.u_fixedColor,i.fixedColor),e.uniform1f(n.u_opacity,r),e.uniform2fv(n.u_depthRange,i.depthRange),e.uniform1i(n.u_clip,i.clip?1:0),e.uniform1i(n.u_cut,i.cut?1:0),e.uniform1f(n.u_cutZ,i.cutZ),e.uniform1f(n.u_fog,i.fog?1:0),e.uniform1f(n.u_alpha,1),i.uploadPalette(n)}prepare(n,i,r,e){let{gl:a}=this;if(n==="streamlines"){if(!this.canTrace)return{draw:()=>{},count:0,vertices:0};this.trace(i.box,r),e();let s=this.lineUniforms;return{count:r.lines,vertices:r.lines*r.steps,draw:d=>{a.useProgram(this.lineProgram),this.common(s,i,r.lineOpacity),a.uniform1f(s.u_alpha,d),a.uniform1i(s.u_round,0),a.uniform1i(s.u_width,this.width),a.uniform1i(s.u_steps,r.steps),a.uniform1i(s.u_animate,r.animate?1:0),a.uniform1f(s.u_time,r.time),a.uniform1f(s.u_flowSpeed,r.flowSpeed),a.uniform1f(s.u_window,r.flowWindow),a.activeTexture(a.TEXTURE0),a.bindTexture(a.TEXTURE_2D_ARRAY,this.history),a.uniform1i(s.u_history,0),a.drawArraysInstanced(a.LINE_STRIP,0,r.steps,r.lines)}}}let u=this.cloudUniforms;return this.cloudProgram===void 0||u===void 0?{draw:()=>{},count:0,vertices:0}:{count:r.points,vertices:r.points,draw:s=>{a.useProgram(this.cloudProgram),this.common(u,i,r.cloudOpacity),a.uniform1f(u.u_alpha,s),a.uniform1i(u.u_round,1),a.uniform1f(u.u_pointPx,r.pointPx*i.dpr),a.uniform1f(u.u_contrast_,r.cloudContrast),a.uniform1i(u.u_byDirection,r.cloudByDirection?1:0),a.drawArrays(a.POINTS,0,r.points)}}}};var G=10;function Me(t){return t==="lines"?6:t==="flat"?9:12*G}function ue(t){return t.sampling==="grid"||t.sampling==="jitter"?t.count**3:t.count**2}var Pt={lines:0,flat:1,solid:2},Rt={grid:0,jitter:1,slice:2,surface:3},$t={normalized:0,saturating:1,clamped:2,actual:3};function Dt(t,n,i){return`#version 300 es
 precision highp float;
 precision highp int;
 uniform mat4 u_mathToView;
@@ -948,16 +1308,16 @@ out vec3 v_math;
 out vec4 v_edge;
 out float v_fog;
 
-${H}
+${D}
 ${i}
-${_t}
-${ze}
+${W}
+${q}
 
 vec3 vtField(vec3 p) {
-  vec3 v = vec3(${e[0]}, ${e[1]}, ${e[2]});
+  vec3 v = vec3(${t[0]}, ${t[1]}, ${t[2]});
   return any(isnan(v)) || any(isinf(v)) ? vec3(0.0) : v;
 }
-float vtSurface(vec2 p) { return ${t??"vtUndefined()"}; }
+float vtSurface(vec2 p) { return ${n??"vtUndefined()"}; }
 
 /** Where instance \`id\` samples the field, or false if it has no point. */
 bool vtSample(int id, out vec3 pos) {
@@ -1075,22 +1435,22 @@ void main() {
     // Solid: cylinder, cone, and the disc under the cone.
     vec3 U = normalize(cross(D, abs(D.y) < 0.9 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0)));
     vec3 V = cross(D, U);
-    float step_ = 6.2831853 / float(${O});
-    if (vid < ${6*O}) {
+    float step_ = 6.2831853 / float(${G});
+    if (vid < ${6*G}) {
       ivec2 c = QUAD[vid % 6];
       float ang = float(vid / 6 + c.x) * step_;
       vec3 radial = cos(ang) * U + sin(ang) * V;
       local = a + D * (float(c.y) * shaftEnd) + radial * halfWidth;
       normal = radial;
-    } else if (vid < ${9*O}) {
-      int k = vid - ${6*O};
+    } else if (vid < ${9*G}) {
+      int k = vid - ${6*G};
       int corner = k % 3;
       float ang = (float(k / 3) + (corner == 2 ? 0.5 : float(corner))) * step_;
       vec3 radial = cos(ang) * U + sin(ang) * V;
       local = corner == 2 ? b : a + D * shaftEnd + radial * headHalf;
       normal = normalize(radial * headLen + D * headHalf);
     } else {
-      int k = vid - ${9*O};
+      int k = vid - ${9*G};
       int corner = k % 3;
       float ang = float(k / 3 + (corner == 2 ? 1 : 0)) * step_;
       vec3 radial = cos(ang) * U + sin(ang) * V;
@@ -1111,7 +1471,7 @@ void main() {
     : vtPalette(1.0 - exp(-m / u_speedScale));
   v_color = vec4(color, 1.0);
 }
-`}var Et=`#version 300 es
+`}var It=`#version 300 es
 precision highp float;
 precision highp int;
 uniform vec3 u_boxMin;
@@ -1123,6 +1483,8 @@ uniform int u_shading;
 uniform int u_outline;
 uniform float u_fog;
 uniform float u_alpha;
+uniform int u_cut;
+uniform float u_cutZ;
 in vec4 v_color;
 in vec3 v_normal;
 in vec3 v_view;
@@ -1130,9 +1492,10 @@ in vec3 v_math;
 in vec4 v_edge;
 in float v_fog;
 out vec4 outColor;
-${G}
+${F}
 void main() {
   if (u_clip == 1 && vtOutsideBox(v_math)) discard;
+  if (u_cut == 1 && v_view.z > u_cutZ) discard;
   vec3 c = v_color.rgb;
   vec3 n = normalize(v_normal);
   vec3 V = u_ortho == 1 ? vec3(0.0, 0.0, 1.0) : normalize(-v_view);
@@ -1154,7 +1517,7 @@ void main() {
   float a = u_alpha * mix(1.0, 0.16, v_fog * u_fog);
   outColor = vec4(clamp(c, 0.0, 1.0) * a, a);
 }
-`,kt=`#version 300 es
+`,Ft=`#version 300 es
 precision highp float;
 precision highp int;
 uniform vec3 u_boxMin;
@@ -1163,12 +1526,12 @@ in vec3 v_math;
 in vec3 v_view;
 in vec3 v_normal;
 out vec4 outColor;
-${G}
+${F}
 void main() {
   if (vtOutsideBox(v_math)) discard;
   outColor = vec4(0.0);
 }
-`,ie=class{constructor(t){this.canvas=t;this.pending=[];this.gpuMs=[];let i=t.getContext("webgl2",{antialias:!0,premultipliedAlpha:!0,alpha:!0,depth:!0,preserveDrawingBuffer:!0});if(i===null)throw new Error("WebGL2 is not available.");this.gl=i,this.vao=i.createVertexArray(),this.timer=i.getExtension("EXT_disjoint_timer_query_webgl2")}get hasTimer(){return this.timer!==null}setField(t,i,n,r){let{gl:a}=this;this.arrowProgram=D(a,Mt(t,n,i+r),Et),this.arrowUniforms=N(a,this.arrowProgram),this.depthProgram=void 0,n!==void 0&&(this.depthProgram=D(a,re(n,H+r),kt),this.depthUniforms=N(a,this.depthProgram))}draw(t,i,n){let{gl:r}=this,a=ae(n),u=we(n.shape);if(r.viewport(0,0,this.canvas.width,this.canvas.height),r.clearColor(0,0,0,0),r.clearDepth(1),r.depthMask(!0),r.clear(r.COLOR_BUFFER_BIT|r.DEPTH_BUFFER_BIT),this.arrowProgram===void 0||this.arrowUniforms===void 0)return{instances:0,vertices:0};this.collectTimer();let s=this.timer!==null?r.createQuery():null;s!==null&&this.timer!==null&&r.beginQuery(this.timer.TIME_ELAPSED_EXT,s);let m=A(t.view,t.world);r.bindVertexArray(this.vao),r.enable(r.BLEND),r.blendFunc(r.ONE,r.ONE_MINUS_SRC_ALPHA);let f=n.occlusion!=="over"&&this.depthProgram!==void 0;if(f&&this.depthUniforms!==void 0){let p=this.depthUniforms;r.useProgram(this.depthProgram),r.enable(r.DEPTH_TEST),r.depthFunc(r.LESS),r.colorMask(!1,!1,!1,!1),r.uniformMatrix4fv(p.u_mathToView,!1,m),r.uniformMatrix4fv(p.u_projection,!1,t.projection),r.uniform3fv(p.u_boxMin,i.min),r.uniform3fv(p.u_boxMax,i.max),r.uniform1i(p.u_res,n.meshResolution),r.drawArrays(r.TRIANGLES,0,n.meshResolution*n.meshResolution*6),r.colorMask(!0,!0,!0,!0)}let c=this.arrowUniforms;r.useProgram(this.arrowProgram),r.uniformMatrix4fv(c.u_mathToView,!1,m),r.uniformMatrix4fv(c.u_projection,!1,t.projection),r.uniform1i(c.u_ortho,t.orthographic?1:0),r.uniform1f(c.u_viewportH,t.height),r.uniform3fv(c.u_boxMin,i.min),r.uniform3fv(c.u_boxMax,i.max),r.uniform1i(c.u_sampling,wt[n.sampling]),r.uniform1i(c.u_count,n.count),r.uniform1i(c.u_sliceAxis,n.sliceAxis),r.uniform1f(c.u_slicePos,n.slicePosition),r.uniform1i(c.u_shape,xt[n.shape]),r.uniform1i(c.u_lengthMode,yt[n.lengthMode]),r.uniform1f(c.u_length,n.length),r.uniform1f(c.u_cap,.125*2*Math.sqrt(3)),r.uniform1f(c.u_widthPx,n.widthPx),r.uniform1i(c.u_colorMode,n.colorMode==="fixed"?1:0),r.uniform3fv(c.u_fixedColor,n.fixedColor),r.uniform1f(c.u_speedScale,Math.max(1e-9,n.speedScale)),r.uniform2fv(c.u_depthRange,Tt(t,i)),r.uniform1i(c.u_clip,n.clip?1:0),r.uniform1i(c.u_shading,n.shading?1:0),r.uniform1i(c.u_outline,n.outline?1:0),r.uniform1f(c.u_fog,n.fog?1:0);let g=Ue(n.palette);r.uniform1fv(c.u_paletteAt,g.positions),r.uniform3fv(c.u_paletteRGB,g.colors),r.uniform1i(c.u_paletteCount,g.count),r.uniform1i(c.u_paletteIsHue,n.palette==="direction-hue"?1:0),r.uniform1f(c.u_saturation,1),r.uniform1f(c.u_contrast,1);let h=n.shape==="lines"?r.LINES:r.TRIANGLES,l=()=>r.drawArraysInstanced(h,0,u,a);return f&&n.occlusion==="fade"&&(r.enable(r.DEPTH_TEST),r.depthFunc(r.GREATER),r.depthMask(!1),r.uniform1f(c.u_alpha,.22),l()),r.uniform1f(c.u_alpha,1),f||n.selfDepth?(r.enable(r.DEPTH_TEST),r.depthFunc(r.LEQUAL),r.depthMask(n.selfDepth)):r.disable(r.DEPTH_TEST),l(),r.depthMask(!0),r.bindVertexArray(null),s!==null&&this.timer!==null&&(r.endQuery(this.timer.TIME_ELAPSED_EXT),this.pending.push(s)),{instances:a,vertices:a*u,gpuMs:this.gpuMs.length>0?St(this.gpuMs):void 0}}collectTimer(){let{gl:t}=this;if(this.timer===null)return;let i=t.getParameter(this.timer.GPU_DISJOINT_EXT);for(;this.pending.length>0;){let n=this.pending[0];if(!t.getQueryParameter(n,t.QUERY_RESULT_AVAILABLE))break;this.pending.shift(),i||(this.gpuMs.push(t.getQueryParameter(n,t.QUERY_RESULT)/1e6),this.gpuMs.length>30&&this.gpuMs.shift()),t.deleteQuery(n)}}};function Tt(e,t){let i=A(e.view,e.world),n=1/0,r=-1/0;for(let a=0;a<8;a++){let u=a&1?t.max[0]:t.min[0],s=a&2?t.max[1]:t.min[1],m=a&4?t.max[2]:t.min[2],f=-(i[2]*u+i[6]*s+i[10]*m+i[14]);n=Math.min(n,f),r=Math.max(r,f)}return[n,r]}function We(e,t){let i=1/0,n=-1/0,r=1/0,a=-1/0;for(let u=0;u<8;u++){let s=z(e,u&1?t.max[0]:t.min[0],u&2?t.max[1]:t.min[1],u&4?t.max[2]:t.min[2]);s!==void 0&&(i=Math.min(i,s.x),n=Math.max(n,s.x),r=Math.min(r,s.y),a=Math.max(a,s.y))}return Math.hypot(n-i,a-r)}function St(e){let t=[...e].sort((i,n)=>i-n);return t[Math.floor(t.length/2)]}var At=`#version 300 es
+`,se=class{constructor(n){this.canvas=n;this.pending=[];this.gpuMs=[];let i=n.getContext("webgl2",{antialias:!0,premultipliedAlpha:!0,alpha:!0,depth:!0,preserveDrawingBuffer:!0});if(i===null)throw new Error("WebGL2 is not available.");this.gl=i,this.vao=i.createVertexArray(),this.timer=i.getExtension("EXT_disjoint_timer_query_webgl2"),this.looks=new ae(i,this.vao)}get canTrace(){return this.looks.canTrace}get hasTimer(){return this.timer!==null}setField(n,i,r,e){let{gl:a}=this;this.arrowProgram=C(a,Dt(n,r,i+e),It),this.arrowUniforms=P(a,this.arrowProgram),this.looks.setField(n,i),this.depthProgram=void 0,r!==void 0&&(this.depthProgram=C(a,oe(r,D+e),Ft),this.depthUniforms=P(a,this.depthProgram))}draw(n,i,r){let{gl:e}=this,a=ue(r),u=Me(r.shape);if(e.viewport(0,0,this.canvas.width,this.canvas.height),e.clearColor(0,0,0,0),e.clearDepth(1),e.depthMask(!0),e.clear(e.COLOR_BUFFER_BIT|e.DEPTH_BUFFER_BIT),this.arrowProgram===void 0||this.arrowUniforms===void 0)return{instances:0,vertices:0};this.collectTimer();let s=this.timer!==null?e.createQuery():null;s!==null&&this.timer!==null&&e.beginQuery(this.timer.TIME_ELAPSED_EXT,s);let d=A(n.view,n.world);e.bindVertexArray(this.vao),e.enable(e.BLEND),e.blendFunc(e.ONE,e.ONE_MINUS_SRC_ALPHA);let p=r.occlusion!=="over"&&this.depthProgram!==void 0;if(p&&this.depthUniforms!==void 0){let b=this.depthUniforms;e.useProgram(this.depthProgram),e.enable(e.DEPTH_TEST),e.depthFunc(e.LESS),e.colorMask(!1,!1,!1,!1),e.uniformMatrix4fv(b.u_mathToView,!1,d),e.uniformMatrix4fv(b.u_projection,!1,n.projection),e.uniform3fv(b.u_boxMin,i.min),e.uniform3fv(b.u_boxMax,i.max),e.uniform1i(b.u_res,r.meshResolution),e.drawArrays(e.TRIANGLES,0,r.meshResolution*r.meshResolution*6),e.colorMask(!0,!0,!0,!0)}let g=[0,1,2].map(b=>(i.min[b]+i.max[b])/2),h=d[2]*g[0]+d[6]*g[1]+d[10]*g[2]+d[14],f=ze(r.palette),m=b=>{e.uniform1fv(b.u_paletteAt,f.positions),e.uniform3fv(b.u_paletteRGB,f.colors),e.uniform1i(b.u_paletteCount,f.count),e.uniform1i(b.u_paletteIsHue,r.palette==="direction-hue"?1:0),e.uniform1f(b.u_saturation,1),e.uniform1f(b.u_contrast,1)};if(r.look!=="arrows"){let b=this.looks.prepare(r.look,{mathToView:d,projection:n.projection,box:i,speedScale:r.speedScale,colorMode:r.colorMode==="fixed"?1:0,fixedColor:r.fixedColor,depthRange:Ke(n,i),clip:r.clip,fog:r.fog,cut:r.cutaway,cutZ:h,dpr:this.canvas.width/Math.max(1,n.width),uploadPalette:m},r,()=>e.viewport(0,0,this.canvas.width,this.canvas.height));return e.bindVertexArray(this.vao),e.depthMask(!1),p&&r.occlusion==="fade"&&(e.enable(e.DEPTH_TEST),e.depthFunc(e.GREATER),b.draw(.25)),p?(e.enable(e.DEPTH_TEST),e.depthFunc(e.LEQUAL)):e.disable(e.DEPTH_TEST),b.draw(1),e.depthMask(!0),e.bindVertexArray(null),this.endTimer(s),{instances:b.count,vertices:b.vertices,gpuMs:this.gpuMs.length>0?et(this.gpuMs):void 0}}let l=this.arrowUniforms;e.useProgram(this.arrowProgram),e.uniform1i(l.u_cut,r.cutaway?1:0),e.uniform1f(l.u_cutZ,h),e.uniformMatrix4fv(l.u_mathToView,!1,d),e.uniformMatrix4fv(l.u_projection,!1,n.projection),e.uniform1i(l.u_ortho,n.orthographic?1:0),e.uniform1f(l.u_viewportH,n.height),e.uniform3fv(l.u_boxMin,i.min),e.uniform3fv(l.u_boxMax,i.max),e.uniform1i(l.u_sampling,Rt[r.sampling]),e.uniform1i(l.u_count,r.count),e.uniform1i(l.u_sliceAxis,r.sliceAxis),e.uniform1f(l.u_slicePos,r.slicePosition),e.uniform1i(l.u_shape,Pt[r.shape]),e.uniform1i(l.u_lengthMode,$t[r.lengthMode]),e.uniform1f(l.u_length,r.length),e.uniform1f(l.u_cap,.125*2*Math.sqrt(3)),e.uniform1f(l.u_widthPx,r.widthPx),e.uniform1i(l.u_colorMode,r.colorMode==="fixed"?1:0),e.uniform3fv(l.u_fixedColor,r.fixedColor),e.uniform1f(l.u_speedScale,Math.max(1e-9,r.speedScale)),e.uniform2fv(l.u_depthRange,Ke(n,i)),e.uniform1i(l.u_clip,r.clip?1:0),e.uniform1i(l.u_shading,r.shading?1:0),e.uniform1i(l.u_outline,r.outline?1:0),e.uniform1f(l.u_fog,r.fog?1:0),m(l);let w=r.shape==="lines"?e.LINES:e.TRIANGLES,E=()=>e.drawArraysInstanced(w,0,u,a);return p&&r.occlusion==="fade"&&(e.enable(e.DEPTH_TEST),e.depthFunc(e.GREATER),e.depthMask(!1),e.uniform1f(l.u_alpha,.22),E()),e.uniform1f(l.u_alpha,1),p||r.selfDepth?(e.enable(e.DEPTH_TEST),e.depthFunc(e.LEQUAL),e.depthMask(r.selfDepth)):e.disable(e.DEPTH_TEST),E(),e.depthMask(!0),e.bindVertexArray(null),this.endTimer(s),{instances:a,vertices:a*u,gpuMs:this.gpuMs.length>0?et(this.gpuMs):void 0}}endTimer(n){n===null||this.timer===null||(this.gl.endQuery(this.timer.TIME_ELAPSED_EXT),this.pending.push(n))}collectTimer(){let{gl:n}=this;if(this.timer===null)return;let i=n.getParameter(this.timer.GPU_DISJOINT_EXT);for(;this.pending.length>0;){let r=this.pending[0];if(!n.getQueryParameter(r,n.QUERY_RESULT_AVAILABLE))break;this.pending.shift(),i||(this.gpuMs.push(n.getQueryParameter(r,n.QUERY_RESULT)/1e6),this.gpuMs.length>30&&this.gpuMs.shift()),n.deleteQuery(r)}}};function Ke(t,n){let i=A(t.view,t.world),r=1/0,e=-1/0;for(let a=0;a<8;a++){let u=a&1?n.max[0]:n.min[0],s=a&2?n.max[1]:n.min[1],d=a&4?n.max[2]:n.min[2],p=-(i[2]*u+i[6]*s+i[10]*d+i[14]);r=Math.min(r,p),e=Math.max(e,p)}return[r,e]}function tt(t,n){let i=1/0,r=-1/0,e=1/0,a=-1/0;for(let u=0;u<8;u++){let s=j(t,u&1?n.max[0]:n.min[0],u&2?n.max[1]:n.min[1],u&4?n.max[2]:n.min[2]);s!==void 0&&(i=Math.min(i,s.x),r=Math.max(r,s.x),e=Math.min(e,s.y),a=Math.max(a,s.y))}return Math.hypot(r-i,a-e)}function et(t){let n=[...t].sort((i,r)=>i-r);return n[Math.floor(n.length/2)]}var Nt=`#version 300 es
 precision highp float;
 precision highp int;
 uniform vec3 u_boxMin;
@@ -1180,7 +1543,7 @@ in vec3 v_math;
 in vec3 v_view;
 in vec3 v_normal;
 out vec4 outColor;
-${G}
+${F}
 void main() {
   if (vtOutsideBox(v_math)) discard;
   vec3 n = normalize(v_normal);
@@ -1191,23 +1554,23 @@ void main() {
   vec3 c = u_color * (0.45 + 0.6 * diffuse);
   outColor = vec4(c * u_opacity, u_opacity);
 }
-`,Ct=`#version 300 es
+`,Ut=`#version 300 es
 precision highp float;
 precision highp int;
 uniform mat4 u_mathToClip;
 in vec3 a_position;
 void main() { gl_Position = u_mathToClip * vec4(a_position, 1.0); }
-`,Lt=`#version 300 es
+`,Ot=`#version 300 es
 precision highp float;
 precision highp int;
 uniform vec4 u_color;
 out vec4 outColor;
 void main() { outColor = vec4(u_color.rgb * u_color.a, u_color.a); }
-`,Pt=[.78,.27,.25],j=160,oe=class{constructor(t){this.canvas=t;this.surfaceOpacity=.85;let i=t.getContext("webgl2",{antialias:!0,premultipliedAlpha:!0,preserveDrawingBuffer:!0});if(i===null)throw new Error("WebGL2 is not available.");this.gl=i,this.lineProgram=D(i,Ct,Lt),this.lineUniforms=N(i,this.lineProgram),this.lineBuffer=i.createBuffer(),this.lineVao=i.createVertexArray(),i.bindVertexArray(this.lineVao),i.bindBuffer(i.ARRAY_BUFFER,this.lineBuffer);let n=i.getAttribLocation(this.lineProgram,"a_position");i.enableVertexAttribArray(n),i.vertexAttribPointer(n,3,i.FLOAT,!1,0,0),this.emptyVao=i.createVertexArray(),i.bindVertexArray(null)}setSurface(t,i){let{gl:n}=this;this.surfaceProgram=void 0,t!==void 0&&(this.surfaceProgram=D(n,re(t,H+i),At),this.surfaceUniforms=N(n,this.surfaceProgram))}draw(t,i,n){let{gl:r}=this;r.viewport(0,0,this.canvas.width,this.canvas.height),r.clearColor(...n.paper,1),r.clearDepth(1),r.clear(r.COLOR_BUFFER_BIT|r.DEPTH_BUFFER_BIT),r.enable(r.DEPTH_TEST),r.depthFunc(r.LEQUAL),r.enable(r.BLEND),r.blendFunc(r.ONE,r.ONE_MINUS_SRC_ALPHA);let a=A(t.view,t.world),u=A(t.projection,a);if(this.surfaceProgram!==void 0&&this.surfaceUniforms!==void 0){let v=this.surfaceUniforms;r.useProgram(this.surfaceProgram),r.bindVertexArray(this.emptyVao),r.uniformMatrix4fv(v.u_mathToView,!1,a),r.uniformMatrix4fv(v.u_projection,!1,t.projection),r.uniform3fv(v.u_boxMin,i.min),r.uniform3fv(v.u_boxMax,i.max),r.uniform1i(v.u_res,j),r.uniform1i(v.u_ortho,t.orthographic?1:0),r.uniform3fv(v.u_color,Pt),r.uniform1f(v.u_opacity,this.surfaceOpacity),r.depthMask(!0),r.drawArrays(r.TRIANGLES,0,j*j*6)}r.useProgram(this.lineProgram),r.bindVertexArray(this.lineVao),r.uniformMatrix4fv(this.lineUniforms.u_mathToClip,!1,u);let s=n.ink,m=(v,y,b=r.LINES)=>{r.bindBuffer(r.ARRAY_BUFFER,this.lineBuffer),r.bufferData(r.ARRAY_BUFFER,new Float32Array(v),r.DYNAMIC_DRAW),r.uniform4fv(this.lineUniforms.u_color,y),r.drawArrays(b,0,v.length/3)},[f,c,g]=i.min,[h,l,p]=i.max,_=[];for(let[v,y]of[[[f,c,g],[h,c,g]],[[f,l,g],[h,l,g]],[[f,c,p],[h,c,p]],[[f,l,p],[h,l,p]],[[f,c,g],[f,l,g]],[[h,c,g],[h,l,g]],[[f,c,p],[f,l,p]],[[h,c,p],[h,l,p]],[[f,c,g],[f,c,p]],[[h,c,g],[h,c,p]],[[f,l,g],[f,l,p]],[[h,l,g],[h,l,p]]])_.push(...v,...y);r.depthMask(!0),m(_,[...s,.35]);let E=[],M=(v,y,b)=>v>=y&&v<=b;if(M(0,c,l)&&M(0,g,p)&&E.push(f,0,0,h,0,0),M(0,f,h)&&M(0,g,p)&&E.push(0,c,0,0,l,0),M(0,f,h)&&M(0,c,l)&&E.push(0,0,g,0,0,p),E.length>0&&m(E,[...s,.85]),M(0,g,p)){r.depthMask(!1);let v=$t(Math.max(h-f,l-c)/10),y=[];for(let b=Math.ceil(f/v)*v;b<=h+1e-9;b+=v)y.push(b,c,0,b,l,0);for(let b=Math.ceil(c/v)*v;b<=l+1e-9;b+=v)y.push(f,b,0,h,b,0);m(y,[...s,.12]),m([f,c,0,h,c,0,h,l,0,f,c,0,h,l,0,f,l,0],[.45,.55,.7,n.dark?.16:.1],r.TRIANGLES),r.depthMask(!0)}r.bindVertexArray(null)}};function $t(e){let t=10**Math.floor(Math.log10(e)),i=e/t;return(i<1.5?1:i<3.5?2:i<7.5?5:10)*t}var Rt={...ge,dimensions:3},ee={charge:{name:"Point charge",note:"E = r / |r|\xB3. A pole at the origin: the test for colour and length.",field:[String.raw`\frac{x}{\left(x^{2}+y^{2}+z^{2}\right)^{1.5}}`,String.raw`\frac{y}{\left(x^{2}+y^{2}+z^{2}\right)^{1.5}}`,String.raw`\frac{z}{\left(x^{2}+y^{2}+z^{2}\right)^{1.5}}`]},dipole:{name:"Dipole",note:"+1 at (0, 0, 1) and \u22121 at (0, 0, \u22121). Two poles.",field:[String.raw`\frac{x}{\left(x^{2}+y^{2}+\left(z-1\right)^{2}\right)^{1.5}}-\frac{x}{\left(x^{2}+y^{2}+\left(z+1\right)^{2}\right)^{1.5}}`,String.raw`\frac{y}{\left(x^{2}+y^{2}+\left(z-1\right)^{2}\right)^{1.5}}-\frac{y}{\left(x^{2}+y^{2}+\left(z+1\right)^{2}\right)^{1.5}}`,String.raw`\frac{z-1}{\left(x^{2}+y^{2}+\left(z-1\right)^{2}\right)^{1.5}}-\frac{z+1}{\left(x^{2}+y^{2}+\left(z+1\right)^{2}\right)^{1.5}}`]},wire:{name:"Line current",note:"B around a wire on the z-axis: circles, falling off as 1/r.",field:[String.raw`\frac{-y}{x^{2}+y^{2}}`,String.raw`\frac{x}{x^{2}+y^{2}}`,"0"]},rotation:{name:"Rotation",note:"(\u2212y, x, 0). Curl is 2 everywhere, along z.",field:["-y","x","0"]},saddle:{name:"\u2207(x\xB2+y\xB2\u2212z\xB2)",note:"A gradient field. Out along x and y, in along z.",field:["2x","2y","-2z"]},abc:{name:"ABC flow",note:"Arnold\u2013Beltrami\u2013Childress: a classic tangled 3D flow.",field:[String.raw`\sin z+\cos y`,String.raw`\sin x+\cos z`,String.raw`\sin y+\cos x`]}},Te={none:{name:"None",latex:""},bump:{name:"Bump",latex:String.raw`3e^{-\frac{x^{2}+y^{2}}{6}}-1`},saddle:{name:"Saddle",latex:String.raw`\frac{x^{2}-y^{2}}{8}`},ripple:{name:"Ripple",latex:String.raw`\cos\left(\sqrt{x^{2}+y^{2}}\right)`}},It=["spectral","sequential-a","turbo","plasma","magma","cividis"],Q=[16,32,64,128,256],o={preset:"charge",field:[...ee.charge.field],surfacePreset:"bump",surface:Te.bump.latex,surfaceOpacity:.85,box:{min:[-5,-5,-5],max:[5,5,5]},view:{turn:-.65,tilt:.42,zoom:1,perspective:1},shape:{auto:!0,value:"solid"},sampling:"jitter",sliceAxis:2,slicePosition:.5,count:{auto:!0,value:8},lengthMode:"normalized",length:{auto:!0,value:.8},widthPx:3,colorMode:"magnitude",palette:"spectral",scale:{auto:!0,value:1},scaleRule:"field",shading:!0,fog:!1,outline:!1,selfDepth:!0,occlusion:"over",mesh:{auto:!0,value:64},clip:!0,spin:!1},d=e=>document.getElementById(e),L=d("stage"),Ye=d("desmos"),Ze=d("overlay"),te,F;try{te=new oe(Ye),F=new ie(Ze)}catch(e){throw d("fatal").hidden=!1,d("fatal").textContent=`This mock-up needs WebGL2. ${e.message}`,e}var Je=[],le,J=!1;function $(){let e=o.field.map(s=>be(s.trim()===""?"0":s,Rt)),t=e.findIndex(s=>!s.ok),i=d("fieldError"),n,r=d("surfaceError");o.surface.trim()!==""&&(n=be(o.surface)),r.hidden=n===void 0||n.ok,n!==void 0&&!n.ok&&(r.textContent=`z = \u2026 : ${n.error}`);let a=n?.ok===!0?n:void 0;J=a!==void 0,le=a!==void 0?xe(a):void 0;try{te.setSurface(a?.glsl,a?.helpers.map(s=>s.glsl).join(`
-`)??"")}catch(s){r.hidden=!1,r.textContent=`The surface did not compile: ${s.message.split(`
-`)[0]}`}if(t>=0){let s=e[t];i.hidden=!1,i.textContent=`${"PQR"[t]}: ${s.error}`;return}i.hidden=!0;let u=e;Je=u.map(s=>xe(s));try{F.setField(u.map(s=>s.glsl),Dt(u),a?.glsl,a?.helpers.map(s=>s.glsl).join(`
+`,Ht=[.78,.27,.25],X=160,le=class{constructor(n){this.canvas=n;this.surfaceOpacity=.85;let i=n.getContext("webgl2",{antialias:!0,premultipliedAlpha:!0,preserveDrawingBuffer:!0});if(i===null)throw new Error("WebGL2 is not available.");this.gl=i,this.lineProgram=C(i,Ut,Ot),this.lineUniforms=P(i,this.lineProgram),this.lineBuffer=i.createBuffer(),this.lineVao=i.createVertexArray(),i.bindVertexArray(this.lineVao),i.bindBuffer(i.ARRAY_BUFFER,this.lineBuffer);let r=i.getAttribLocation(this.lineProgram,"a_position");i.enableVertexAttribArray(r),i.vertexAttribPointer(r,3,i.FLOAT,!1,0,0),this.emptyVao=i.createVertexArray(),i.bindVertexArray(null)}setSurface(n,i){let{gl:r}=this;this.surfaceProgram=void 0,n!==void 0&&(this.surfaceProgram=C(r,oe(n,D+i),Nt),this.surfaceUniforms=P(r,this.surfaceProgram))}draw(n,i,r){let{gl:e}=this;e.viewport(0,0,this.canvas.width,this.canvas.height),e.clearColor(...r.paper,1),e.clearDepth(1),e.clear(e.COLOR_BUFFER_BIT|e.DEPTH_BUFFER_BIT),e.enable(e.DEPTH_TEST),e.depthFunc(e.LEQUAL),e.enable(e.BLEND),e.blendFunc(e.ONE,e.ONE_MINUS_SRC_ALPHA);let a=A(n.view,n.world),u=A(n.projection,a);if(this.surfaceProgram!==void 0&&this.surfaceUniforms!==void 0){let v=this.surfaceUniforms;e.useProgram(this.surfaceProgram),e.bindVertexArray(this.emptyVao),e.uniformMatrix4fv(v.u_mathToView,!1,a),e.uniformMatrix4fv(v.u_projection,!1,n.projection),e.uniform3fv(v.u_boxMin,i.min),e.uniform3fv(v.u_boxMax,i.max),e.uniform1i(v.u_res,X),e.uniform1i(v.u_ortho,n.orthographic?1:0),e.uniform3fv(v.u_color,Ht),e.uniform1f(v.u_opacity,this.surfaceOpacity),e.depthMask(!0),e.drawArrays(e.TRIANGLES,0,X*X*6)}e.useProgram(this.lineProgram),e.bindVertexArray(this.lineVao),e.uniformMatrix4fv(this.lineUniforms.u_mathToClip,!1,u);let s=r.ink,d=(v,M,_=e.LINES)=>{e.bindBuffer(e.ARRAY_BUFFER,this.lineBuffer),e.bufferData(e.ARRAY_BUFFER,new Float32Array(v),e.DYNAMIC_DRAW),e.uniform4fv(this.lineUniforms.u_color,M),e.drawArrays(_,0,v.length/3)},[p,g,h]=i.min,[f,m,l]=i.max,w=[];for(let[v,M]of[[[p,g,h],[f,g,h]],[[p,m,h],[f,m,h]],[[p,g,l],[f,g,l]],[[p,m,l],[f,m,l]],[[p,g,h],[p,m,h]],[[f,g,h],[f,m,h]],[[p,g,l],[p,m,l]],[[f,g,l],[f,m,l]],[[p,g,h],[p,g,l]],[[f,g,h],[f,g,l]],[[p,m,h],[p,m,l]],[[f,m,h],[f,m,l]]])w.push(...v,...M);e.depthMask(!0),d(w,[...s,.35]);let E=[],b=(v,M,_)=>v>=M&&v<=_;if(b(0,g,m)&&b(0,h,l)&&E.push(p,0,0,f,0,0),b(0,p,f)&&b(0,h,l)&&E.push(0,g,0,0,m,0),b(0,p,f)&&b(0,g,m)&&E.push(0,0,h,0,0,l),E.length>0&&d(E,[...s,.85]),b(0,h,l)){e.depthMask(!1);let v=Bt(Math.max(f-p,m-g)/10),M=[];for(let _=Math.ceil(p/v)*v;_<=f+1e-9;_+=v)M.push(_,g,0,_,m,0);for(let _=Math.ceil(g/v)*v;_<=m+1e-9;_+=v)M.push(p,_,0,f,_,0);d(M,[...s,.12]),d([p,g,0,f,g,0,f,m,0,p,g,0,f,m,0,p,m,0],[.45,.55,.7,r.dark?.16:.1],e.TRIANGLES),e.depthMask(!0)}e.bindVertexArray(null)}};function Bt(t){let n=10**Math.floor(Math.log10(t)),i=t/n;return(i<1.5?1:i<3.5?2:i<7.5?5:10)*n}var Gt={...xe,dimensions:3},ne={charge:{name:"Point charge",note:"E = r / |r|\xB3. A pole at the origin: the test for colour and length.",field:[String.raw`\frac{x}{\left(x^{2}+y^{2}+z^{2}\right)^{1.5}}`,String.raw`\frac{y}{\left(x^{2}+y^{2}+z^{2}\right)^{1.5}}`,String.raw`\frac{z}{\left(x^{2}+y^{2}+z^{2}\right)^{1.5}}`]},dipole:{name:"Dipole",note:"+1 at (0, 0, 1) and \u22121 at (0, 0, \u22121). Two poles.",field:[String.raw`\frac{x}{\left(x^{2}+y^{2}+\left(z-1\right)^{2}\right)^{1.5}}-\frac{x}{\left(x^{2}+y^{2}+\left(z+1\right)^{2}\right)^{1.5}}`,String.raw`\frac{y}{\left(x^{2}+y^{2}+\left(z-1\right)^{2}\right)^{1.5}}-\frac{y}{\left(x^{2}+y^{2}+\left(z+1\right)^{2}\right)^{1.5}}`,String.raw`\frac{z-1}{\left(x^{2}+y^{2}+\left(z-1\right)^{2}\right)^{1.5}}-\frac{z+1}{\left(x^{2}+y^{2}+\left(z+1\right)^{2}\right)^{1.5}}`]},wire:{name:"Line current",note:"B around a wire on the z-axis: circles, falling off as 1/r.",field:[String.raw`\frac{-y}{x^{2}+y^{2}}`,String.raw`\frac{x}{x^{2}+y^{2}}`,"0"]},rotation:{name:"Rotation",note:"(\u2212y, x, 0). Curl is 2 everywhere, along z.",field:["-y","x","0"]},saddle:{name:"\u2207(x\xB2+y\xB2\u2212z\xB2)",note:"A gradient field. Out along x and y, in along z.",field:["2x","2y","-2z"]},abc:{name:"ABC flow",note:"Arnold\u2013Beltrami\u2013Childress: a classic tangled 3D flow.",field:[String.raw`\sin z+\cos y`,String.raw`\sin x+\cos z`,String.raw`\sin y+\cos x`]}},Ae={none:{name:"None",latex:""},bump:{name:"Bump",latex:String.raw`3e^{-\frac{x^{2}+y^{2}}{6}}-1`},saddle:{name:"Saddle",latex:String.raw`\frac{x^{2}-y^{2}}{8}`},ripple:{name:"Ripple",latex:String.raw`\cos\left(\sqrt{x^{2}+y^{2}}\right)`}},zt=["spectral","sequential-a","turbo","plasma","magma","cividis"],K=[16,32,64,128,256],o={preset:"charge",field:[...ne.charge.field],surfacePreset:"bump",surface:Ae.bump.latex,surfaceOpacity:.85,box:{min:[-5,-5,-5],max:[5,5,5]},view:{turn:-.65,tilt:.42,zoom:1,perspective:1},shape:{auto:!0,value:"solid"},sampling:"jitter",sliceAxis:2,slicePosition:.5,count:{auto:!0,value:8},lengthMode:"normalized",length:{auto:!0,value:.8},widthPx:3,colorMode:"magnitude",palette:"spectral",scale:{auto:!0,value:1},scaleRule:"field",shading:!0,fog:!1,outline:!1,selfDepth:!0,occlusion:"hide",mesh:{auto:!0,value:64},clip:!0,spin:!1,look:"arrows",cutaway:!1,lines:{auto:!0,value:2500},lineLength:.6,lineOpacity:.4,points:{auto:!0,value:15e4},pointPx:2,cloudOpacity:.35,cloudContrast:3,cloudByDirection:!1,animate:!0,flowSpeed:.25,flowWindow:.4},c=t=>document.getElementById(t),$=c("stage"),it=c("desmos"),ot=c("overlay"),re,O;try{re=new le(it),O=new se(ot)}catch(t){throw c("fatal").hidden=!1,c("fatal").textContent=`This mock-up needs WebGL2. ${t.message}`,t}var at=[],me,te=!1;function N(){let t=o.field.map(s=>we(s.trim()===""?"0":s,Gt)),n=t.findIndex(s=>!s.ok),i=c("fieldError"),r,e=c("surfaceError");o.surface.trim()!==""&&(r=we(o.surface)),e.hidden=r===void 0||r.ok,r!==void 0&&!r.ok&&(e.textContent=`z = \u2026 : ${r.error}`);let a=r?.ok===!0?r:void 0;te=a!==void 0,me=a!==void 0?ye(a):void 0;try{re.setSurface(a?.glsl,a?.helpers.map(s=>s.glsl).join(`
+`)??"")}catch(s){e.hidden=!1,e.textContent=`The surface did not compile: ${s.message.split(`
+`)[0]}`}if(n>=0){let s=t[n];i.hidden=!1,i.textContent=`${"PQR"[n]}: ${s.error}`;return}i.hidden=!0;let u=t;at=u.map(s=>ye(s));try{O.setField(u.map(s=>s.glsl),Vt(u),a?.glsl,a?.helpers.map(s=>s.glsl).join(`
 `)??"")}catch(s){i.hidden=!1,i.textContent=`The shader did not compile: ${s.message.split(`
-`)[0]}`}}function Dt(e){let t=new Map;for(let i of e)for(let n of i.helpers)t.set(n.name,n.glsl);return[...t.values()].join(`
-`)}var K=600,ue=NaN;function pe(){let e=o.sampling==="surface"&&!J?"grid":o.sampling,t=e==="grid"||e==="jitter",i=t?Z(Math.round(K/75),4,12):Z(Math.round(K/34),8,32),n=o.count.auto?i:Z(Math.round(o.count.value),1,64),a=(t?n**3:n**2)<=3e3?"solid":"flat",u=o.shape.auto?a:o.shape.value,s=2/n,m=o.length.auto?.8:o.length.value,f=[0,1,2].map(_=>o.box.max[_]-o.box.min[_]),c=(f[0]+f[1]+f[2])/9,g=o.scaleRule==="field"&&Number.isFinite(ue)&&ue>0?ue/Math.LN2:c,h=o.scale.auto?g:Math.max(1e-6,o.scale.value),l=Ot(),p=o.mesh.auto?l:o.mesh.value;return{shape:u,sampling:e,count:n,sliceAxis:o.sliceAxis,slicePosition:o.slicePosition,lengthMode:o.lengthMode,length:m*s,widthPx:o.widthPx,colorMode:o.colorMode,palette:o.palette,fixedColor:[.18,.38,.72],speedScale:h,shading:o.shading,fog:o.fog,outline:o.outline,selfDepth:o.selfDepth,occlusion:o.occlusion,meshResolution:p,clip:o.clip,autoNotes:{count:`${i} per ${t?"axis":"side"}`,shape:a==="solid"?"Shaded 3D":"Flat",length:"0.8 \xD7 spacing",scale:W(g),mesh:`${l}`}}}function Nt(e){if(le===void 0)return;let t=et(),{min:i,max:n}=o.box,r=(l,p)=>le([l,p]),a=0,u=0,s=0,m=l=>i[0]+(n[0]-i[0])*l/e,f=l=>i[1]+(n[1]-i[1])*l/e,c=[];for(let l=0;l<=e;l++)for(let p=0;p<=e;p++)c.push(r(m(p),f(l)));let g=(l,p)=>c[p*(e+1)+l],h=(l,p,_)=>{let E=r(l,p);if(!Number.isFinite(E)||!Number.isFinite(_)||E<i[2]||E>n[2])return;let M=z(t,l,p,E),v=z(t,l,p,_);if(M===void 0||v===void 0)return;let y=Math.hypot(M.x-v.x,M.y-v.y);a=Math.max(a,y),u+=y,s++};for(let l=0;l<e;l++)for(let p=0;p<e;p++){let _=m(p),E=m(p+1),M=f(l),v=f(l+1);h((_+E)/2,(M+v)/2,(g(p,l)+g(p+1,l+1))/2),h((_+E)/2,M,(g(p,l)+g(p+1,l))/2),h(_,(M+v)/2,(g(p,l)+g(p,l+1))/2)}return s===0?void 0:{worst:a,mean:u/s}}var se=new Map,Xe="";function Se(e){let t=`${o.surface}|${o.box.min}|${o.box.max}|${K.toFixed(0)}`;return t!==Xe&&(se.clear(),Xe=t),se.has(e)||se.set(e,Nt(e)),se.get(e)}function Ot(){if(!J)return 64;for(let e of Q){let t=Se(e);if(t===void 0||t.worst<1)return e}return Q[Q.length-1]}function ye(e){let t=Math.imul(e>>>0,747796405)+2891336453>>>0,i=Math.imul((t>>>(t>>>28)+4^t)>>>0,277803737)>>>0;return(i>>>22^i)>>>0}function Qe(e){let{min:t,max:i}=o.box,n=e.count,r=(h,l)=>t[h]+(i[h]-t[h])*l,a=[],u=[0,1,2].map(h=>(i[h]-t[h])/2),s=.125*2*Math.sqrt(3),m=0,f=ae(e);for(let h=0;h<f;h++){let l;if(e.sampling==="grid"||e.sampling==="jitter"){let v=[h%n,Math.floor(h/n)%n,Math.floor(h/(n*n))].map(y=>(y+.5)/n);if(e.sampling==="jitter"){let y=[ye(h),ye((h^2654435769)>>>0),ye((h^2246822507)>>>0)];for(let b=0;b<3;b++)v[b]+=(y[b]/4294967295-.5)*.72/n}l=v.map((y,b)=>r(b,y))}else{let v=[(h%n+.5)/n,(Math.floor(h/n)+.5)/n];if(e.sampling==="slice")l=(e.sliceAxis===0?[e.slicePosition,v[0],v[1]]:e.sliceAxis===1?[v[0],e.slicePosition,v[1]]:[v[0],v[1],e.slicePosition]).map((b,U)=>r(U,b));else{let y=r(0,v[0]),b=r(1,v[1]),U=le?.([y,b])??NaN;if(!(U>=t[2]&&U<=i[2]))continue;l=[y,b,U]}}let p=Je.map(v=>v(l));if(p.some(v=>!Number.isFinite(v)))continue;let _=Math.hypot(p[0],p[1],p[2]);if(_<=1e-9)continue;a.push(_);let E=Math.hypot(p[0]/u[0],p[1]/u[1],p[2]/u[2]);(e.lengthMode==="normalized"?e.length:e.lengthMode==="saturating"?e.length*(1-Math.exp(-_/e.speedScale)):e.lengthMode==="clamped"?Math.min(e.length*_/e.speedScale,1.6*e.length):E)>s&&m++}a.sort((h,l)=>h-l);let c=h=>1-Math.exp(-h/e.speedScale),g=a.length;return{drawn:g,median:g>0?a[Math.floor(g/2)]:NaN,max:g>0?a[g-1]:NaN,saturated:g>0?a.filter(h=>c(h)>.95).length/g:0,bottom:g>0?a.filter(h=>c(h)<.1).length/g:0,capped:g>0?m/g:0}}function Ke(){let e=L.getBoundingClientRect();return{width:Math.max(1,e.width),height:Math.max(1,e.height)}}function et(){let{width:e,height:t}=Ke();return je(o.box,o.view,e,t)}function _e(){let e=getComputedStyle(document.documentElement),t=n=>{let r=document.createElement("span");r.style.color=e.getPropertyValue(n),document.body.appendChild(r);let a=getComputedStyle(r).color.match(/[\d.]+/g).map(Number);return r.remove(),[a[0]/255,a[1]/255,a[2]/255]},i=t("--paper");return{paper:i,ink:t("--ink"),dark:i[0]+i[1]+i[2]<1.2}}var Me=_e(),Y=!0,T,Ee=!1,q=0,B=[];function w(e=!1){e&&(Y=!0),!Ee&&(Ee=!0,requestAnimationFrame(Bt))}function Bt(e){Ee=!1,q>0&&(B.push(e-q),B.length>60&&B.shift()),q=e,o.spin&&(o.view.turn+=.006);let t=et();K=We(t,o.box);let i=pe();Y&&(ue=Qe(i).median,i=pe()),te.draw(t,o.box,Me);let n=F.draw(t,o.box,i);Y&&(T=Qe(i),Y=!1),Ft(i,n),o.spin||ce>0?(ce>0&&--ce===0&&Ut(),w()):q=0}function W(e,t=3){return Number.isFinite(e)?e!==0&&(Math.abs(e)>=1e4||Math.abs(e)<.001)?e.toExponential(2):Number(e.toPrecision(t)).toString():"\u2014"}var V=e=>`${(e*100).toFixed(e>0&&e<.01?2:0)}%`,X;function Ft(e,t){d("autoCount").textContent=e.autoNotes.count,d("autoShape").textContent=e.autoNotes.shape,d("autoLength").textContent=e.autoNotes.length,d("autoScale").textContent=`${e.autoNotes.scale} (${o.scaleRule==="field"?"median |F| \xF7 ln 2":"box width \xF7 3"})`,k("scaleRule",o.scaleRule),d("autoMesh").textContent=e.autoNotes.mesh,o.count.auto&&document.activeElement!==d("count")&&(d("count").value=String(e.count)),o.scale.auto&&document.activeElement!==d("scale")&&(d("scale").value=W(e.speedScale)),o.length.auto&&(d("length").value="0.8"),d("lengthValue").textContent=`${(o.length.auto?.8:o.length.value).toFixed(2)} \xD7 spacing`,k("shape",o.shape.auto?"auto":o.shape.value),k("mesh",o.mesh.auto?"auto":String(o.mesh.value)),k("sampling",e.sampling),d("mInstances").textContent=t.instances.toLocaleString(),d("mPerArrow").textContent=`${we(e.shape)} (${e.shape==="solid"?"shaded 3D":e.shape})`,d("mVertices").textContent=t.vertices.toLocaleString(),d("mGpu").textContent=F.hasTimer?t.gpuMs!==void 0?`${t.gpuMs.toFixed(2)} ms`:"measuring\u2026":"no GPU timer in this browser";let i=[...B].sort((n,r)=>n-r);if(d("mFps").textContent=i.length>10?`${(1e3/i[Math.floor(i.length/2)]).toFixed(0)} fps`:"spin to measure",T!==void 0){d("mDrawn").textContent=T.drawn.toLocaleString(),d("mMedian").textContent=W(T.median),d("mMax").textContent=W(T.max),d("mSaturated").textContent=V(T.saturated),d("mBottom").textContent=V(T.bottom),d("mCapped").textContent=V(T.capped);let n=d("colourVerdict");T.bottom>.6?(n.className="verdict warn",n.textContent=`Most arrows (${V(T.bottom)}) sit in the first tenth of the ramp: the scale is too large for this field. Lower it to spread the colours.`):T.saturated>.4?(n.className="verdict warn",n.textContent=`${V(T.saturated)} of arrows are at the end of the ramp: the scale is too small for this field.`):(n.className="verdict good",n.textContent="The colours spread across the ramp. Arrows near a pole run into its end, as they should.")}X=J?Se(e.meshResolution):void 0,d("mGap").textContent=X===void 0?"no surface":`${X.worst.toFixed(2)} px worst, ${X.mean.toFixed(2)} px mean`,d("meshRow").hidden=o.occlusion==="over",d("sliceRow").hidden=o.sampling!=="slice",d("slicePosValue").textContent=W(o.box.min[o.sliceAxis]+(o.box.max[o.sliceAxis]-o.box.min[o.sliceAxis])*o.slicePosition),d("perspectiveValue").textContent=o.view.perspective===0?"0 (orthographic)":o.view.perspective.toFixed(1),d("opacityValue").textContent=o.surfaceOpacity.toFixed(2),d("widthValue").textContent=`${o.widthPx} px`;for(let n of document.querySelectorAll('[data-key="sampling"] [data-value="surface"]'))n.disabled=!J}var ce=0;function tt(){F.gpuMs=[],B.length=0,q=0,ce=90,d("benchmark").textContent="Timing\u2026",w()}function Ut(){d("benchmark").textContent="Time 90 frames";let e=[...B].sort((n,r)=>n-r),t=[...F.gpuMs].sort((n,r)=>n-r),i=pe();d("benchmarkResult").textContent=`${ae(i).toLocaleString()} arrows, ${i.shape==="solid"?"shaded 3D":i.shape}: `+(t.length>0?`GPU ${t[Math.floor(t.length/2)].toFixed(2)} ms median, `:"")+`${(1e3/e[Math.floor(e.length/2)]).toFixed(0)} fps (both layers redrawn every frame).`}function k(e,t){for(let i of document.querySelectorAll(`[data-key="${e}"] [data-value]`))i.setAttribute("aria-pressed",String(i.dataset.value===t))}function S(e,t){document.querySelector(`[data-key="${e}"]`).addEventListener("click",n=>{let r=n.target.closest("[data-value]");r===null||r.disabled||(t(r.dataset.value),k(e,r.dataset.value),w(!0))})}function C(e,t,i){let n=d(e),r=()=>n.setAttribute("aria-pressed",String(t()));r(),n.addEventListener("click",()=>{i(!t()),r(),w(!0)})}function zt(){let e=document.querySelector('[data-key="preset"]');for(let[r,a]of Object.entries(ee)){let u=document.createElement("button");u.className="chip",u.dataset.value=r,u.textContent=a.name,e.appendChild(u)}let t=document.querySelector('[data-key="surfacePreset"]');for(let[r,a]of Object.entries(Te)){let u=document.createElement("button");u.className="chip",u.dataset.value=r,u.textContent=a.name,t.appendChild(u)}let i=document.querySelector('[data-key="palette"]');for(let r of It){let a=document.createElement("button");a.className="chip swatch",a.dataset.value=r,a.title=P[r].name,a.innerHTML=`<span class="ramp" style="background:${Fe(r)}"></span>${P[r].name}`,i.appendChild(a)}let n=document.querySelector('[data-key="mesh"]');for(let r of Q){let a=document.createElement("button");a.className="chip",a.dataset.value=String(r),a.textContent=String(r),n.appendChild(a)}}function ke(){["fieldP","fieldQ","fieldR"].forEach((e,t)=>{d(e).value=o.field[t]}),d("presetNote").textContent=ee[o.preset]?.note??"Your own field."}function Ht(){zt(),ke(),d("surface").value=o.surface,S("preset",n=>{o.preset=n,o.field=[...ee[n].field],ke(),$()}),["fieldP","fieldQ","fieldR"].forEach((n,r)=>{d(n).addEventListener("input",a=>{o.field[r]=a.target.value,o.preset="",k("preset",""),d("presetNote").textContent="Your own field.",$(),w(!0)})}),S("surfacePreset",n=>{o.surfacePreset=n,o.surface=Te[n].latex,d("surface").value=o.surface,$()}),d("surface").addEventListener("input",n=>{o.surface=n.target.value,k("surfacePreset",""),$(),w(!0)}),S("shape",n=>{o.shape=n==="auto"?{auto:!0,value:o.shape.value}:{auto:!1,value:n}}),S("sampling",n=>{o.sampling=n}),S("sliceAxis",n=>{o.sliceAxis=Number(n)}),d("slicePos").addEventListener("input",n=>{o.slicePosition=Number(n.target.value),w(!0)}),C("countAuto",()=>o.count.auto,n=>o.count.auto=n),d("count").addEventListener("input",n=>{let r=Number(n.target.value);r>=1&&(o.count={auto:!1,value:r},d("countAuto").setAttribute("aria-pressed","false"),w(!0))}),S("lengthMode",n=>{o.lengthMode=n}),C("lengthAuto",()=>o.length.auto,n=>o.length.auto=n),d("length").addEventListener("input",n=>{o.length={auto:!1,value:Number(n.target.value)},d("lengthAuto").setAttribute("aria-pressed","false"),w(!0)}),d("width").addEventListener("input",n=>{o.widthPx=Number(n.target.value),w()}),S("colorMode",n=>{o.colorMode=n}),S("palette",n=>{o.palette=n}),C("scaleAuto",()=>o.scale.auto,n=>o.scale.auto=n),S("scaleRule",n=>{o.scaleRule=n,o.scale={auto:!0,value:o.scale.value},d("scaleAuto").setAttribute("aria-pressed","true")}),d("scale").addEventListener("input",n=>{let r=Number(n.target.value);r>0&&(o.scale={auto:!1,value:r},d("scaleAuto").setAttribute("aria-pressed","false"),w(!0))}),C("cueShading",()=>o.shading,n=>o.shading=n),C("cueFog",()=>o.fog,n=>o.fog=n),C("cueOutline",()=>o.outline,n=>o.outline=n),C("cueDepth",()=>o.selfDepth,n=>o.selfDepth=n),C("clip",()=>o.clip,n=>o.clip=n),S("occlusion",n=>{o.occlusion=n}),S("mesh",n=>{o.mesh=n==="auto"?{auto:!0,value:o.mesh.value}:{auto:!1,value:Number(n)}}),d("opacity").addEventListener("input",n=>{o.surfaceOpacity=Number(n.target.value),te.surfaceOpacity=o.surfaceOpacity,w()}),d("perspective").addEventListener("input",n=>{o.view.perspective=Number(n.target.value),w()}),["xmin","ymin","zmin","xmax","ymax","zmax"].forEach(n=>{let r=d(n),a="xyz".indexOf(n[0]),u=n.endsWith("min")?"min":"max";r.value=String(o.box[u][a]),r.addEventListener("input",()=>{let s=Number(r.value);if(!Number.isFinite(s))return;let m={min:[...o.box.min],max:[...o.box.max]};m[u][a]=s,m.max[a]>m.min[a]&&(o.box=m,w(!0))})}),C("spin",()=>o.spin,n=>o.spin=n),d("resetView").addEventListener("click",()=>{o.view={turn:-.65,tilt:.42,zoom:1,perspective:o.view.perspective},w(!0)}),d("benchmark").addEventListener("click",tt);let e;L.addEventListener("pointerdown",n=>{e={x:n.clientX,y:n.clientY},L.setPointerCapture(n.pointerId)}),L.addEventListener("pointermove",n=>{e!==void 0&&(o.view.turn+=(n.clientX-e.x)*.01,o.view.tilt=Z(o.view.tilt+(n.clientY-e.y)*.01,-1.55,1.55),e={x:n.clientX,y:n.clientY},w())});let t=()=>{e=void 0,Y=!0,w()};L.addEventListener("pointerup",t),L.addEventListener("pointercancel",t),L.addEventListener("wheel",n=>{n.preventDefault(),o.view.zoom=Z(o.view.zoom*Math.exp(-n.deltaY*.0012),.3,6),w(!0)},{passive:!1});let i=()=>{let n=Math.min(window.devicePixelRatio||1,2),{width:r,height:a}=Ke();for(let u of[Ye,Ze])u.width=Math.round(r*n),u.height=Math.round(a*n);w(!0)};new ResizeObserver(i).observe(L),window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{Me=_e(),w()}),new MutationObserver(()=>{Me=_e(),w()}).observe(document.documentElement,{attributes:!0,attributeFilter:["data-theme"]}),k("preset",o.preset),k("surfacePreset",o.surfacePreset),k("sliceAxis",String(o.sliceAxis)),k("lengthMode",o.lengthMode),k("colorMode",o.colorMode),k("palette",o.palette),k("occlusion",o.occlusion),$(),i()}function Z(e,t,i){return Math.min(i,Math.max(t,e))}window.mockup={state:o,set(e){Object.assign(o,e),(e.field!==void 0||e.surface!==void 0)&&$(),te.surfaceOpacity=o.surfaceOpacity,w(!0)},preset(e){o.preset=e,o.field=[...ee[e].field],ke(),k("preset",e),$(),w(!0)},numbers(){let e=pe();return{settings:{...e,autoNotes:e.autoNotes},stats:T,gap:X,gaps:Object.fromEntries(Q.map(t=>[t,Se(t)])),standInResolution:j,boxPx:K}},benchmark:tt};Ht();})();
+`)[0]}`}}function Vt(t){let n=new Map;for(let i of t)for(let r of i.helpers)n.set(r.name,r.glsl);return[...n.values()].join(`
+`)}var U=600,de=NaN;function fe(){let t=o.sampling==="surface"&&!te?"grid":o.sampling,n=t==="grid"||t==="jitter",i=n?R(Math.round(U/75),4,12):R(Math.round(U/34),8,32),r=o.count.auto?i:R(Math.round(o.count.value),1,64),a=(n?r**3:r**2)<=3e3?"solid":"flat",u=o.shape.auto?a:o.shape.value,s=2/r,d=o.length.auto?.8:o.length.value,p=[0,1,2].map(b=>o.box.max[b]-o.box.min[b]),g=(p[0]+p[1]+p[2])/9,h=o.scaleRule==="field"&&Number.isFinite(de)&&de>0?de/Math.LN2:g,f=o.scale.auto?h:Math.max(1e-6,o.scale.value),m=qt(),l=R(Math.round((U/9)**2),800,6e3),w=R(Math.round(.5*U**2),4e4,4e5),E=o.mesh.auto?m:o.mesh.value;return{shape:u,sampling:t,count:r,sliceAxis:o.sliceAxis,slicePosition:o.slicePosition,lengthMode:o.lengthMode,length:d*s,widthPx:o.widthPx,colorMode:o.colorMode,palette:o.palette,fixedColor:[.18,.38,.72],speedScale:f,shading:o.shading,fog:o.fog,outline:o.outline,selfDepth:o.selfDepth,occlusion:o.occlusion,meshResolution:E,clip:o.clip,look:o.look,cutaway:o.cutaway,lines:o.lines.auto?l:R(Math.round(o.lines.value),1,4e4),steps:96,lineLength:o.lineLength,lineOpacity:o.lineOpacity,points:o.points.auto?w:R(Math.round(o.points.value),1,2e6),pointPx:o.pointPx,cloudOpacity:o.cloudOpacity,cloudContrast:o.cloudContrast,cloudByDirection:o.cloudByDirection,animate:o.animate,flowSpeed:o.flowSpeed,flowWindow:o.flowWindow,time:performance.now()/1e3,autoNotes:{lines:l.toLocaleString(),points:w.toLocaleString(),count:`${i} per ${n?"axis":"side"}`,shape:a==="solid"?"Shaded 3D":"Flat",length:"0.8 \xD7 spacing",scale:Z(h),mesh:`${m}`}}}function jt(t){if(me===void 0)return;let n=ut(),{min:i,max:r}=o.box,e=(m,l)=>me([m,l]),a=0,u=0,s=0,d=m=>i[0]+(r[0]-i[0])*m/t,p=m=>i[1]+(r[1]-i[1])*m/t,g=[];for(let m=0;m<=t;m++)for(let l=0;l<=t;l++)g.push(e(d(l),p(m)));let h=(m,l)=>g[l*(t+1)+m],f=(m,l,w)=>{let E=e(m,l);if(!Number.isFinite(E)||!Number.isFinite(w)||E<i[2]||E>r[2])return;let b=j(n,m,l,E),v=j(n,m,l,w);if(b===void 0||v===void 0)return;let M=Math.hypot(b.x-v.x,b.y-v.y);a=Math.max(a,M),u+=M,s++};for(let m=0;m<t;m++)for(let l=0;l<t;l++){let w=d(l),E=d(l+1),b=p(m),v=p(m+1);f((w+E)/2,(b+v)/2,(h(l,m)+h(l+1,m+1))/2),f((w+E)/2,b,(h(l,m)+h(l+1,m))/2),f(w,(b+v)/2,(h(l,m)+h(l,m+1))/2)}return s===0?void 0:{worst:a,mean:u/s}}var ce=new Map,nt="";function Ce(t){let n=`${o.surface}|${o.box.min}|${o.box.max}|${U.toFixed(0)}`;return n!==nt&&(ce.clear(),nt=n),ce.has(t)||ce.set(t,jt(t)),ce.get(t)}function qt(){if(!te)return 64;for(let t of K){let n=Ce(t);if(n===void 0||n.worst<1)return t}return K[K.length-1]}function Ee(t){let n=Math.imul(t>>>0,747796405)+2891336453>>>0,i=Math.imul((n>>>(n>>>28)+4^n)>>>0,277803737)>>>0;return(i>>>22^i)>>>0}function rt(t){let{min:n,max:i}=o.box,r=t.count,e=(f,m)=>n[f]+(i[f]-n[f])*m,a=[],u=[0,1,2].map(f=>(i[f]-n[f])/2),s=.125*2*Math.sqrt(3),d=0,p=ue(t);for(let f=0;f<p;f++){let m;if(t.sampling==="grid"||t.sampling==="jitter"){let v=[f%r,Math.floor(f/r)%r,Math.floor(f/(r*r))].map(M=>(M+.5)/r);if(t.sampling==="jitter"){let M=[Ee(f),Ee((f^2654435769)>>>0),Ee((f^2246822507)>>>0)];for(let _=0;_<3;_++)v[_]+=(M[_]/4294967295-.5)*.72/r}m=v.map((M,_)=>e(_,M))}else{let v=[(f%r+.5)/r,(Math.floor(f/r)+.5)/r];if(t.sampling==="slice")m=(t.sliceAxis===0?[t.slicePosition,v[0],v[1]]:t.sliceAxis===1?[v[0],t.slicePosition,v[1]]:[v[0],v[1],t.slicePosition]).map((_,V)=>e(V,_));else{let M=e(0,v[0]),_=e(1,v[1]),V=me?.([M,_])??NaN;if(!(V>=n[2]&&V<=i[2]))continue;m=[M,_,V]}}let l=at.map(v=>v(m));if(l.some(v=>!Number.isFinite(v)))continue;let w=Math.hypot(l[0],l[1],l[2]);if(w<=1e-9)continue;a.push(w);let E=Math.hypot(l[0]/u[0],l[1]/u[1],l[2]/u[2]);(t.lengthMode==="normalized"?t.length:t.lengthMode==="saturating"?t.length*(1-Math.exp(-w/t.speedScale)):t.lengthMode==="clamped"?Math.min(t.length*w/t.speedScale,1.6*t.length):E)>s&&d++}a.sort((f,m)=>f-m);let g=f=>1-Math.exp(-f/t.speedScale),h=a.length;return{drawn:h,median:h>0?a[Math.floor(h/2)]:NaN,max:h>0?a[h-1]:NaN,saturated:h>0?a.filter(f=>g(f)>.95).length/h:0,bottom:h>0?a.filter(f=>g(f)<.1).length/h:0,capped:h>0?d/h:0}}function st(){let t=$.getBoundingClientRect();return{width:Math.max(1,t.width),height:Math.max(1,t.height)}}function ut(){let{width:t,height:n}=st();return qe(o.box,o.view,t,n)}function Te(){let t=getComputedStyle(document.documentElement),n=r=>{let e=document.createElement("span");e.style.color=t.getPropertyValue(r),document.body.appendChild(e);let a=getComputedStyle(e).color.match(/[\d.]+/g).map(Number);return e.remove(),[a[0]/255,a[1]/255,a[2]/255]},i=n("--paper");return{paper:i,ink:n("--ink"),dark:i[0]+i[1]+i[2]<1.2}}var ke=Te(),ee=!0,S,Se=!1,Q=0,z=[];function x(t=!1){t&&(ee=!0),!Se&&(Se=!0,requestAnimationFrame(Wt))}function Wt(t){Se=!1,Q>0&&(z.push(t-Q),z.length>60&&z.shift()),Q=t,o.spin&&(o.view.turn+=.006);let n=ut();U=tt(n,o.box);let i=fe();ee&&(de=rt(i).median,i=fe()),re.draw(n,o.box,ke);let r=O.draw(n,o.box,i);ee&&(S=rt(i),ee=!1),Xt(i,r);let e=o.look==="streamlines"&&o.animate;o.spin||pe>0||e?(pe>0&&--pe===0&&Yt(),x()):Q=0}function Z(t,n=3){return Number.isFinite(t)?t!==0&&(Math.abs(t)>=1e4||Math.abs(t)<.001)?t.toExponential(2):Number(t.toPrecision(n)).toString():"\u2014"}var Y=t=>`${(t*100).toFixed(t>0&&t<.01?2:0)}%`,J;function Xt(t,n){c("autoCount").textContent=t.autoNotes.count,c("autoShape").textContent=t.autoNotes.shape,c("autoLength").textContent=t.autoNotes.length,c("autoScale").textContent=`${t.autoNotes.scale} (${o.scaleRule==="field"?"median |F| \xF7 ln 2":"box width \xF7 3"})`,T("scaleRule",o.scaleRule),c("autoMesh").textContent=t.autoNotes.mesh,o.count.auto&&document.activeElement!==c("count")&&(c("count").value=String(t.count)),o.scale.auto&&document.activeElement!==c("scale")&&(c("scale").value=Z(t.speedScale)),o.length.auto&&(c("length").value="0.8"),c("lengthValue").textContent=`${(o.length.auto?.8:o.length.value).toFixed(2)} \xD7 spacing`,T("shape",o.shape.auto?"auto":o.shape.value),T("mesh",o.mesh.auto?"auto":String(o.mesh.value)),T("sampling",t.sampling),c("mInstances").textContent=n.instances.toLocaleString(),c("mPerArrow").textContent=t.look==="streamlines"?`${t.steps} per line`:t.look==="cloud"?"1 per point":`${Me(t.shape)} (${t.shape==="solid"?"shaded 3D":t.shape})`,c("mAskedLabel").textContent=t.look==="streamlines"?"Lines":t.look==="cloud"?"Points tried":"Arrows asked for",c("autoLines").textContent=t.autoNotes.lines,c("autoPoints").textContent=t.autoNotes.points,o.lines.auto&&document.activeElement!==c("lines")&&(c("lines").value=String(t.lines)),o.points.auto&&document.activeElement!==c("points")&&(c("points").value=String(t.points)),T("look",o.look);for(let r of document.querySelectorAll("[data-look]"))r.hidden=!r.dataset.look.split(" ").includes(o.look);c("lineLengthValue").textContent=`${Math.round(o.lineLength*100)}% of the box`,c("lineOpacityValue").textContent=o.lineOpacity.toFixed(2),c("pointPxValue").textContent=`${o.pointPx} px`,c("cloudOpacityValue").textContent=o.cloudOpacity.toFixed(2),c("cloudContrastValue").textContent=o.cloudContrast.toFixed(1),c("flowSpeedValue").textContent=`${o.flowSpeed.toFixed(2)} lines/s`,c("flowWindowValue").textContent=`${Math.round(o.flowWindow*100)}% of a line`,c("mVertices").textContent=n.vertices.toLocaleString(),c("mGpu").textContent=O.hasTimer?n.gpuMs!==void 0?`${n.gpuMs.toFixed(2)} ms`:"measuring\u2026":"no GPU timer in this browser";let i=[...z].sort((r,e)=>r-e);if(c("mFps").textContent=i.length>10?`${(1e3/i[Math.floor(i.length/2)]).toFixed(0)} fps`:"spin to measure",S!==void 0){c("mDrawn").textContent=S.drawn.toLocaleString(),c("mMedian").textContent=Z(S.median),c("mMax").textContent=Z(S.max),c("mSaturated").textContent=Y(S.saturated),c("mBottom").textContent=Y(S.bottom),c("mCapped").textContent=Y(S.capped);let r=c("colourVerdict");S.bottom>.6?(r.className="verdict warn",r.textContent=`Most arrows (${Y(S.bottom)}) sit in the first tenth of the ramp: the scale is too large for this field. Lower it to spread the colours.`):S.saturated>.4?(r.className="verdict warn",r.textContent=`${Y(S.saturated)} of arrows are at the end of the ramp: the scale is too small for this field.`):(r.className="verdict good",r.textContent="The colours spread across the ramp. Arrows near a pole run into its end, as they should.")}J=te?Ce(t.meshResolution):void 0,c("mGap").textContent=J===void 0?"no surface":`${J.worst.toFixed(2)} px worst, ${J.mean.toFixed(2)} px mean`,c("meshRow").hidden=o.occlusion==="over",c("sliceRow").hidden=o.sampling!=="slice",c("slicePosValue").textContent=Z(o.box.min[o.sliceAxis]+(o.box.max[o.sliceAxis]-o.box.min[o.sliceAxis])*o.slicePosition),c("perspectiveValue").textContent=o.view.perspective===0?"0 (orthographic)":o.view.perspective.toFixed(1),c("opacityValue").textContent=o.surfaceOpacity.toFixed(2),c("widthValue").textContent=`${o.widthPx} px`;for(let r of document.querySelectorAll('[data-key="sampling"] [data-value="surface"]'))r.disabled=!te}var pe=0;function lt(){O.gpuMs=[],z.length=0,Q=0,pe=90,c("benchmark").textContent="Timing\u2026",x()}function Yt(){c("benchmark").textContent="Time 90 frames";let t=[...z].sort((r,e)=>r-e),n=[...O.gpuMs].sort((r,e)=>r-e),i=fe();c("benchmarkResult").textContent=`${ue(i).toLocaleString()} arrows, ${i.shape==="solid"?"shaded 3D":i.shape}: `+(n.length>0?`GPU ${n[Math.floor(n.length/2)].toFixed(2)} ms median, `:"")+`${(1e3/t[Math.floor(t.length/2)]).toFixed(0)} fps (both layers redrawn every frame).`}function T(t,n){for(let i of document.querySelectorAll(`[data-key="${t}"] [data-value]`))i.setAttribute("aria-pressed",String(i.dataset.value===n))}function L(t,n){document.querySelector(`[data-key="${t}"]`).addEventListener("click",r=>{let e=r.target.closest("[data-value]");e===null||e.disabled||(n(e.dataset.value),T(t,e.dataset.value),x(!0))})}function k(t,n,i){let r=c(t),e=()=>r.setAttribute("aria-pressed",String(n()));e(),r.addEventListener("click",()=>{i(!n()),e(),x(!0)})}function Qt(){let t=document.querySelector('[data-key="preset"]');for(let[e,a]of Object.entries(ne)){let u=document.createElement("button");u.className="chip",u.dataset.value=e,u.textContent=a.name,t.appendChild(u)}let n=document.querySelector('[data-key="surfacePreset"]');for(let[e,a]of Object.entries(Ae)){let u=document.createElement("button");u.className="chip",u.dataset.value=e,u.textContent=a.name,n.appendChild(u)}let i=document.querySelector('[data-key="palette"]');for(let e of zt){let a=document.createElement("button");a.className="chip swatch",a.dataset.value=e,a.title=I[e].name,a.innerHTML=`<span class="ramp" style="background:${Ge(e)}"></span>${I[e].name}`,i.appendChild(a)}let r=document.querySelector('[data-key="mesh"]');for(let e of K){let a=document.createElement("button");a.className="chip",a.dataset.value=String(e),a.textContent=String(e),r.appendChild(a)}}function Le(){["fieldP","fieldQ","fieldR"].forEach((t,n)=>{c(t).value=o.field[n]}),c("presetNote").textContent=ne[o.preset]?.note??"Your own field."}function Zt(){if(Qt(),Le(),c("surface").value=o.surface,L("preset",e=>{o.preset=e,o.field=[...ne[e].field],Le(),N()}),["fieldP","fieldQ","fieldR"].forEach((e,a)=>{c(e).addEventListener("input",u=>{o.field[a]=u.target.value,o.preset="",T("preset",""),c("presetNote").textContent="Your own field.",N(),x(!0)})}),L("surfacePreset",e=>{o.surfacePreset=e,o.surface=Ae[e].latex,c("surface").value=o.surface,N()}),c("surface").addEventListener("input",e=>{o.surface=e.target.value,T("surfacePreset",""),N(),x(!0)}),L("shape",e=>{o.shape=e==="auto"?{auto:!0,value:o.shape.value}:{auto:!1,value:e}}),L("sampling",e=>{o.sampling=e}),L("sliceAxis",e=>{o.sliceAxis=Number(e)}),c("slicePos").addEventListener("input",e=>{o.slicePosition=Number(e.target.value),x(!0)}),k("countAuto",()=>o.count.auto,e=>o.count.auto=e),c("count").addEventListener("input",e=>{let a=Number(e.target.value);a>=1&&(o.count={auto:!1,value:a},c("countAuto").setAttribute("aria-pressed","false"),x(!0))}),L("lengthMode",e=>{o.lengthMode=e}),k("lengthAuto",()=>o.length.auto,e=>o.length.auto=e),c("length").addEventListener("input",e=>{o.length={auto:!1,value:Number(e.target.value)},c("lengthAuto").setAttribute("aria-pressed","false"),x(!0)}),c("width").addEventListener("input",e=>{o.widthPx=Number(e.target.value),x()}),L("colorMode",e=>{o.colorMode=e}),L("palette",e=>{o.palette=e}),k("scaleAuto",()=>o.scale.auto,e=>o.scale.auto=e),L("scaleRule",e=>{o.scaleRule=e,o.scale={auto:!0,value:o.scale.value},c("scaleAuto").setAttribute("aria-pressed","true")}),c("scale").addEventListener("input",e=>{let a=Number(e.target.value);a>0&&(o.scale={auto:!1,value:a},c("scaleAuto").setAttribute("aria-pressed","false"),x(!0))}),k("cueShading",()=>o.shading,e=>o.shading=e),k("cueFog",()=>o.fog,e=>o.fog=e),k("cueOutline",()=>o.outline,e=>o.outline=e),k("cueDepth",()=>o.selfDepth,e=>o.selfDepth=e),k("clip",()=>o.clip,e=>o.clip=e),k("cutaway",()=>o.cutaway,e=>o.cutaway=e),L("look",e=>{o.look=e}),!O.canTrace){let e=document.querySelector('[data-key="look"] [data-value="streamlines"]');e.disabled=!0,e.title="Streamlines need float render targets, which this browser lacks."}k("linesAuto",()=>o.lines.auto,e=>o.lines.auto=e),c("lines").addEventListener("input",e=>{let a=Number(e.target.value);a>=1&&(o.lines={auto:!1,value:a},c("linesAuto").setAttribute("aria-pressed","false"),x())}),k("pointsAuto",()=>o.points.auto,e=>o.points.auto=e),c("points").addEventListener("input",e=>{let a=Number(e.target.value);a>=1&&(o.points={auto:!1,value:a},c("pointsAuto").setAttribute("aria-pressed","false"),x())});let t=(e,a)=>c(e).addEventListener("input",u=>{a(Number(u.target.value)),x()});t("lineLength",e=>o.lineLength=e),t("lineOpacity",e=>o.lineOpacity=e),t("pointPx",e=>o.pointPx=e),t("cloudOpacity",e=>o.cloudOpacity=e),t("cloudContrast",e=>o.cloudContrast=e),t("flowSpeed",e=>o.flowSpeed=e),t("flowWindow",e=>o.flowWindow=e),k("animate",()=>o.animate,e=>o.animate=e),L("occlusion",e=>{o.occlusion=e}),L("mesh",e=>{o.mesh=e==="auto"?{auto:!0,value:o.mesh.value}:{auto:!1,value:Number(e)}}),c("opacity").addEventListener("input",e=>{o.surfaceOpacity=Number(e.target.value),re.surfaceOpacity=o.surfaceOpacity,x()}),c("perspective").addEventListener("input",e=>{o.view.perspective=Number(e.target.value),x()}),["xmin","ymin","zmin","xmax","ymax","zmax"].forEach(e=>{let a=c(e),u="xyz".indexOf(e[0]),s=e.endsWith("min")?"min":"max";a.value=String(o.box[s][u]),a.addEventListener("input",()=>{let d=Number(a.value);if(!Number.isFinite(d))return;let p={min:[...o.box.min],max:[...o.box.max]};p[s][u]=d,p.max[u]>p.min[u]&&(o.box=p,x(!0))})}),k("spin",()=>o.spin,e=>o.spin=e),c("resetView").addEventListener("click",()=>{o.view={turn:-.65,tilt:.42,zoom:1,perspective:o.view.perspective},x(!0)}),c("benchmark").addEventListener("click",lt);let n;$.addEventListener("pointerdown",e=>{n={x:e.clientX,y:e.clientY},$.setPointerCapture(e.pointerId)}),$.addEventListener("pointermove",e=>{n!==void 0&&(o.view.turn+=(e.clientX-n.x)*.01,o.view.tilt=R(o.view.tilt+(e.clientY-n.y)*.01,-1.55,1.55),n={x:e.clientX,y:e.clientY},x())});let i=()=>{n=void 0,ee=!0,x()};$.addEventListener("pointerup",i),$.addEventListener("pointercancel",i),$.addEventListener("wheel",e=>{e.preventDefault(),o.view.zoom=R(o.view.zoom*Math.exp(-e.deltaY*.0012),.3,6),x(!0)},{passive:!1});let r=()=>{let e=Math.min(window.devicePixelRatio||1,2),{width:a,height:u}=st();for(let s of[it,ot])s.width=Math.round(a*e),s.height=Math.round(u*e);x(!0)};new ResizeObserver(r).observe($),window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{ke=Te(),x()}),new MutationObserver(()=>{ke=Te(),x()}).observe(document.documentElement,{attributes:!0,attributeFilter:["data-theme"]}),T("preset",o.preset),T("surfacePreset",o.surfacePreset),T("sliceAxis",String(o.sliceAxis)),T("lengthMode",o.lengthMode),T("colorMode",o.colorMode),T("palette",o.palette),T("occlusion",o.occlusion),N(),r()}function R(t,n,i){return Math.min(i,Math.max(n,t))}window.mockup={state:o,set(t){Object.assign(o,t),(t.field!==void 0||t.surface!==void 0)&&N(),re.surfaceOpacity=o.surfaceOpacity,x(!0)},preset(t){o.preset=t,o.field=[...ne[t].field],Le(),T("preset",t),N(),x(!0)},numbers(){let t=fe();return{settings:{...t,autoNotes:t.autoNotes},stats:S,gap:J,gaps:Object.fromEntries(K.map(n=>[n,Ce(n)])),standInResolution:X,boxPx:U}},benchmark:lt};Zt();})();
 
 </script>

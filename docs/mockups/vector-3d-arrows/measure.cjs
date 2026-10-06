@@ -146,6 +146,52 @@ async function sheet(browser, title, cells, columns, file) {
   sampling.push({ png: await shot(page), caption: "ABC flow · whole box" });
   await sheet(browser, "Where arrows go", sampling, 3, "sampling.png");
 
+  // ---- Looks that show the inside: streamlines and the glow cloud.
+  const looks = [];
+  for (const [id, patch, caption] of [
+    ["dipole", { look: "streamlines", animate: false }, "streamlines"],
+    [
+      "dipole",
+      { look: "streamlines", animate: true },
+      "streamlines, animated (one frame)",
+    ],
+    ["wire", { look: "streamlines", animate: false }, "streamlines"],
+    [
+      "abc",
+      { look: "streamlines", animate: false, cutaway: true },
+      "streamlines, near half cut away",
+    ],
+    ["dipole", { look: "cloud" }, "glow cloud by strength"],
+    [
+      "dipole",
+      { look: "cloud", cloudByDirection: true },
+      "glow cloud by direction",
+    ],
+    [
+      "dipole",
+      { look: "cloud", cloudByDirection: true, cutaway: true },
+      "by direction, cut away",
+    ],
+    ["charge", { look: "arrows", cutaway: true }, "arrows, cut away"],
+  ]) {
+    await preset(id);
+    await set({
+      surface: "",
+      cutaway: false,
+      cloudByDirection: false,
+      ...patch,
+    });
+    looks.push({ png: await shot(page), caption: `${id} · ${caption}` });
+  }
+  await sheet(
+    browser,
+    "Looks that show the middle of the field as well as its edges",
+    looks,
+    4,
+    "looks.png"
+  );
+  await set({ look: "arrows", cutaway: false, cloudByDirection: false });
+
   // ---- Poles: colour and length on the point charge and the dipole.
   out.poles = {};
   const poleCells = [];

@@ -27,6 +27,7 @@ import {
   type ArrowSettings,
   type LengthMode,
   type Occlusion,
+  type Look,
   type Sampling,
   type Shape,
 } from "./overlay";
@@ -134,10 +135,25 @@ const state = {
   fog: false,
   outline: false,
   selfDepth: true,
-  occlusion: "over" as Occlusion,
+  // Hidden by default: an arrow behind a surface the student graphed should
+  // look behind it. X-ray and Faded stay one click away.
+  occlusion: "hide" as Occlusion,
   mesh: { auto: true, value: 64 } as Auto<number>,
   clip: true,
   spin: false,
+  look: "arrows" as Look,
+  cutaway: false,
+  lines: { auto: true, value: 2500 } as Auto<number>,
+  lineLength: 0.6,
+  lineOpacity: 0.4,
+  points: { auto: true, value: 150000 } as Auto<number>,
+  pointPx: 2,
+  cloudOpacity: 0.35,
+  cloudContrast: 3,
+  cloudByDirection: false,
+  animate: true,
+  flowSpeed: 0.25,
+  flowWindow: 0.4,
 };
 
 // ---------------------------------------------------------------- elements
@@ -264,6 +280,11 @@ function effective(): ArrowSettings & { autoNotes: Record<string, string> } {
     ? autoScale
     : Math.max(1e-6, state.scale.value);
   const autoMesh = autoMeshResolution();
+  // Enough lines to fill the box with threads at about one per 9 px of its
+  // on-screen size, and a cloud of about half a point per square pixel of it:
+  // dense enough to read as a volume, faint enough to see through.
+  const autoLines = clamp(Math.round((lastBoxPx / 9) ** 2), 800, 6000);
+  const autoPoints = clamp(Math.round(0.5 * lastBoxPx ** 2), 40000, 400000);
   const meshResolution = state.mesh.auto ? autoMesh : state.mesh.value;
   return {
     shape,
@@ -285,7 +306,28 @@ function effective(): ArrowSettings & { autoNotes: Record<string, string> } {
     occlusion: state.occlusion,
     meshResolution,
     clip: state.clip,
+    look: state.look,
+    cutaway: state.cutaway,
+    lines: state.lines.auto
+      ? autoLines
+      : clamp(Math.round(state.lines.value), 1, 40000),
+    steps: 96,
+    lineLength: state.lineLength,
+    lineOpacity: state.lineOpacity,
+    points: state.points.auto
+      ? autoPoints
+      : clamp(Math.round(state.points.value), 1, 2000000),
+    pointPx: state.pointPx,
+    cloudOpacity: state.cloudOpacity,
+    cloudContrast: state.cloudContrast,
+    cloudByDirection: state.cloudByDirection,
+    animate: state.animate,
+    flowSpeed: state.flowSpeed,
+    flowWindow: state.flowWindow,
+    time: performance.now() / 1000,
     autoNotes: {
+      lines: autoLines.toLocaleString(),
+      points: autoPoints.toLocaleString(),
       count: `${autoCount} per ${volume ? "axis" : "side"}`,
       shape: autoShape === "solid" ? "Shaded 3D" : "Flat",
       length: "0.8 × spacing",
@@ -521,7 +563,8 @@ function render(time: number) {
     statsDirty = false;
   }
   showReadouts(s, frame);
-  if (state.spin || benchmarkFrames > 0) {
+  const flowing = state.look === "streamlines" && state.animate;
+  if (state.spin || benchmarkFrames > 0 || flowing) {
     if (benchmarkFrames > 0 && --benchmarkFrames === 0) finishBenchmark();
     requestRender();
   } else {
@@ -564,7 +607,36 @@ function showReadouts(
 
   $("mInstances").textContent = frame.instances.toLocaleString();
   $("mPerArrow").textContent =
-    `${verticesPerArrow(s.shape)} (${s.shape === "solid" ? "shaded 3D" : s.shape})`;
+    s.look === "streamlines"
+      ? `${s.steps} per line`
+      : s.look === "cloud"
+        ? "1 per point"
+        : `${verticesPerArrow(s.shape)} (${s.shape === "solid" ? "shaded 3D" : s.shape})`;
+  $("mAskedLabel").textContent =
+    s.look === "streamlines"
+      ? "Lines"
+      : s.look === "cloud"
+        ? "Points tried"
+        : "Arrows asked for";
+  $("autoLines").textContent = s.autoNotes.lines;
+  $("autoPoints").textContent = s.autoNotes.points;
+  if (state.lines.auto && document.activeElement !== $("lines"))
+    $<HTMLInputElement>("lines").value = String(s.lines);
+  if (state.points.auto && document.activeElement !== $("points"))
+    $<HTMLInputElement>("points").value = String(s.points);
+  syncChips("look", state.look);
+  for (const el of document.querySelectorAll<HTMLElement>("[data-look]")) {
+    el.hidden = !el.dataset.look!.split(" ").includes(state.look);
+  }
+  $("lineLengthValue").textContent =
+    `${Math.round(state.lineLength * 100)}% of the box`;
+  $("lineOpacityValue").textContent = state.lineOpacity.toFixed(2);
+  $("pointPxValue").textContent = `${state.pointPx} px`;
+  $("cloudOpacityValue").textContent = state.cloudOpacity.toFixed(2);
+  $("cloudContrastValue").textContent = state.cloudContrast.toFixed(1);
+  $("flowSpeedValue").textContent = `${state.flowSpeed.toFixed(2)} lines/s`;
+  $("flowWindowValue").textContent =
+    `${Math.round(state.flowWindow * 100)}% of a line`;
   $("mVertices").textContent = frame.vertices.toLocaleString();
   $("mGpu").textContent = overlay.hasTimer
     ? frame.gpuMs !== undefined
@@ -850,6 +922,63 @@ function wire() {
     "clip",
     () => state.clip,
     (v) => (state.clip = v)
+  );
+  toggle(
+    "cutaway",
+    () => state.cutaway,
+    (v) => (state.cutaway = v)
+  );
+  onChips("look", (v) => {
+    state.look = v as Look;
+  });
+  if (!overlay.canTrace) {
+    const b = document.querySelector<HTMLButtonElement>(
+      '[data-key="look"] [data-value="streamlines"]'
+    )!;
+    b.disabled = true;
+    b.title =
+      "Streamlines need float render targets, which this browser lacks.";
+  }
+  toggle(
+    "linesAuto",
+    () => state.lines.auto,
+    (v) => (state.lines.auto = v)
+  );
+  $<HTMLInputElement>("lines").addEventListener("input", (e) => {
+    const value = Number((e.target as HTMLInputElement).value);
+    if (!(value >= 1)) return;
+    state.lines = { auto: false, value };
+    $("linesAuto").setAttribute("aria-pressed", "false");
+    requestRender();
+  });
+  toggle(
+    "pointsAuto",
+    () => state.points.auto,
+    (v) => (state.points.auto = v)
+  );
+  $<HTMLInputElement>("points").addEventListener("input", (e) => {
+    const value = Number((e.target as HTMLInputElement).value);
+    if (!(value >= 1)) return;
+    state.points = { auto: false, value };
+    $("pointsAuto").setAttribute("aria-pressed", "false");
+    requestRender();
+  });
+  const slider = (id: string, set: (v: number) => void) =>
+    $<HTMLInputElement>(id).addEventListener("input", (e) => {
+      set(Number((e.target as HTMLInputElement).value));
+      requestRender();
+    });
+  slider("lineLength", (v) => (state.lineLength = v));
+  slider("lineOpacity", (v) => (state.lineOpacity = v));
+  slider("pointPx", (v) => (state.pointPx = v));
+  slider("cloudOpacity", (v) => (state.cloudOpacity = v));
+  slider("cloudContrast", (v) => (state.cloudContrast = v));
+  slider("flowSpeed", (v) => (state.flowSpeed = v));
+  slider("flowWindow", (v) => (state.flowWindow = v));
+  toggle(
+    "animate",
+    () => state.animate,
+    (v) => (state.animate = v)
   );
   onChips("occlusion", (v) => {
     state.occlusion = v as Occlusion;
