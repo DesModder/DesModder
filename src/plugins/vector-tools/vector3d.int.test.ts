@@ -192,6 +192,57 @@ testWithPageAndOpts(
       Buffer.from(shot.png, "base64")
     );
 
+    // The cutaway: nothing, the near half, a cake slice. Coloured pixels
+    // stand in for arrows, since Desmos's own scene is grey.
+    const coloured = async (png: string) =>
+      await driver.page.evaluate(async (b64: string) => {
+        const img = await createImageBitmap(
+          await (await fetch("data:image/png;base64," + b64)).blob()
+        );
+        const c = new OffscreenCanvas(img.width, img.height);
+        const x = c.getContext("2d")!;
+        x.drawImage(img, 0, 0);
+        const { data } = x.getImageData(0, 0, img.width, img.height);
+        let n = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          const hi = Math.max(data[i], data[i + 1], data[i + 2]);
+          const lo = Math.min(data[i], data[i + 1], data[i + 2]);
+          if (hi - lo > 60) n++;
+        }
+        return n;
+      }, png);
+    const cuts: Record<string, number> = {};
+    for (const cutaway of ["off", "half", "wedge"]) {
+      await configure(driver, `config.space3d.cutaway = "${cutaway}";`);
+      const { png: cutShot } = await capture(driver);
+      if (cutaway !== "off")
+        writeFileSync(
+          join(ASSETS, `plugin-cutaway-${cutaway}.png`),
+          Buffer.from(cutShot, "base64")
+        );
+      cuts[cutaway] = await coloured(cutShot);
+    }
+    // A quarter of the box gone takes roughly a quarter of the arrows; the
+    // near half, roughly half. Loose bounds: arrows overlap on screen.
+    expect(cuts.wedge).toBeLessThan(cuts.off * 0.92);
+    expect(cuts.wedge).toBeGreaterThan(cuts.off * 0.5);
+    expect(cuts.half).toBeLessThan(cuts.off * 0.75);
+    // Fixing the slice keeps it where the camera looks now.
+    const fixedTurn = await driver.page.evaluate(() => {
+      const vt = DSM.enabledPlugins["vector-tools"] as any;
+      vt.setSpace3D("cutaway", "wedge");
+      vt.setCakeSliceFixed(true);
+      return {
+        turn: vt.space3d.cutTurn as number,
+        facing: vt.arrow3dFrame.cameraAzimuth as number,
+      };
+    });
+    expect(fixedTurn.turn).toBeCloseTo(fixedTurn.facing, 6);
+    await configure(
+      driver,
+      `config.space3d.cutaway = "off"; config.space3d.cutTurn = null;`
+    );
+
     // One arrow, along +x from the box's centre, in pure green: its tail and
     // tip have to land where camera3d projects them from the camera of the
     // frame Desmos drew.

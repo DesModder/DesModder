@@ -1422,6 +1422,16 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     });
   }
 
+  /**
+   * Fixes the cake slice in the box, or lets it face the viewer again.
+   * Fixing keeps it where it points now, the camera's own direction, so
+   * switching never makes it jump.
+   */
+  setCakeSliceFixed(fixed: boolean) {
+    const facing = this.arrow3d?.last?.cameraAzimuth ?? 0;
+    this.setSpace3D("cutTurn", fixed ? facing : null);
+  }
+
   /** R(x, y, z), which only the live 3D arrows read. */
   setComponentZ(latex: string) {
     if (this.getConfig().components.zLatex === latex) return;
