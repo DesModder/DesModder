@@ -387,3 +387,36 @@ describe("the functions Desmos has", () => {
     }
   });
 });
+
+describe("fields on Desmos 3D", () => {
+  const SPACE = { ...environment([]), dimensions: 3 as const };
+
+  test("z is a coordinate only where the field is three-dimensional", () => {
+    // On the 2D graph paper z is just a name, and an undefined one is refused
+    // by name rather than quietly read as something.
+    expect(compileFieldComponentToGLSL("z").ok).toBe(false);
+    const result = compileFieldComponentToGLSL("xz-y", SPACE);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.glsl).toContain("p.z");
+  });
+
+  test("a definition may read z, because helpers take the whole point", () => {
+    const result = compileFieldComponentToGLSL(String.raw`f\left(x\right)`, {
+      ...environment([], { f: [["u"], "uz"] }),
+      dimensions: 3,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.helpers[0].glsl).toMatch(
+      /^float vtu_f\(vec3 p, float vl_u\)/
+    );
+    expect(result.helpers[0].glsl).toContain("p.z");
+  });
+
+  test("a 2D field compiles exactly as it did", () => {
+    const before = compileFieldComponentToGLSL(String.raw`f\left(x\right)`, {
+      ...environment([], { f: [["u"], "u^{2}"] }),
+    });
+    expect(before.ok && before.helpers[0].glsl).toMatch(/\(vec2 p, /);
+  });
+});

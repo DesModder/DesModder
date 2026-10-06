@@ -1,6 +1,7 @@
 /**
  * Compiles the subset of Desmos LaTeX that a vector-field component can
- * realistically use into a GLSL ES 3.00 expression over `vec2 p`.
+ * realistically use into a GLSL ES 3.00 expression over `vec2 p` — or `vec3 p`
+ * for a field on Desmos 3D, see `FieldEnvironment.dimensions`.
  *
  * This exists because the flow visualizer evaluates the field on the GPU, tens
  * of thousands of times per frame; it cannot call back into Desmos's evaluator.
@@ -42,6 +43,15 @@ export interface FieldEnvironment {
    * them to define a variable that could not possibly be found.
    */
   unknownNameHint?: string;
+  /**
+   * Whether `z` is a coordinate, and so whether the point is a `vec3 p`.
+   *
+   * Only Desmos 3D has a z, so it is opt-in: on the 2D graph paper `z` is an
+   * ordinary name that the expression list may or may not define, and every
+   * 2D caller keeps compiling exactly what it did. In 3D, z is a coordinate
+   * the way x and y are, and helpers take `vec3 p` so a definition may read it.
+   */
+  dimensions?: 2 | 3;
 }
 
 export const EMPTY_ENVIRONMENT: FieldEnvironment = {
@@ -284,7 +294,7 @@ class CompileContext {
     // called is already ahead of it and the shader can emit them in order.
     const glslName = glslFunctionName(name);
     const signature = [
-      "vec2 p",
+      this.env.dimensions === 3 ? "vec3 p" : "vec2 p",
       ...definition.params.map((param) => `float ${glslLocalName(param)}`),
     ].join(", ");
     this.helpers.push({
@@ -789,6 +799,7 @@ class Parser {
       default:
         break;
     }
+    if (name === "z" && this.context.env.dimensions === 3) return "p.z";
     // `t` means the animation clock, but only where the graph has not said
     // otherwise. A definition the user wrote down is an explicit statement of
     // what the letter means and beats an implicit one — the ordinary scoping
