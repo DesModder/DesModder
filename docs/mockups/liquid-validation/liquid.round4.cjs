@@ -27,88 +27,6 @@ function frictionVelocity(U, y, nu) {
   return u;
 }
 
-const clamp01 = (x) => Math.max(0, Math.min(1, x));
-
-/**
- * Conservative 2-D PLIC geometry for one unit square. `nx,ny` point into the
- * liquid and the returned fractions are the wet lengths of E,N,W,S faces.
- * This is deliberately a CPU-oracle implementation: exact polygon clipping
- * plus bisection is easy to audit; a GPU implementation should use the
- * equivalent closed-form 2-D reconstruction or a small lookup table.
- */
-function plicFaceFractions(alpha, nx, ny, out = new Float64Array(4)) {
-  alpha = clamp01(alpha);
-  const mag = Math.hypot(nx, ny);
-  if (alpha <= 0 || mag < 1e-12) {
-    out.fill(alpha <= 0 ? 0 : alpha);
-    return out;
-  }
-  if (alpha >= 1) {
-    out.fill(1);
-    return out;
-  }
-  nx /= mag;
-  ny /= mag;
-  const ax = Math.abs(nx),
-    ay = Math.abs(ny);
-  const offset = (nx < 0 ? -ax : 0) + (ny < 0 ? -ay : 0);
-  // Area of {ax*X + ay*Y <= c} in the unit square.  This is the CDF of
-  // ax*U + ay*V and avoids polygon allocation inside the per-step oracle.
-  const lowerArea = (c) => {
-    if (ax < 1e-12) return clamp01(c / ay);
-    if (ay < 1e-12) return clamp01(c / ax);
-    const sq = (z) => (z > 0 ? z * z : 0);
-    return clamp01(
-      (sq(c) - sq(c - ax) - sq(c - ay) + sq(c - ax - ay)) / (2 * ax * ay)
-    );
-  };
-  // liquid area = alpha = 1 - lowerArea(c'); c' is in transformed coords.
-  let lo = 0,
-    hi = ax + ay;
-  const target = 1 - alpha;
-  for (let it = 0; it < 8; it++) {
-    const mid = 0.5 * (lo + hi);
-    if (lowerArea(mid) < target) lo = mid;
-    else hi = mid;
-  }
-  const c = 0.5 * (lo + hi) + offset;
-  const face = (x0, y0, x1, y1) => {
-    const d0 = nx * x0 + ny * y0 - c,
-      d1 = nx * x1 + ny * y1 - c;
-    if (d0 >= 0 && d1 >= 0) return 1;
-    if (d0 < 0 && d1 < 0) return 0;
-    const t = d0 / (d0 - d1);
-    return d0 >= 0 ? t : 1 - t;
-  };
-  out[0] = face(1, 0, 1, 1);
-  out[1] = face(0, 1, 1, 1);
-  out[2] = face(0, 0, 0, 1);
-  out[3] = face(0, 0, 1, 0);
-  return out;
-}
-
-/** Convert a physical 2-D-slice drag law to lattice coefficients.
- * a = -linear*u - quadratic*|u|u in physical units.
- * For laminar friction between front/back plates separated by b:
- * linear = 12 nu / b^2.  An optional physical quadratic coefficient Cq [1/m]
- * is converted independently.  The returned coefficients act once per step.
- */
-function physicalSliceDrag({
-  nu = 1e-6,
-  depth = Infinity,
-  dx,
-  dt,
-  quadratic = 0,
-}) {
-  return {
-    linear:
-      Number.isFinite(depth) && depth > 0
-        ? (12 * nu * dt) / (depth * depth)
-        : 0,
-    quadratic: quadratic * dx,
-  };
-}
-
 function equilibrium(dr, ux, uy, out) {
   const rho = 1 + dr,
     usq = 1.5 * (ux * ux + uy * uy);
@@ -222,10 +140,6 @@ class Liquid {
     gasPasses = 4,
     minBubble = 4,
     maxGauge = Infinity,
-    interfaceFlux = "average",
-    capillaryCoeff = 0,
-    spanwiseLinear = 0,
-    spanwiseQuadratic = 0,
     solid = () => false,
     fill = () => 0,
   }) {
@@ -245,10 +159,6 @@ class Liquid {
       gasPasses,
       minBubble,
       maxGauge,
-      interfaceFlux,
-      capillaryCoeff,
-      spanwiseLinear,
-      spanwiseQuadratic,
     });
     const N = (this.N = nx * ny);
     const f64 = () => new Float64Array(N);
@@ -285,11 +195,6 @@ class Liquid {
     this.gasMass = f64();
     this.gasVol = f64();
     this.gasFlow = f64();
-    // Interface geometry for the experimental sharper flux and capillary jump.
-    this.surfNx = f64();
-    this.surfNy = f64();
-    this.curvature = f64();
-    this.faceFill = new Float64Array(4 * N); // E,N,W,S wet fractions
     this.steps = 0;
     this.poured = 0;
     this.peakSpeed = 0;
@@ -398,77 +303,6 @@ class Liquid {
 
   step(count = 1) {
     for (let n = 0; n < count; n++) this.oneStep();
-  }
-
-  /** Reconstruct outward (liquid -> gas) normals, curvature and PLIC face fills. */
-  updateInterfaceGeometry() {
-    const { N, type: t, phi, nb } = this;
-    const sx = this.surfNx,
-      sy = this.surfNy,
-      curv = this.curvature;
-    sx.fill(0);
-    sy.fill(0);
-    curv.fill(0);
-    const val = (j, k) => (j >= 0 && t[j] !== SOLID ? phi[j] : phi[k]);
-    // A compact isotropic gradient.  -grad(phi) points out of the liquid.
-    // PLIC alone only needs normals in interface cells; capillarity also needs
-    // normals one cell away for div(n), so compute the full field only then.
-    for (let k = 0; k < N; k++) {
-      if (t[k] === SOLID || (this.capillaryCoeff === 0 && t[k] !== INTERFACE))
-        continue;
-      const e = val(nb[1 * N + k], k),
-        n = val(nb[2 * N + k], k);
-      const w = val(nb[3 * N + k], k),
-        s = val(nb[4 * N + k], k);
-      const ne = val(nb[5 * N + k], k),
-        nw = val(nb[6 * N + k], k);
-      const sw = val(nb[7 * N + k], k),
-        se = val(nb[8 * N + k], k);
-      const gx = e - w + 0.25 * (ne + se - nw - sw);
-      const gy = n - s + 0.25 * (ne + nw - se - sw);
-      const m = Math.hypot(gx, gy);
-      if (m > 1e-12) {
-        sx[k] = -gx / m;
-        sy[k] = -gy / m;
-      }
-    }
-    if (this.capillaryCoeff !== 0) {
-      // kappa = -div(n_out); negative for a liquid drop, positive for a gas bubble.
-      for (let k = 0; k < N; k++) {
-        if (t[k] !== INTERFACE) continue;
-        const e = nb[1 * N + k],
-          n = nb[2 * N + k],
-          w = nb[3 * N + k],
-          s = nb[4 * N + k];
-        const nxE = e >= 0 && t[e] !== SOLID ? sx[e] : sx[k];
-        const nxW = w >= 0 && t[w] !== SOLID ? sx[w] : sx[k];
-        const nyN = n >= 0 && t[n] !== SOLID ? sy[n] : sy[k];
-        const nyS = s >= 0 && t[s] !== SOLID ? sy[s] : sy[k];
-        curv[k] = -0.5 * (nxE - nxW + nyN - nyS);
-      }
-    }
-    if (this.interfaceFlux !== "plic") return;
-    const tmp = new Float64Array(4),
-      ff = this.faceFill;
-    for (let k = 0; k < N; k++) {
-      if (t[k] !== INTERFACE) continue;
-      // plicFaceFractions expects the normal pointing into the liquid.
-      plicFaceFractions(phi[k], -sx[k], -sy[k], tmp);
-      ff[k] = tmp[0];
-      ff[N + k] = tmp[1];
-      ff[2 * N + k] = tmp[2];
-      ff[3 * N + k] = tmp[3];
-    }
-  }
-
-  interfaceExchangeFactor(k, j, i) {
-    if (this.interfaceFlux !== "plic" || i > 4)
-      return 0.5 * (this.phi[k] + this.phi[j]);
-    // i is the population direction arriving at k; j lies in OPP[i].
-    const slot = (d) => (d === 1 ? 0 : d === 2 ? 1 : d === 3 ? 2 : 3);
-    const a = this.faceFill[slot(OPP[i]) * this.N + k];
-    const b = this.faceFill[slot(i) * this.N + j];
-    return 0.5 * (a + b);
   }
 
   /** The gas pressure, as a density, that the free surface pushes against.
@@ -758,8 +592,6 @@ class Liquid {
     nUx.fill(0);
     nUy.fill(0);
     tent.set(t);
-    if (this.interfaceFlux === "plic" || this.capillaryCoeff !== 0)
-      this.updateInterfaceGeometry();
     if (this.bubbles) {
       if (this.gasModel === "local") this.updateGasLocal();
       else this.updateGas();
@@ -785,7 +617,7 @@ class Liquid {
         if (j < 0 || t[j] === SOLID)
           g[i] = slip ? this.wallPopulation(k, i) : p[OPP[i] * N + k];
         else if (t[j] === GAS) {
-          const dg = gasRho[j] - 1 - this.capillaryCoeff * this.curvature[k];
+          const dg = gasRho[j] - 1;
           g[i] =
             feqi(i, dg, uxk, uyk) +
             feqi(OPP[i], dg, uxk, uyk) -
@@ -797,9 +629,7 @@ class Liquid {
             wet++;
             if (t[j] === FLUID) bulk++;
             const factor =
-              t[k] === FLUID || t[j] === FLUID
-                ? 1
-                : this.interfaceExchangeFactor(k, j, i);
+              t[k] === FLUID || t[j] === FLUID ? 1 : 0.5 * (phi[k] + phi[j]);
             dm += factor * (p[i * N + j] - p[OPP[i] * N + k]);
           }
         }
@@ -811,12 +641,6 @@ class Liquid {
         const w = this.wallStress(k, uxk, uyk);
         fx += w[0];
         fy += w[1];
-      }
-      if (this.spanwiseLinear !== 0 || this.spanwiseQuadratic !== 0) {
-        const sp = Math.hypot(uxk, uyk);
-        const drag = this.spanwiseLinear + this.spanwiseQuadratic * sp;
-        fx -= rho[k] * drag * uxk;
-        fy -= rho[k] * drag * uyk;
       }
       collide(g, this.tau, this.smagorinsky, fx, fy, macro);
       // Spray, a surface cell with no bulk liquid beside it, is a drop one or
@@ -979,13 +803,4 @@ class Liquid {
   }
 }
 if (typeof module !== "undefined")
-  module.exports = {
-    Liquid,
-    GAS,
-    INTERFACE,
-    FLUID,
-    SOLID,
-    frictionVelocity,
-    plicFaceFractions,
-    physicalSliceDrag,
-  };
+  module.exports = { Liquid, GAS, INTERFACE, FLUID, SOLID };

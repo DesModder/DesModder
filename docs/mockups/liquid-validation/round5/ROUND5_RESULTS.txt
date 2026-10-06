@@ -1,0 +1,130 @@
+
+$ node --test round5.test.cjs
+TAP version 13
+# Subtest: PLIC face geometry has the expected half-cell cuts
+ok 1 - PLIC face geometry has the expected half-cell cuts
+  ---
+  duration_ms: 0.792322
+  type: 'test'
+  ...
+# Subtest: physical slice drag conversion is pinned
+ok 2 - physical slice drag conversion is pinned
+  ---
+  duration_ms: 0.152325
+  type: 'test'
+  ...
+# Subtest: new features are opt-in: default dam oracle output is unchanged
+ok 3 - new features are opt-in: default dam oracle output is unchanged
+  ---
+  duration_ms: 933.365694
+  type: 'test'
+  ...
+# Subtest: mass ledger remains conservative with PLIC exchange
+ok 4 - mass ledger remains conservative with PLIC exchange
+  ---
+  duration_ms: 98.151244
+  type: 'test'
+  ...
+# Subtest: capillary pressure jump stays finite and conservative in a coarse drop
+ok 5 - capillary pressure jump stays finite and conservative in a coarse drop
+  ---
+  duration_ms: 37.118487
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1114.336063
+
+$ NX=160 TEND=1.18 SAMPLE=30 NOBUB=1 node wave.cjs
+SMAG 0.1 NX 160 SAMPLE 30 FLUX average SIGMA 0 B inf CQ 0: theory T 0.819 s, measured 0.825 s, damping/period 8.3% | amplitude per half-period (cm): 2.00 1.91 1.83
+
+$ NX=160 TEND=1.18 SAMPLE=30 NOBUB=1 FLUX=plic node wave.cjs
+TIMEOUT NOTE: the preceding NX=160 FLUX=plic wave rerun exceeded the 300 s batch limit. A prior completed run of the same command measured T=0.825 s and 8.9% damping/period (2.00, 1.92, 1.82 cm).
+
+$ NX=160 TEND=0.45 node rise.cjs
+160 cells, d 6.3 cm, Collins 0.46 m/s, measured 0.17 m/s, FLUX average, SIGMA 0, B inf, CQ 0, K 0.149 regions
+  t 0.05 gas 100% height 19.8 cm
+  t 0.10 gas 100% height 21.4 cm
+  t 0.15 gas 100% height 22.5 cm
+  t 0.20 gas 32% height 23.4 cm
+  t 0.25 gas 27% height 23.7 cm
+  t 0.30 gas 27% height 24.8 cm
+  t 0.35 gas 21% height 25.7 cm
+  t 0.40 gas 16% height 26.8 cm
+
+$ NX=160 TEND=0.45 SIGMA=0.072 node rise.cjs
+160 cells, d 6.3 cm, Collins 0.46 m/s, measured 0.15 m/s, FLUX average, SIGMA 0.072, B inf, CQ 0, K 0.149 regions
+  t 0.05 gas 100% height 19.8 cm
+  t 0.10 gas 100% height 21.4 cm
+  t 0.15 gas 100% height 22.6 cm
+  t 0.20 gas 101% height 24.1 cm
+  t 0.25 gas 54% height 24.9 cm
+  t 0.30 gas 43% height 25.9 cm
+  t 0.35 gas 36% height 26.1 cm
+  t 0.40 gas 36% height 26.6 cm
+
+$ TEND=0.50 node capillary.cjs
+capillary static dx 6.25 mm R 4.0 cm sigma 0.072 coeff 1.691e-5 FLUX average | theory T 2.418 s measured 0.014 s | max spurious 0.0021 m/s | mode 0.0000 | mass drift -6.64e-16
+
+$ OSC=1 TEND=3.0 node capillary.cjs
+
+REPORTING FIX: capillary static-period detector now only reports a period when OSC=1. Solver unchanged.
+$ TEND=0.50 node capillary.cjs
+capillary static dx 6.25 mm R 4.0 cm sigma 0.072 coeff 1.691e-5 FLUX average | theory T 2.418 s measured n/a s | max spurious 0.0021 m/s | mode 0.0000 | mass drift -6.64e-16
+PRIOR COMPLETED OSCILLATION RUNS (same solver; rerun exceeded current batch timeout):
+  OSC=1 TEND=3.0 node capillary.cjs -> theory 2.418 s, measured 1.315 s, max spurious 0.0065 m/s, mode 0.0160, mass drift -2.42e-15
+  DX=0.003125 NX=96 NY=96 OSC=1 TEND=3.0 node capillary.cjs -> theory 2.418 s, measured 1.478 s, max spurious 0.0102 m/s, mass drift -3.32e-15
+
+$ NX=160 WIDTH=0.015 SLIP=0 node wall.cjs
+slab 2 cells wide, slip 0: t 0.05 fell 1.0 cm of 1.2 (81%) | t 0.10 fell 3.7 cm of 4.9 (76%) | t 0.15 fell 7.5 cm of 11.1 (68%) | t 0.20 fell 9.9 cm of 19.7 (50%) | t 0.25 fell 11.8 cm of 30.7 (38%)
+
+$ NX=160 WIDTH=0.015 SLIP=1 node wall.cjs
+slab 2 cells wide, slip 1: t 0.05 fell 1.1 cm of 1.2 (88%) | t 0.10 fell 4.2 cm of 4.9 (85%) | t 0.15 fell 9.2 cm of 11.1 (83%) | t 0.20 fell 16.1 cm of 19.7 (82%) | t 0.25 fell 24.7 cm of 30.7 (80%)
+
+$ NX=160 WIDTH=0.015 SLIP=1 MID=1 node wall.cjs
+slab 2 cells wide, slip 1: t 0.05 fell 1.1 cm of 1.2 (86%) | t 0.10 fell 4.2 cm of 4.9 (85%) | t 0.15 fell 9.6 cm of 11.1 (87%) | t 0.20 fell 17.3 cm of 19.7 (88%) | t 0.25 fell 27.3 cm of 30.7 (89%)
+
+$ NX=160 WIDTH=0.00625 SLIP=1 node wall.cjs
+slab 1 cells wide, slip 1: t 0.05 fell 0.8 cm of 1.2 (65%) | t 0.10 fell 3.0 cm of 4.9 (62%) | t 0.15 fell 6.6 cm of 11.1 (60%) | t 0.20 fell 11.7 cm of 19.7 (60%) | t 0.25 fell 18.6 cm of 30.7 (60%)
+
+$ NX=160 WIDTH=0.00625 SLIP=1 MID=1 node wall.cjs
+slab 1 cells wide, slip 1: t 0.05 fell 0.8 cm of 1.2 (69%) | t 0.10 fell 3.4 cm of 4.9 (69%) | t 0.15 fell 7.8 cm of 11.1 (71%) | t 0.20 fell 14.3 cm of 19.7 (73%) | t 0.25 fell 22.8 cm of 30.7 (74%)
+
+$ TEND=1.25 node sloshing.cjs
+sloshing dx 6.25 mm cells 82x79 B inf CQ 0 SMAG 0.1 FLUX average | theory T 0.806 s measured 0.821 s | delta 0.128 1/s vs exp 0.065+/-0.015 | loss/period 10.0% | amps cm 2.00 1.90 1.80
+
+$ TEND=1.15 B=0.05 node sloshing.cjs
+
+LATEST DIAGNOSTIC FIX
+$ TEND=0.50 node capillary.cjs
+capillary static dx 6.25 mm R 4.0 cm sigma 0.072 coeff 1.691e-5 FLUX average | theory T 2.418 s measured n/a s | peak speed 0.0087 m/s final max speed 0.0021 m/s | mode 0.0000 | mass drift -6.64e-16
+
+COMPLETED EARLIER IN THIS ROUND-5 SESSION — DRAG/TURBULENCE SWEEP
+$ NX=80 NOBUB=1 SMAG=0 CQ=0 node physics.cjs
+dam 80 new (4 s): front mean 0.9% (+ ahead), late speed 1.33 vs MM 1.32, last X 3.67 3.87 4.13 | mean kinetic energy 1.5-2.0 s 10.75 J/m | at 2.0 s: kinetic energy 8.83 J/m, gas regions 0, peak Mach 0.25, mass drift -1.4e-15
+$ NX=80 NOBUB=1 SMAG=0.1 CQ=0 node physics.cjs
+dam 80 new (4 s): front mean 0.6% (+ ahead), late speed 1.28 vs MM 1.32, last X 3.60 3.80 4.07 | mean kinetic energy 1.5-2.0 s 8.43 J/m | at 2.0 s: kinetic energy 6.12 J/m, gas regions 0, peak Mach 0.14, mass drift -2.4e-15
+$ NX=80 NOBUB=1 SMAG=0.2 CQ=0 node physics.cjs
+dam 80 new (4 s): front mean -0.3% (+ ahead), late speed 1.19 vs MM 1.32, last X 3.53 3.67 3.93 | mean kinetic energy 1.5-2.0 s 8.43 J/m | at 2.0 s: kinetic energy 4.83 J/m, gas regions 0, peak Mach 0.19, mass drift 0.0e+0
+$ NX=80 NOBUB=1 SMAG=0.1 CQ=0.2 node physics.cjs
+dam 80 new (4 s): front mean -0.7% (+ ahead), late speed 1.28 vs MM 1.32, last X 3.53 3.73 4.00 | mean kinetic energy 1.5-2.0 s 8.82 J/m | at 2.0 s: kinetic energy 4.07 J/m, gas regions 0, peak Mach 0.17, mass drift -2.5e-16
+$ NX=80 NOBUB=1 SMAG=0.1 CQ=1 node physics.cjs
+dam 80 new (4 s): front mean -4.5% (+ ahead), late speed 1.09 vs MM 1.32, last X 3.27 3.40 3.67 | mean kinetic energy 1.5-2.0 s 3.45 J/m | at 2.0 s: kinetic energy 1.45 J/m, gas regions 0, peak Mach 0.08, mass drift -2.4e-15
+$ NX=80 NOBUB=1 SMAG=0.1 B=0.15 node physics.cjs
+dam 80 new (4 s): front mean 0.7% (+ ahead), late speed 1.28 vs MM 1.32, last X 3.67 3.80 4.07 | mean kinetic energy 1.5-2.0 s 8.54 J/m | at 2.0 s: kinetic energy 6.05 J/m, gas regions 0, peak Mach 0.15, mass drift 3.8e-16
+$ NX=80 NOBUB=1 SMAG=0.1 B=0.05 node physics.cjs
+dam 80 new (4 s): front mean 0.3% (+ ahead), late speed 1.28 vs MM 1.32, last X 3.60 3.80 4.07 | mean kinetic energy 1.5-2.0 s 10.42 J/m | at 2.0 s: kinetic energy 6.24 J/m, gas regions 0, peak Mach 0.15, mass drift -2.1e-15
+
+COMPLETED EARLIER IN THIS ROUND-5 SESSION — MATCHED SLOSHING
+$ TEND=1.25 node sloshing.cjs
+sloshing dx 6.25 mm cells 82x79 B inf CQ 0 SMAG 0.1 FLUX average | theory T 0.806 s measured 0.821 s | delta 0.128 1/s vs exp 0.065+/-0.015 | loss/period 10.0% | amps cm 2.00 1.90 1.80
+$ TEND=1.15 B=0.05 node sloshing.cjs
+sloshing dx 6.25 mm cells 82x79 B 0.05 CQ 0 SMAG 0.1 FLUX average | theory T 0.806 s measured 0.823 s | delta 0.130 1/s vs exp 0.065+/-0.015 | loss/period 10.2% | amps cm 2.00 1.90 1.80
+$ TEND=1.15 CQ=0.2 node sloshing.cjs
+sloshing dx 6.25 mm cells 82x79 B inf CQ 0.2 SMAG 0.1 FLUX average | theory T 0.806 s measured 0.823 s | delta 0.128 1/s vs exp 0.065+/-0.015 | loss/period 10.0% | amps cm 2.00 1.90 1.80

@@ -79,3 +79,32 @@ What they showed (6 mm cells unless stated):
   the dam break is 11.5 J/m against 4.7 with gripping walls. Whether either
   matches real water needs measured energy decay; 2D also lacks the 3D
   turbulence that drains real water.
+
+## Round 5 — real-water behavior research
+
+The full report is `round5/ROUND5_REPORT.md`; exact commands/output are in
+`round5/ROUND5_RESULTS.txt`.
+
+Round-5 additions are opt-in. `node --test round5.test.cjs` pins the old default (against `liquid.round4.cjs`)
+oracle, conservative PLIC research exchange, physical drag conversion, and the
+capillary pressure jump.
+
+Main measured conclusions:
+
+- matched quasi-2-D sloshing at 6.25 mm decays at `0.128 1/s` versus
+  `0.065 +/- 0.015 1/s` measured, so a global extra damping term is not
+  justified before the interface-advection error is fixed;
+- the cheap PLIC _face-weight_ substitution is not a true PLIC VOF advection
+  method and did not improve the production standing wave (`8.3%` -> `8.9%`
+  first-period damping in completed runs);
+- the capillary pressure jump is conservative, but finite-difference curvature
+  gives a 2-D drop oscillation period far from theory, so it is research-only;
+- water surface tension improves the 6.3 cm bubble's cohesion but does not
+  recover Collins' rise speed;
+- Malaspinas/Sagaut-style first-cell wall modeling is appropriate to resolved
+  attached wall flow, not a one-cell free-surface film.
+
+Recommended next solver change: a true finite-volume/geometric VOF advection
+pass with PLIC reconstruction, while retaining the current “only missing PDFs”
+free-surface boundary. Revalidate waves first; only then calibrate any missing
+spanwise/3-D dissipation.

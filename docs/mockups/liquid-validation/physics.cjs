@@ -1,5 +1,5 @@
 // The page's scenes in real units with a chosen physics set; reports what the page would.
-const { Liquid } = require("./liquid.cjs");
+const { Liquid, physicalSliceDrag } = require("./liquid.cjs");
 const nx = +(process.env.NX || 160),
   ny = Math.round(nx * 0.6),
   r = nx / 160,
@@ -7,11 +7,25 @@ const nx = +(process.env.NX || 160),
 const dt = Math.sqrt((3e-5 * dx) / 9.81),
   tau = 0.5 + (3e-6 * dt) / dx / dx,
   K = (101325 * 3 * dt * dt) / (1000 * dx * dx);
+const slice = physicalSliceDrag({
+  nu: 1e-6,
+  depth: +(process.env.B || Infinity),
+  dx,
+  dt,
+  quadratic: +(process.env.CQ || 0),
+});
+const extra = {
+  interfaceFlux: process.env.FLUX || "average",
+  capillaryCoeff:
+    (3 * +(process.env.SIGMA || 0) * dt * dt) / (1000 * dx * dx * dx),
+  spanwiseLinear: slice.linear,
+  spanwiseQuadratic: slice.quadratic,
+};
 const NEW = !process.env.OLD;
 const opts = NEW
   ? {
       atmosphere: K,
-      bubbles: true,
+      bubbles: !process.env.NOBUB,
       fillRate: 0,
       closePockets: false,
       instantFill: true,
@@ -52,8 +66,10 @@ const make = {
       nx,
       ny,
       tau,
+      smagorinsky: +(process.env.SMAG ?? 0.1),
       gravity: 3e-5,
       ...opts,
+      ...extra,
       solid: wall,
       fill: (x, y) => (x >= 1 && x <= a && y >= 1 && y <= 2 * a ? 1 : 0),
     }),
@@ -62,6 +78,7 @@ const make = {
       nx,
       ny,
       tau,
+      smagorinsky: +(process.env.SMAG ?? 0.1),
       gravity: 3e-5,
       ...opts,
       solid: (x, y) =>
@@ -69,6 +86,13 @@ const make = {
       fill: () => 0,
     }),
 }[scene];
+const kineticEnergy = (s) => {
+  let ke = 0;
+  for (let k = 0; k < s.N; k++)
+    if (s.type[k] === 1 || s.type[k] === 2)
+      ke += 0.5 * s.mass[k] * (s.ux[k] ** 2 + s.uy[k] ** 2);
+  return ke * (dx / dt) ** 2 * dx * dx * 1000;
+};
 const s = make(),
   m0 = s.totalMass();
 let out = [];
@@ -98,7 +122,20 @@ try {
         .map((x) => x.toFixed(2))
         .join(" ")}`
     );
-    s.step(Math.round(2 / dt) - s.steps); // on to 2 s: the slosh
+    const target = Math.round(2 / dt);
+    let keSum = 0,
+      keN = 0;
+    while (s.steps < target) {
+      s.oneStep();
+      const tt = s.steps * dt;
+      if (tt >= 1.5 && s.steps % 20 === 0) {
+        keSum += kineticEnergy(s);
+        keN++;
+      }
+    }
+    out.push(
+      `mean kinetic energy 1.5-2.0 s ${(keSum / Math.max(1, keN)).toFixed(2)} J/m`
+    );
   } else {
     const per = (0.025 * 1.0 * dt) / (dx * dx);
     for (let n = 0; n * dt < 3; n++) {
@@ -108,14 +145,10 @@ try {
     }
   }
   // kinetic energy and holes at the end
-  let ke = 0,
-    holes = 0;
-  for (let k = 0; k < s.N; k++)
-    if (s.type[k] === 1 || s.type[k] === 2)
-      ke += 0.5 * s.mass[k] * (s.ux[k] ** 2 + s.uy[k] ** 2);
+  const ke = kineticEnergy(s);
   const regions = s.bubblePV ? s.bubblePV.length : 0;
   out.push(
-    `at ${(s.steps * dt).toFixed(1)} s: kinetic energy ${(ke * (dx / dt) ** 2 * dx * dx * 1000).toFixed(2)} J/m, gas regions ${regions}, peak Mach ${(s.peakSpeed * Math.sqrt(3)).toFixed(2)}, mass drift ${((s.totalMass() - m0 - s.poured) / (m0 + s.poured)).toExponential(1)}`
+    `at ${(s.steps * dt).toFixed(1)} s: kinetic energy ${ke.toFixed(2)} J/m, gas regions ${regions}, peak Mach ${(s.peakSpeed * Math.sqrt(3)).toFixed(2)}, mass drift ${((s.totalMass() - m0 - s.poured) / (m0 + s.poured)).toExponential(1)}`
   );
 } catch (e) {
   out.push(e.message);
