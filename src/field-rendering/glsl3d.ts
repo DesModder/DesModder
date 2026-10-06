@@ -180,3 +180,11 @@ export function depthRange(
   }
   return [near, far];
 }
+
+/** "#rrggbb" as 0..1 channels; a malformed colour is the default blue. */
+export function hexToUnitRGB(hex: string): [number, number, number] {
+  const match = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (match === null) return [0.18, 0.43, 0.84];
+  const n = parseInt(match[1], 16);
+  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+}

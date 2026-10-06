@@ -30,6 +30,7 @@ import {
   cutUniforms,
   depthRange,
   HASH_GLSL,
+  hexToUnitRGB,
   PLACEMENT_INDEX,
   SAMPLE_GLSL,
   uploadCut,
@@ -40,12 +41,12 @@ import type { Box3D, Overlay3DRenderer } from "./Overlay3D";
 import { linkProgram3D, uniformsOf, type Uniforms } from "./program3d";
 import { AUTO_SURFACE_RESOLUTION, SurfaceDepth } from "./SurfaceDepth";
 import type { Surface3D } from "./surfaces3d";
+import { FieldScale3D, type ScaleRule3D } from "./FieldScale3D";
 import { PALETTE_GLSL, paletteUniforms, type PaletteID } from "./palettes";
+export { boxScale3D, type ScaleRule3D } from "./FieldScale3D";
 
 export type ArrowShape3D = "lines" | "flat" | "solid";
 export type ArrowLength3D = "normalized" | "saturating" | "clamped" | "actual";
-/** What Auto takes the colour scale from; see `Arrow3DOptions.scale`. */
-export type ScaleRule3D = "field" | "box";
 
 export interface Arrow3DOptions {
   shape: ArrowShape3D | "auto";
@@ -162,12 +163,6 @@ export function autoArrowShape3D(instances: number): ArrowShape3D {
   return instances <= 3000 ? "solid" : "flat";
 }
 
-/** The 2D overlay's colour scale, a third of the width, in 3D. */
-export function boxScale3D(box: Box3D) {
-  const w = [0, 1, 2].map((i) => box.max[i] - box.min[i]);
-  return (w[0] + w[1] + w[2]) / 9;
-}
-
 /** What the last frame drew, for the panel and the tests. */
 export interface Arrow3DFrame {
   instances: number;
@@ -196,9 +191,6 @@ const LENGTH_INDEX: Record<ArrowLength3D, number> = {
 };
 /** However long Auto would make it, no arrow is longer than this, in box half-widths: an eighth of the diagonal. */
 const LENGTH_CAP = 0.125 * 2 * Math.sqrt(3);
-/** At most this many samples are read back to find the median. */
-const SCALE_SAMPLES = 4096;
-const SCALE_WIDTH = 64;
 
 function arrowVertexSource(field: Field3D) {
   return `#version 300 es
@@ -405,64 +397,18 @@ void main() {
 }
 `;
 
-/**
- * |F| at the samples the arrows use, one texel each, for the median the
- * field's colour scale is taken from. The GPU's own evaluation of the same
- * code, so the scale and the arrows cannot disagree about the field.
- */
-function magnitudeVertexSource(field: Field3D) {
-  return `#version 300 es
-precision highp float;
-precision highp int;
-uniform int u_total;
-uniform int u_taken;
-out float v_m;
-${field3dFunctions(field)}
-${HASH_GLSL}
-${CLIP_GLSL}
-float vtSurface(vec2 p) { return vtUndefined(); }
-${SAMPLE_GLSL}
-void main() {
-  int i = gl_VertexID;
-  // Spread over all the arrows when there are more than can be read back.
-  int id = int(floor(float(i) * float(u_total) / float(u_taken)));
-  vec3 pos;
-  v_m = vtSample(id, pos) ? length(vtField(pos)) : -1.0;
-  vec2 texel = vec2(float(i % ${SCALE_WIDTH}), float(i / ${SCALE_WIDTH})) + 0.5;
-  vec2 size = vec2(${SCALE_WIDTH}.0, float(${SCALE_SAMPLES / SCALE_WIDTH}));
-  gl_Position = vec4(texel / size * 2.0 - 1.0, 0.0, 1.0);
-  gl_PointSize = 1.0;
-}
-`;
-}
-
-const MAGNITUDE_FRAGMENT = `#version 300 es
-precision highp float;
-in float v_m;
-out vec4 outColor;
-void main() { outColor = vec4(v_m, 0.0, 0.0, 1.0); }
-`;
-
 export class Arrow3DRenderer implements Overlay3DRenderer {
   private readonly gl: WebGL2RenderingContext;
   private readonly vao: WebGLVertexArrayObject;
   private program?: WebGLProgram;
   private uniforms: Uniforms = {};
-  private magnitudeProgram?: WebGLProgram;
-  private magnitudeUniforms: Uniforms = {};
-  private magnitudeTarget?: {
-    framebuffer: WebGLFramebuffer;
-    texture: WebGLTexture;
-  };
-  private readonly canReadBack: boolean;
   private readonly surfaceDepth: SurfaceDepth;
+  private readonly scale: FieldScale3D;
   private field?: Field3D;
   private options: Arrow3DOptions = DEFAULT_ARROW_3D_OPTIONS;
   private parameters: ReadonlyMap<string, number> = new Map();
   private time = 0;
   private cssHeight = 1;
-  /** The median |F| and what it was measured for. */
-  private median?: { key: string; value: number };
   last?: Arrow3DFrame;
 
   constructor(private readonly canvas: HTMLCanvasElement) {
@@ -479,8 +425,8 @@ export class Arrow3DRenderer implements Overlay3DRenderer {
     }
     this.gl = gl;
     this.vao = gl.createVertexArray()!;
-    this.canReadBack = gl.getExtension("EXT_color_buffer_float") !== null;
     this.surfaceDepth = new SurfaceDepth(gl);
+    this.scale = new FieldScale3D(gl, this.vao);
   }
 
   /** The surfaces the field is hidden or faded behind. */
@@ -503,17 +449,8 @@ export class Arrow3DRenderer implements Overlay3DRenderer {
     if (this.program !== undefined) gl.deleteProgram(this.program);
     this.program = program;
     this.uniforms = uniformsOf(gl, program);
-    if (this.magnitudeProgram !== undefined)
-      gl.deleteProgram(this.magnitudeProgram);
-    this.magnitudeProgram = this.canReadBack
-      ? linkProgram3D(gl, magnitudeVertexSource(field), MAGNITUDE_FRAGMENT)
-      : undefined;
-    this.magnitudeUniforms =
-      this.magnitudeProgram !== undefined
-        ? uniformsOf(gl, this.magnitudeProgram)
-        : {};
     this.field = field;
-    this.median = undefined;
+    this.scale.setField(field);
   }
 
   setOptions(options: Arrow3DOptions) {
@@ -667,104 +604,31 @@ export class Arrow3DRenderer implements Overlay3DRenderer {
     const { scale } = this.options;
     if (typeof scale === "number")
       return { speedScale: scale, scaleSource: "manual" };
-    if (scale === "field") {
-      const median = this.measureMedian(box, count, instances);
-      if (median !== undefined && median > 0) {
-        return { speedScale: median / Math.LN2, scaleSource: "field" };
-      }
-    }
-    return { speedScale: boxScale3D(box), scaleSource: "box" };
-  }
-
-  private measureMedian(box: Box3D, count: number, instances: number) {
-    const { gl, magnitudeProgram, field } = this;
-    if (magnitudeProgram === undefined || field === undefined) return undefined;
     const o = this.options;
-    const params = [...this.parameters].map(([k, v]) => `${k}=${v}`).join();
-    const key = [
-      box.min.join(),
-      box.max.join(),
-      o.placement,
-      count,
-      o.sliceAxis,
-      o.slicePosition,
-      params,
-      // A field that moves with time is re-measured every half second, not
-      // every frame: a readback stalls the pipeline.
-      field.usesTime ? Math.floor(this.time * 2) : 0,
-    ].join("|");
-    if (this.median?.key === key) return this.median.value;
-
-    const taken = Math.min(instances, SCALE_SAMPLES);
-    const height = SCALE_SAMPLES / SCALE_WIDTH;
-    if (this.magnitudeTarget === undefined) {
-      const texture = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA32F, SCALE_WIDTH, height);
-      const framebuffer = gl.createFramebuffer();
-      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-      gl.framebufferTexture2D(
-        gl.FRAMEBUFFER,
-        gl.COLOR_ATTACHMENT0,
-        gl.TEXTURE_2D,
-        texture,
-        0
-      );
-      this.magnitudeTarget = { framebuffer, texture };
-    }
-    const u = this.magnitudeUniforms;
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.magnitudeTarget.framebuffer);
-    gl.viewport(0, 0, SCALE_WIDTH, height);
-    gl.disable(gl.BLEND);
-    gl.disable(gl.DEPTH_TEST);
-    gl.clearColor(-1, 0, 0, 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.useProgram(magnitudeProgram);
-    gl.bindVertexArray(this.vao);
-    uploadField3DParameters(gl, u, field, this.parameters, this.time);
-    gl.uniform3fv(u.u_boxMin, box.min);
-    gl.uniform3fv(u.u_boxMax, box.max);
-    gl.uniform1i(u.u_sampling, PLACEMENT_INDEX[o.placement]);
-    gl.uniform1i(u.u_count, count);
-    gl.uniform1i(u.u_sliceAxis, o.sliceAxis);
-    gl.uniform1f(u.u_slicePos, o.slicePosition);
-    gl.uniform1i(u.u_total, instances);
-    gl.uniform1i(u.u_taken, taken);
-    gl.drawArrays(gl.POINTS, 0, taken);
-    const pixels = new Float32Array(SCALE_WIDTH * height * 4);
-    gl.readPixels(0, 0, SCALE_WIDTH, height, gl.RGBA, gl.FLOAT, pixels);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-    gl.enable(gl.BLEND);
-
-    const magnitudes: number[] = [];
-    for (let i = 0; i < taken; i++) {
-      const m = pixels[i * 4];
-      if (m > 1e-9 && Number.isFinite(m)) magnitudes.push(m);
-    }
-    magnitudes.sort((a, b) => a - b);
-    const value =
-      magnitudes.length > 0
-        ? magnitudes[Math.floor(magnitudes.length / 2)]
-        : undefined;
-    if (value !== undefined) this.median = { key, value };
-    return value;
+    const resolved = this.scale.resolve(
+      scale,
+      box,
+      {
+        placement: o.placement,
+        count,
+        sliceAxis: o.sliceAxis,
+        slicePosition: o.slicePosition,
+        instances,
+      },
+      this.parameters,
+      this.time
+    );
+    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    return resolved;
   }
 
   destroy() {
     const { gl } = this;
     if (this.program !== undefined) gl.deleteProgram(this.program);
-    if (this.magnitudeProgram !== undefined)
-      gl.deleteProgram(this.magnitudeProgram);
-    if (this.magnitudeTarget !== undefined) {
-      gl.deleteFramebuffer(this.magnitudeTarget.framebuffer);
-      gl.deleteTexture(this.magnitudeTarget.texture);
-    }
     this.surfaceDepth.dispose();
+    this.scale.dispose();
     gl.deleteVertexArray(this.vao);
     this.program = undefined;
-    this.magnitudeProgram = undefined;
-    this.magnitudeTarget = undefined;
   }
 }
 
@@ -788,13 +652,6 @@ export function boxScreenSize(camera: Camera3D, box: Box3D) {
     y1 = Math.max(y1, p.y);
   }
   return Number.isFinite(x0) ? Math.hypot(x1 - x0, y1 - y0) : 0;
-}
-
-function hexToUnitRGB(hex: string): [number, number, number] {
-  const match = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
-  if (match === null) return [0.18, 0.43, 0.84];
-  const n = parseInt(match[1], 16);
-  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 }
 
 function clamp(v: number, lo: number, hi: number) {

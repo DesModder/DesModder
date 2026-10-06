@@ -243,6 +243,57 @@ testWithPageAndOpts(
       `config.space3d.cutaway = "off"; config.space3d.cutTurn = null;`
     );
 
+    // The looks that show the middle: streamlines and the glow cloud, on a
+    // dipole. They swap the renderer, so the overlay remounts under them.
+    // +1 at (0, 0, 1) and −1 at (0, 0, −1). Each component's two numerators
+    // differ only for z, whose numerator is the distance to its own charge.
+    const dipole = (above: string, below: string) =>
+      String.raw`\frac{${above}}{\left(x^{2}+y^{2}+\left(z-1\right)^{2}\right)^{1.5}}-\frac{${below}}{\left(x^{2}+y^{2}+\left(z+1\right)^{2}\right)^{1.5}}`;
+    // Into a page-side script string, where a lone backslash would escape.
+    const quoted = (latex: string) => JSON.stringify(latex);
+    await configure(
+      driver,
+      `config.components.xLatex = ${quoted(dipole("x", "x"))};
+       config.components.yLatex = ${quoted(dipole("y", "y"))};
+       config.components.zLatex = ${quoted(dipole("z-1", "z+1"))};
+       config.space3d.look = "streamlines";
+       config.space3d.animate = false;`
+    );
+    const volume = async () =>
+      await driver.page.evaluate(
+        () => (DSM.enabledPlugins["vector-tools"] as any).volume3dFrame
+      );
+    expect((await volume())?.look).toBe("streamlines");
+    expect((await volume())?.count).toBeGreaterThan(100);
+    const still = await capture(driver);
+    writeFileSync(
+      join(ASSETS, "plugin-streamlines.png"),
+      Buffer.from(still.png, "base64")
+    );
+    expect(await coloured(still.png)).toBeGreaterThan(2000);
+    // Animated, the lit stretches move between frames.
+    await configure(driver, `config.space3d.animate = true;`);
+    const first = (await capture(driver)).png;
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    const second = (await capture(driver)).png;
+    expect(second).not.toBe(first);
+    await configure(
+      driver,
+      `config.space3d.look = "cloud"; config.space3d.cloudByDirection = true;`
+    );
+    expect((await volume())?.look).toBe("cloud");
+    const cloud = await capture(driver);
+    writeFileSync(
+      join(ASSETS, "plugin-cloud.png"),
+      Buffer.from(cloud.png, "base64")
+    );
+    expect(await coloured(cloud.png)).toBeGreaterThan(2000);
+    await configure(
+      driver,
+      `config.space3d.look = "arrows"; config.space3d.cloudByDirection = false;`
+    );
+    expect((await frame(driver)).frame?.instances).toBeGreaterThan(0);
+
     // One arrow, along +x from the box's centre, in pure green: its tail and
     // tip have to land where camera3d projects them from the camera of the
     // frame Desmos drew.

@@ -109,6 +109,10 @@ import {
 } from "../../field-rendering/Arrow3DRenderer";
 import type { Field3D } from "../../field-rendering/field3d";
 import {
+  Volume3DRenderer,
+  type Volume3DOptions,
+} from "../../field-rendering/Volume3DRenderer";
+import {
   sameSurfaces,
   scanSurfaces3D,
   type SurfaceItem,
@@ -361,13 +365,24 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       },
     },
     (canvas) => {
-      const renderer = new Arrow3DRenderer(canvas);
-      this.arrow3d = renderer;
+      // Arrows and the two volume looks are different renderers on the same
+      // overlay; which one is built follows the look, and switching between
+      // them remounts the overlay (see refreshArrows3D).
+      const { look } = this.getConfig().space3d;
+      let renderer: Arrow3DRenderer | Volume3DRenderer;
+      if (look === "arrows") {
+        renderer = this.arrow3d = new Arrow3DRenderer(canvas);
+        this.volume3d = undefined;
+      } else {
+        renderer = this.volume3d = new Volume3DRenderer(canvas);
+        this.arrow3d = undefined;
+      }
       this.configureArrow3D();
       return renderer;
     }
   );
   private arrow3d?: Arrow3DRenderer;
+  private volume3d?: Volume3DRenderer;
   private field3dCache?: {
     source: FieldSource;
     xLatex: string;
@@ -596,6 +611,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.arrowOverlay.setTime(0);
     this.flowOverlay.setTime(0);
     this.arrow3d?.setTime(0);
+    this.volume3d?.setTime(0);
     this.overlay3d.requestFrame();
     this.util.tick();
   }
@@ -637,6 +653,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.arrowOverlay.setTime(this.clockSeconds);
     this.flowOverlay.setTime(this.clockSeconds);
     this.arrow3d?.setTime(this.clockSeconds);
+    this.volume3d?.setTime(this.clockSeconds);
     this.overlay3d.requestFrame();
   };
 
@@ -760,6 +777,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.arrowOverlay.setParameters(values);
     this.flowOverlay.setParameters(values);
     this.arrow3d?.setParameters(values);
+    this.volume3d?.setParameters(values);
     this.overlay3d.requestFrame();
   }
 
@@ -810,9 +828,18 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     if (this.arrowMode !== "live") return "";
     if (this.arrowMessage !== "") return this.arrowMessage;
     if (this.cc.is3dProduct()) {
-      const frame = this.arrow3d?.last;
-      if (!this.overlay3d.isRunning || frame === undefined) return "";
-      const drawing = `Drawing ${frame.instances} arrows live in 3D.`;
+      if (!this.overlay3d.isRunning) return "";
+      const arrows = this.arrow3d?.last;
+      const volume = this.volume3d?.last;
+      const drawing =
+        arrows !== undefined
+          ? `Drawing ${arrows.instances} arrows live in 3D.`
+          : volume?.look === "streamlines"
+            ? `Drawing ${volume.count} streamlines live in 3D.`
+            : volume !== undefined
+              ? `Drawing a cloud from ${volume.count} points in 3D.`
+              : "";
+      if (drawing === "") return "";
       // Say which surfaces the arrows show through despite Hidden, rather than
       // leave someone wondering why an arrow is in front of a sphere.
       const { skipped } = this.surfaces3d;
@@ -886,19 +913,22 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
   private refreshArrows3D() {
     this.arrowOverlay.stop();
     if (this.arrowMode !== "live") {
-      this.overlay3d.stop();
-      this.arrow3d = undefined;
+      this.stop3D();
       this.arrowMessage = "";
       return;
     }
     const compiled = this.field3dCompilation;
     if (!compiled.ok) {
-      this.overlay3d.stop();
-      this.arrow3d = undefined;
+      this.stop3D();
       this.arrowMessage = compiled.error;
       return;
     }
     this.arrowMessage = "";
+    // A different kind of renderer for the look than the one mounted: start
+    // again, which builds the right one.
+    const wantsArrows = this.getConfig().space3d.look === "arrows";
+    const hasArrows = this.arrow3d !== undefined;
+    if (this.overlay3d.isRunning && wantsArrows !== hasArrows) this.stop3D();
     if (!this.overlay3d.isRunning) {
       // Mounting builds the renderer, which configures itself.
       this.overlay3d.start();
@@ -907,8 +937,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     try {
       this.configureArrow3D();
     } catch (error) {
-      this.overlay3d.stop();
-      this.arrow3d = undefined;
+      this.stop3D();
       this.arrowMessage =
         error instanceof Error
           ? error.message
@@ -918,16 +947,66 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.overlay3d.requestFrame();
   }
 
+  private stop3D() {
+    this.overlay3d.stop();
+    this.arrow3d = undefined;
+    this.volume3d = undefined;
+  }
+
   /** Gives the 3D renderer the current field, settings, values and time. */
   private configureArrow3D() {
-    const renderer = this.arrow3d;
     const compiled = this.field3dCompilation;
-    if (renderer === undefined || !compiled.ok) return;
+    if (!compiled.ok) return;
+    const renderer = this.arrow3d ?? this.volume3d;
+    if (renderer === undefined) return;
     renderer.setField(compiled.field);
     renderer.setSurfaces(this.surfaces3d.surfaces);
-    renderer.setOptions(this.arrow3dOptions);
+    if (this.arrow3d !== undefined)
+      this.arrow3d.setOptions(this.arrow3dOptions);
+    else this.volume3d?.setOptions(this.volume3dOptions);
     renderer.setParameters(this.parameterValues);
     renderer.setTime(this.clockSeconds);
+  }
+
+  /** What the streamlines or the cloud are told, from the field's settings. */
+  get volume3dOptions(): Volume3DOptions {
+    const config = this.getConfig();
+    const s = config.space3d;
+    return {
+      look: s.look === "cloud" ? "cloud" : "streamlines",
+      lines: s.linesAuto ? "auto" : s.lines,
+      steps: 96,
+      lineLength: s.lineLength,
+      lineOpacity: s.lineOpacity,
+      animate: s.animate,
+      flowSpeed: s.flowSpeed,
+      flowWindow: s.flowWindow,
+      points: s.pointsAuto ? "auto" : s.points,
+      pointPx: s.pointPx,
+      cloudOpacity: s.cloudOpacity,
+      cloudContrast: s.cloudContrast,
+      cloudByDirection: s.cloudByDirection,
+      colorMode: config.color.mode === "fixed" ? "fixed" : "magnitude",
+      palette: config.color.palette,
+      fixedColor: config.color.fixedColor,
+      saturation: config.color.saturation,
+      contrast: config.color.contrast,
+      scale: s.scaleAuto ? s.scaleRule : s.scale,
+      fog: s.fog,
+      clip: s.clip,
+      cut: {
+        cutaway: s.cutaway,
+        angle: s.cutAngle,
+        turn: s.cutTurn ?? undefined,
+      },
+      occlusion: s.occlusion,
+      surfaceResolution: s.meshAuto ? "auto" : s.mesh,
+    };
+  }
+
+  /** Tests and the panel: what the last streamline or cloud frame drew. */
+  get volume3dFrame() {
+    return this.overlay3d.isRunning ? this.volume3d?.last : undefined;
   }
 
   /** What the 3D renderer is told, from the field's settings. */
@@ -1072,8 +1151,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     this.detachPanelElement();
     this.arrowOverlay.stop();
     this.flowOverlay.stop();
-    this.overlay3d.stop();
-    this.arrow3d = undefined;
+    this.stop3D();
     this.fluid.dispose();
     this.dsm.pillboxMenus?.removePillboxButton("dsm-vector-tools-menu");
   }
@@ -1428,7 +1506,10 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
    * switching never makes it jump.
    */
   setCakeSliceFixed(fixed: boolean) {
-    const facing = this.arrow3d?.last?.cameraAzimuth ?? 0;
+    const facing =
+      this.arrow3d?.last?.cameraAzimuth ??
+      this.volume3d?.last?.cameraAzimuth ??
+      0;
     this.setSpace3D("cutTurn", fixed ? facing : null);
   }
 
