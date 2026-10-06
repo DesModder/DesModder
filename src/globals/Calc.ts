@@ -273,11 +273,34 @@ export interface Grapher3d {
   };
   viewportController: {
     animateToOrientation: (m: Matrix3) => void;
+    /** The box, as numbers. Verified 2026-10-06. */
+    getViewport: () => Viewport3D;
   };
   transition: {
     duration: number;
   };
   redrawAllLayers: () => void;
+  /**
+   * The canvas Desmos 3D draws on: a later sibling of the 2D graph canvas,
+   * which it paints over. Private; verified 2026-10-06
+   * (`docs/VECTOR_TOOLS_3D_BUILD_PLAN.md`).
+   */
+  webglCanvas?: HTMLCanvasElement;
+  /**
+   * Called once per redraw with the redraw's result, camera included; see
+   * `field-rendering/camera3d.ts`. Private.
+   */
+  onRedraw3dResults: (result: unknown) => void;
+  redrawResult?: unknown;
+}
+
+export interface Viewport3D {
+  xmin: number;
+  xmax: number;
+  ymin: number;
+  ymax: number;
+  zmin: number;
+  zmax: number;
 }
 
 export type Scale = "linear" | "logarithmic";
