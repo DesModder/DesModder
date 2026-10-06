@@ -406,19 +406,19 @@
         </p>
       </section>
       <section>
-        <span class="label" id="fill-label"
-          >Half-full cells inside the liquid</span
-        >
+        <span class="label" id="air-label">Air trapped under water</span>
         <div
           class="chips"
           role="group"
-          aria-labelledby="fill-label"
-          id="fills"
+          aria-labelledby="air-label"
+          id="airs"
         ></div>
         <p class="hint">
-          Pressure never fills a surface cell that has liquid all round it, so
-          pools show holes. Filling them slowly closes the holes; it moved the
-          dam-break front by about one point.
+          Held at one atmosphere, a pocket under 30 cm of water implodes in a
+          seventh of a second. As an ideal gas it pushes back and rises instead,
+          but at these cell sizes a 6 cm bubble breaks up within half a second,
+          the water is no calmer after the tap stops, and the gas costs a
+          quarter more GPU time (Auto then picks 8 mm cells).
         </p>
         <div class="row">
           <button class="btn primary" id="play" type="button">Pause</button>
@@ -526,13 +526,14 @@
           <tr>
             <td>Air trapped under water</td>
             <td>
-              held at one atmosphere, so a pocket under 30 cm of water implodes
-              in 0.14 s and stirs the water at 0.3–0.5 m/s; real air pockets
-              rise and pop
+              held at one atmosphere, a pocket under 30 cm of water implodes in
+              0.14 s and stirs the water; as an ideal gas (Thürey, Körner,
+              Anderl) it rises
             </td>
             <td>
-              not yet here: an ideal-gas bubble model works on the CPU, its
-              bubbles rise at 0.2 m/s against the 0.46 m/s Collins measured
+              Air switch. A 6 cm bubble, 10 cells across, keeps its gas for 0.4
+              s and rises at about 0.2 m/s against Collins' 0.46, then breaks
+              up; the water is no calmer
             </td>
           </tr>
           <tr>
@@ -1414,8 +1415,8 @@ void main() { vec2 p = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2); gl_Positio
   const GPU_COLLIDE =
     GPU_COMMON +
     `
-uniform sampler2D O0, O1, O3, C0, C1;
-uniform float tau, smag, gravity, sprayCap, wallSlip;
+uniform sampler2D O0, O1, O3, C0, C1, B;
+uniform float tau, smag, gravity, sprayCap, wallSlip, instantFill;
 const int DIR[9] = int[9](7, 3, 6, 4, 0, 2, 8, 1, 5);
 int dirOf(int cx, int cy) { return DIR[(cx + 1) * 3 + cy + 1]; }
 layout(location = 0) out vec4 o0; layout(location = 1) out vec4 o1;
@@ -1463,7 +1464,6 @@ void main() {
     vec4 a = texelFetch(O0, x, 0), b = texelFetch(O1, x, 0);
     f = float[9](a.x, a.y, a.z, a.w, b.x, b.y, b.z, b.w, texelFetch(O3, x, 0).z);
   }
-  float gas[9]; equilibrium(0.0, c0.zw, gas);
   float g[9]; g[0] = f[0];
   float dm = 0.0; int wet = 0, dry = 0, bulk = 0;
   for (int i = 1; i < 9; i++) {
@@ -1473,7 +1473,7 @@ void main() {
     vec4 cj = texelFetch(C0, j, 0);
     int tj = kind(cj.x);
     if (tj == SOLID) g[i] = wallPopulation(x, i, f[o]);
-    else if (tj == GAS) { g[i] = gas[i] + gas[o] - f[o]; dry++; }
+    else if (tj == GAS) { float dg = texelFetch(B, j, 0).w - 1.0; g[i] = feq(i, dg, c0.zw) + feq(o, dg, c0.zw) - f[o]; dry++; } // against that gas's pressure
     else {
       float pij = popAt(j, i, cj);
       g[i] = pij; wet++;
@@ -1522,7 +1522,7 @@ void main() {
   int tent = tk;
   float enclosed = 0.0;
   if (tk == INTERFACE) {
-    tent = wet == 0 ? GAS : nMd >= 0.0 ? FLUID : nMd <= -rho ? GAS : INTERFACE;
+    tent = wet == 0 ? GAS : (nMd >= 0.0 || (instantFill > 0.5 && dry == 0)) ? FLUID : nMd <= -rho ? GAS : INTERFACE;
     enclosed = (wet > 0 && dry == 0) ? 1.0 : 0.0;
   }
   o0 = vec4(g[0], g[1], g[2], g[3]); o1 = vec4(g[4], g[5], g[6], g[7]);
@@ -1533,6 +1533,7 @@ void main() {
     GPU_COMMON +
     `
 uniform sampler2D C0, O2;
+uniform float closePockets;
 out vec4 o;
 void main() {
   ivec2 x = ivec2(gl_FragCoord.xy);
@@ -1547,7 +1548,7 @@ void main() {
       if (tj == INTERFACE && kind(texelFetch(O2, j, 0).x) == FLUID) { advanced = true; break; }
       if (tj == GAS) dry++; else if (tj != SOLID) wet++;
     }
-    if (advanced || (t == GAS && wet > 0 && dry == 0)) fixedType = INTERFACE;
+    if (advanced || (closePockets > 0.5 && t == GAS && wet > 0 && dry == 0)) fixedType = INTERFACE;
   }
   o = vec4(float(fixedType), 0.0, 0.0, 0.0);
 }`;
@@ -1622,6 +1623,120 @@ void main() {
   bool isNew = kind(texelFetch(C0, x, 0).x) == GAS && fin == INTERFACE;
   o0 = vec4(float(fin + (isNew ? 4 : 0)), phi, v.zw);
   o1 = vec4(base, y.z, v.y, texelFetch(C1, x, 0).w); // the poured tally rides along
+}`;
+
+  // The gas: liquid.js's ideal-gas bubbles (updateGas) without per-bubble
+  // bookkeeping. G holds a region label, a distance to the region's root, the
+  // cell's gas mass and the gas pressure as a density:
+  //   G  label (1e7 open air, −2 not gas), distance, gas mass, 1 + K (p − 1)
+  // A region is labelled by its highest cell index, its top, where a rising
+  // bubble grows (by its lowest, the bottom it fills from, it lost its label
+  // every few steps). The distance grows without
+  // end in a part that lost its root (it split off, or the root filled), and
+  // past `dmax` that part labels itself afresh. Each cell's gas, its volume
+  // (surface cells count their empty part) and a count of gas cells are added
+  // onto the region's root pixel (a scatter with float blending); pressure is
+  // gas over volume, and the gas goes back to the region's gas cells only,
+  // evenly. Held in surface cells too, gas left the bubble whenever a surface
+  // cell lost its last gas neighbour (5% in five steps). Gas cells of the open
+  // air carry no gas of their own (−1): a pocket made only of them has just
+  // pinched off and starts at one atmosphere.
+  const GAS_HELPERS = `
+float volumeOf(vec4 c0) { int t = kind(c0.x); return t == GAS ? 1.0 : t == INTERFACE ? max(0.0, 1.0 - c0.y) : 0.0; }
+const float AIR = 1e7;
+// A cell's gas region: its own label if it is gas, else the highest label of
+// the gas beside it (a surface cell's gas belongs there); −2 if none.
+float regionOf(ivec2 x) {
+  if (kind(texelFetch(C0, x, 0).x) == GAS) return texelFetch(G, x, 0).x;
+  float L = -2.0;
+  for (int i = 1; i < 9; i++) {
+    ivec2 j = x + C[i];
+    if (!inside(j) || kind(texelFetch(C0, j, 0).x) != GAS) continue;
+    L = max(L, texelFetch(G, j, 0).x);
+  }
+  return L;
+}
+`;
+  const GPU_LABEL =
+    GPU_COMMON +
+    `
+uniform sampler2D G, C0;
+uniform float dmax;
+out vec4 o;
+void main() {
+  ivec2 x = ivec2(gl_FragCoord.xy);
+  vec4 b = texelFetch(G, x, 0);
+  if (kind(texelFetch(C0, x, 0).x) != GAS) { o = vec4(-2.0, 0.0, b.zw); return; }
+  if (x.y == N.y - 1) { o = vec4(1e7, 0.0, b.zw); return; } // the open top: the air
+  // A new gas cell joins the region beside it; only a root, or gas with no
+  // labelled gas beside it, names a region after itself. When every new cell
+  // offered its own name, the top of a rising bubble kept splitting off as a
+  // region with no gas, which was then given gas at one atmosphere (the
+  // bubble grew sevenfold).
+  float own = float(x.y * N.x + x.x), L = -2.0, d = 0.0;
+  for (int i = 1; i < 9; i++) {
+    ivec2 j = x + C[i];
+    if (!inside(j) || kind(texelFetch(C0, j, 0).x) != GAS) continue;
+    vec4 bj = texelFetch(G, j, 0);
+    float dj = bj.y + 1.0;
+    if (bj.x < -1.5 || dj > dmax) continue;
+    if (bj.x > L || (bj.x == L && dj < d)) { L = bj.x; d = dj; }
+  }
+  if (L < -1.5 || (b.x == own && own >= L)) { L = own; d = 0.0; }
+  o = vec4(L, d, b.zw);
+}`;
+  const GPU_SCATTER_VERTEX =
+    GPU_COMMON +
+    `
+uniform sampler2D G, C0;
+out vec4 sums;
+` +
+    GAS_HELPERS +
+    `
+void main() {
+  ivec2 x = ivec2(gl_VertexID % N.x, gl_VertexID / N.x);
+  float L = regionOf(x);
+  gl_PointSize = 1.0;
+  vec4 c0 = texelFetch(C0, x, 0);
+  float M = texelFetch(G, x, 0).z;
+  bool gas = kind(c0.x) == GAS, fromAir = M < -0.5;
+  // gas carried, volume, gas cells, gas cells that were open air
+  sums = vec4(fromAir ? 0.0 : max(M, 0.0), volumeOf(c0), gas ? 1.0 : 0.0, gas && fromAir ? 1.0 : 0.0);
+  if (L < -0.5 || L >= AIR) { gl_Position = vec4(-2.0, -2.0, 0.0, 1.0); return; } // no gas, or the open air
+  int r = int(L + 0.5);
+  gl_Position = vec4((vec2(r % N.x, r / N.x) + 0.5) / vec2(N) * 2.0 - 1.0, 0.0, 1.0);
+}`;
+  const GPU_SCATTER = `#version 300 es
+precision highp float;
+in vec4 sums;
+out vec4 o;
+void main() { o = sums; }`;
+  const GPU_PRESSURE =
+    GPU_COMMON +
+    `
+uniform sampler2D G, C0, R;
+uniform float K, maxGauge;
+out vec4 o;
+` +
+    GAS_HELPERS +
+    `
+void main() {
+  ivec2 x = ivec2(gl_FragCoord.xy);
+  vec4 b = texelFetch(G, x, 0);
+  bool gas = kind(texelFetch(C0, x, 0).x) == GAS;
+  float L = regionOf(x), p = 1.0, M = 0.0;
+  if (L > -0.5 && L < AIR) {
+    int r = int(L + 0.5);
+    vec4 sum = texelFetch(R, ivec2(r % N.x, r / N.x), 0);
+    // Open-air cells count at one atmosphere for their share of the volume.
+    // A region of only those has just pinched off, and one whose gas all
+    // just emptied out of liquid has no history: both start at one
+    // atmosphere. Froth swung 0.6–1.9 atm on the CPU: held to ±maxGauge.
+    float share = sum.y / max(sum.z, 1.0), gasMass = sum.x + sum.w * share;
+    if (sum.z > 0.5 && sum.w < sum.z - 0.5 && gasMass > 1e-4 * sum.y) p = clamp(gasMass / sum.y, 1.0 - maxGauge, 1.0 + maxGauge);
+    if (gas) M = p * share;
+  } else if (gas) M = -1.0; // the open air
+  o = vec4(b.x, b.y, M, 1.0 + K * (p - 1.0));
 }`;
 
   // Pour, draw walls or erase, inside a disc: C -> C'.
@@ -1725,7 +1840,14 @@ void main() {
         gravity: initial.gravity,
         fillRate: initial.fillRate,
         wallSlip: initial.wallSlip || 0,
+        instantFill: initial.instantFill ? 1 : 0,
+        closePockets: initial.closePockets === false ? 0 : 1,
+        atmosphere: initial.atmosphere || 0.148,
+        maxGauge: Math.min(10, initial.maxGauge ?? 10),
       });
+      // Bubbles need float blending to add up each region's gas.
+      this.bubbles = !!initial.bubbles && !!gl.getExtension("EXT_float_blend");
+      this.gasEvery = 4;
       this.steps = 0;
       this.poured = 0;
       this.pouredIn = 0;
@@ -1766,10 +1888,13 @@ void main() {
       this.X = set(1);
       this.V = set(1);
       this.Y = set(1);
-      const build = (src) => {
+      this.G = set(1);
+      this.G2 = set(1);
+      this.R = set(1);
+      const build = (src, vertex = GPU_VERTEX) => {
         const p = gl.createProgram();
         for (const [type, code] of [
-          [gl.VERTEX_SHADER, GPU_VERTEX],
+          [gl.VERTEX_SHADER, vertex],
           [gl.FRAGMENT_SHADER, src],
         ]) {
           const s = gl.createShader(type);
@@ -1799,8 +1924,28 @@ void main() {
         brush: build(GPU_BRUSH),
         zeroTally: build(GPU_ZERO_TALLY),
         render: build(GPU_RENDER),
+        label: build(GPU_LABEL),
+        scatter: build(GPU_SCATTER, GPU_SCATTER_VERTEX),
+        pressure: build(GPU_PRESSURE),
       };
       this.upload(initial);
+      if (this.bubbles) this.settleLabels();
+    }
+
+    /** Labels until every region has its final label. Spread a cell per
+     *  update, the open air took hundreds of steps to reach the bottom of the
+     *  tank, and meanwhile the air beside a dam-break column was cut into
+     *  regions whose gas was reshared as they merged: pressures jumped ±15%,
+     *  and 2% of an atmosphere here weighs as much as 30 cells of water, so
+     *  the column was held back. Run when a scene starts or walls change. */
+    settleLabels() {
+      const C0 = this.C.textures[0];
+      for (let pass = 0; pass < this.nx + this.ny; pass++) {
+        this.draw(this.prog.label, { G: this.G.textures[0], C0 }, this.G2, {
+          dmax: ["uniform1f", this.nx + this.ny],
+        });
+        [this.G, this.G2] = [this.G2, this.G];
+      }
     }
 
     upload(s) {
@@ -1830,6 +1975,10 @@ void main() {
           data
         );
       };
+      const g = new Float32Array(4 * N); // all gas at one atmosphere
+      for (let k = 0; k < N; k++)
+        g.set([-2, 0, s.type[k] === 0 ? -1 : 0, 1], 4 * k); // gas starts as open air
+      put(this.G.textures[0], g);
       o.forEach((data, i) => put(this.O.textures[i], data));
       c.forEach((data, i) => put(this.C.textures[i], data));
       this.solid = Uint8Array.from(s.type, (t) => (t === 3 ? 1 : 0));
@@ -1883,19 +2032,41 @@ void main() {
       const { gl } = this;
       gl.disable(gl.BLEND);
       for (let n = 0; n < count; n++) {
+        const on = (pass) => !this.only || this.only === pass; // `only` times one pass alone
+        // Every fourth step: the gas update cost as much as the rest of a step,
+        // and the stiffest gas swing here (a 6 cm bubble ringing) lasts about 80
+        // steps, so four steps still sample it twenty times.
+        if (this.bubbles && this.labelsStale) {
+          this.settleLabels();
+          this.labelsStale = false;
+        }
+        if (
+          this.bubbles &&
+          this.steps % this.gasEvery === 0 &&
+          (on("gas") || this.only === "label" || this.only === "scatter")
+        )
+          this.updateGas();
         const [O0, O1, , O3] = this.O.textures,
           [C0, C1] = this.C.textures,
           [Q0, Q1, Q2, Q3] = this.O2.textures;
-        const on = (pass) => !this.only || this.only === pass; // `only` times one pass alone
         if (on("collide"))
-          this.draw(this.prog.collide, { O0, O1, O3, C0, C1 }, this.O2, {
-            tau: ["uniform1f", this.tau],
-            smag: ["uniform1f", this.smagorinsky],
-            gravity: ["uniform1f", this.gravity],
-            sprayCap: ["uniform1f", 0.25 / Math.sqrt(3)],
-            wallSlip: ["uniform1f", this.wallSlip],
+          this.draw(
+            this.prog.collide,
+            { O0, O1, O3, C0, C1, B: this.G.textures[0] },
+            this.O2,
+            {
+              tau: ["uniform1f", this.tau],
+              smag: ["uniform1f", this.smagorinsky],
+              gravity: ["uniform1f", this.gravity],
+              sprayCap: ["uniform1f", 0.25 / Math.sqrt(3)],
+              wallSlip: ["uniform1f", this.wallSlip],
+              instantFill: ["uniform1f", this.instantFill],
+            }
+          );
+        if (on("advance"))
+          this.draw(this.prog.advance, { C0, O2: Q2 }, this.X, {
+            closePockets: ["uniform1f", this.closePockets],
           });
-        if (on("advance")) this.draw(this.prog.advance, { C0, O2: Q2 }, this.X);
         if (on("settle"))
           this.draw(
             this.prog.settle,
@@ -1921,6 +2092,59 @@ void main() {
         [this.C, this.C2] = [this.C2, this.C];
         this.steps++;
       }
+    }
+
+    /** Labels the gas regions, adds up each one's gas, and sets its pressure. */
+    updateGas() {
+      const { gl } = this,
+        C0 = this.C.textures[0];
+      // One labelling pass a step: labels spread a cell a step, and a part that
+      // lost its root relabels after nx + ny steps, during which it shares the
+      // pressure of the part it left.
+      if (!this.only || this.only === "label") {
+        this.draw(this.prog.label, { G: this.G.textures[0], C0 }, this.G2, {
+          dmax: ["uniform1f", this.nx + this.ny],
+        });
+        [this.G, this.G2] = [this.G2, this.G];
+      }
+      if (this.only === "label") return;
+      // Scatter: every cell's gas onto its region's root pixel.
+      const scatter = this.prog.scatter;
+      gl.useProgram(scatter.p);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, this.G.textures[0]);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, C0);
+      if (!scatter.sent.ready) {
+        gl.uniform1i(scatter.u.G, 0);
+        gl.uniform1i(scatter.u.C0, 1);
+        gl.uniform2i(scatter.u.N, this.nx, this.ny);
+        scatter.sent.ready = true;
+      }
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.R.fbo);
+      this.boundTarget = this.R;
+      if (!this.gridViewport) {
+        gl.viewport(0, 0, this.nx, this.ny);
+        this.gridViewport = true;
+      }
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.enable(gl.BLEND);
+      gl.blendEquation(gl.FUNC_ADD);
+      gl.blendFunc(gl.ONE, gl.ONE);
+      gl.drawArrays(gl.POINTS, 0, this.N);
+      gl.disable(gl.BLEND);
+      if (this.only === "scatter") return;
+      this.draw(
+        this.prog.pressure,
+        { G: this.G.textures[0], C0, R: this.R.textures[0] },
+        this.G2,
+        {
+          K: ["uniform1f", this.atmosphere],
+          maxGauge: ["uniform1f", this.maxGauge],
+        }
+      );
+      [this.G, this.G2] = [this.G2, this.G];
     }
 
     brush(mode, cx, cy, radius, share = 0, speed = 0) {
@@ -1964,6 +2188,7 @@ void main() {
     paint(cx, cy, radius, wall) {
       this.brush(wall ? 1 : 2, cx, cy, radius);
       this.dirtySolids = true;
+      this.labelsStale = true;
     }
 
     readInto(c0, c1, pbo) {
@@ -2121,6 +2346,9 @@ void main() {
         this.X,
         this.V,
         this.Y,
+        this.G,
+        this.G2,
+        this.R,
       ]) {
         set.textures.forEach((t) => gl.deleteTexture(t));
         gl.deleteFramebuffer(set.fbo);
@@ -2178,6 +2406,7 @@ void main() {
       const ny = Math.round(nx * 0.6),
         dx = TANK / nx,
         dt = Math.sqrt((G_LAT * dx) / G);
+      // One atmosphere as a lattice density: P_atm / (ρ c_s²), c_s = dx / (dt √3).
       return {
         nx,
         ny,
@@ -2185,6 +2414,7 @@ void main() {
         dt,
         tau: 0.5 + (3 * NU_WATER * dt) / (dx * dx),
         r: nx / 160,
+        atmosphere: (101325 * 3 * dt * dt) / (1000 * dx * dx),
       };
     }
     const LEVELS = [120, 160, 240, 320, 480];
@@ -2257,16 +2487,46 @@ void main() {
         tau: gr.tau,
         smagorinsky: 0.1,
         gravity: G_LAT,
-        fillRate: state.fill === "slow" ? 0.05 : 0,
         wallSlip: state.walls === "slide" ? 1 : 0,
-        bubbles: false,
+        atmosphere: gr.atmosphere,
+        ...AIR_PHYSICS[state.air],
         solid,
         fill,
       });
+    // Bubbles: trapped air is an ideal gas (p·V kept), with Thürey's flag rule
+    // in place of the hole-closing rules, which ate the gas. Without them a
+    // pocket is held at one atmosphere and implodes; its holes either fill a
+    // little each step or stay.
+    const AIR_PHYSICS = {
+      bubbles: {
+        bubbles: true,
+        minBubble: 0,
+        maxGauge: 0.15,
+        fillRate: 0,
+        closePockets: false,
+        instantFill: true,
+      },
+      fill: {
+        bubbles: false,
+        fillRate: 0.05,
+        closePockets: true,
+        instantFill: false,
+      },
+      leave: {
+        bubbles: false,
+        fillRate: 0,
+        closePockets: true,
+        instantFill: false,
+      },
+    };
 
     const TOOLS = { pour: "Pour", wall: "Draw walls", erase: "Erase walls" };
     const SHOWS = { speed: "Speed", pressure: "Pressure", cells: "Cell types" };
-    const FILLS = { slow: "Fill slowly", leave: "Leave them" };
+    const AIRS = {
+      bubbles: "Bubbles (ideal gas)",
+      fill: "Collapse, fill holes slowly",
+      leave: "Collapse, leave holes",
+    };
     const WALLS = {
       slide: "Slide (law of the wall)",
       grip: "Grip (bounce-back)",
@@ -2286,7 +2546,7 @@ void main() {
       scene: "dam",
       tool: "pour",
       show: "speed",
-      fill: "slow",
+      air: "fill",
       walls: "slide",
       pace: "1",
       size: "auto",
@@ -3026,10 +3286,11 @@ void main() {
     chips($("paces"), PACES, "pace", (id) => {
       state.pace = id;
     });
-    chips($("fills"), FILLS, "fill", (id) => {
-      state.fill = id;
-      state.engine.fillRate = id === "slow" ? 0.05 : 0;
-    });
+    chips($("airs"), AIRS, "air", (id) => {
+      state.air = id;
+      state.auto = null;
+      load(state.scene);
+    }); // bubbles cost GPU time: Auto times again
     chips($("walls"), WALLS, "walls", (id) => {
       state.walls = id;
       state.engine.wallSlip = id === "slide" ? 1 : 0;

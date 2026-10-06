@@ -204,6 +204,7 @@ Evidence pictures: `assets/fluid-gate1-taylor-green.png`,
   the browser, runs in `docs/mockups/liquid-mockup.html` (dam break, pour,
   tank with a hole, still tank; pour and draw walls by hand). The tab waits
   on Rafael's verdict on that mock-up. What the port found beyond GPT:
+
   - **A stranded surface cell ran away.** A 1%-full cell left behind when
     the dam column fell had no liquid beside it, so it could pass its mass
     nowhere and gravity sped it up for ever: Mach 0.94 by step 9700 while
@@ -262,13 +263,18 @@ Evidence pictures: `assets/fluid-gate1-taylor-green.png`,
   - **Rafael's report after real time** (water too fast, holes, sticking to
     walls, a walled-in tap bursting) was checked against experiments and
     exact theory in `docs/mockups/liquid-validation/`. In the mock-up now:
+
     - sliding walls with log-law friction, as a switch against gripping
       ones;
-    - the tap as a nozzle kept full, which pours only where there is room.
-      Measured, not yet in the mock-up: an ideal-gas bubble model (pockets
-      held at one atmosphere implode and stir the water; with it they rise,
-      but at half Collins' speed at 6 mm). Also measured, with no fix yet:
-      the standing wave damps 13% a period at 6 mm, against under 1% for real
-      water.
+    - the tap as a nozzle kept full, which pours only where there is room;
+    - ideal-gas bubbles on the GPU, behind an Air switch (off by default). They
+      end the implosions without moving the dam-break front, but at 6–8 mm a
+      6 cm bubble breaks up within half a second and the water is no calmer.
+      They cost a quarter more GPU time, which drops Auto to 8 mm.
+
+    Measured, with no fix yet: the standing wave damps 13% a period at 6 mm,
+    against under 1% for real water. Whether the water is "too fast" needs
+    measured energy decay to compare against.
+
 - **Gate 7 onward:** 3D FieldPlay on the camera match in
   `DESMOS_3D_CAMERA.md`.

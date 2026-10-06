@@ -48,6 +48,33 @@ What they showed (6 mm cells unless stated):
   diffuses, so the bubble stays stratified and does not rise (4 cm/s). The GPU
   needs per-region sums. EXT_float_blend, present on Iris Xe, allows them as a
   scatter-add to each region's root cell.
+- **On the GPU** (`GpuLiquid.updateGas` in the mock-up) the regions are
+  labelled in a shader and summed by that scatter. What it took:
+
+  - **Gas in gas cells only.** Each region's gas is held only in its gas
+    cells, shared evenly. Held in surface cells too, gas left whenever a
+    surface cell lost its last gas neighbour (5% in five steps).
+  - **Label by the top.** Regions take their highest cell index, the top. By
+    the lowest, a rising bubble kept losing its label as it filled from below.
+  - **Join, don't rename.** New gas cells join the region beside them. When
+    each offered its own name, the growing top split off with no gas, and was
+    given gas at one atmosphere, so the bubble grew sevenfold.
+  - **Settle labels at the start.** Labels settle fully when a scene starts or
+    walls change. Spread a cell per update, the open air took hundreds of steps
+    to reach the floor. Meanwhile resharing gas between merging regions swung
+    pressures ±15%, and 2% of an atmosphere outweighs 30 cells of water: the
+    dam-break column was held back 18%.
+  - **Update every fourth step.** The update cost as much as a whole step; the
+    stiffest gas swing lasts about 80 steps.
+
+  With these, the dam-break front is as without bubbles (X 4.10 against 4.02 at
+  T 3.24, 6 mm), the still tank stays within 0.65% of ρgh, and mass holds
+  to 1e-8. The 6.3 cm bubble keeps its gas for 0.4 s, rises at about 0.2 m/s,
+  then breaks up. Five seconds into the pour, the water is no calmer with
+  bubbles (3.2 J/m against 2.7 at 5 s). An apparent 30% calming went away once
+  labels settled: it had been the label noise draining energy. Bubbles cost a
+  quarter more GPU time, so Auto picks 8 mm cells instead of 6 mm.
+
 - **Energy**: sliding walls leave the water livelier. Kinetic energy 2 s into
   the dam break is 11.5 J/m against 4.7 with gripping walls. Whether either
   matches real water needs measured energy decay; 2D also lacks the 3D
