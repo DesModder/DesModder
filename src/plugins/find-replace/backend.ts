@@ -59,9 +59,9 @@ function replace(
     // `from` should have "global" flag enabled in order to replace all
     return s.replace(/(?<=\$\{)((?:[^{}]|\{[^}]*\})+)(?=\})/g, replaceLatex);
   }
-  const state = calc.getState();
+  const { listModel } = calc.controller;
   if (!filter) {
-    const { ticker } = state.expressions;
+    const { ticker } = listModel;
     if (ticker?.handlerLatex !== undefined) {
       ticker.handlerLatex = replaceLatex(ticker.handlerLatex);
     }
@@ -69,7 +69,7 @@ function replace(
       ticker.minStepLatex = replaceLatex(ticker.minStepLatex);
     }
   }
-  state.expressions.list.forEach((expr: any) => {
+  listModel.__itemModelArray.forEach((expr: any) => {
     if (filter?.(expr) === false) return;
 
     rootKeys.forEach((k) => {
@@ -103,9 +103,7 @@ function replace(
       expr.clickableInfo.latex = replaceLatex(expr.clickableInfo.latex);
     }
   });
-  calc.setState(state, {
-    allowUndo: true,
-  });
+  calc.controller.dispatch({ type: "tick" });
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#escaping
