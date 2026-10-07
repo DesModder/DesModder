@@ -160,7 +160,7 @@ export const expression: Schema = {
   errorHidden: "boolean",
   glesmos: "boolean",
   fill: "expr",
-  displayEvaluationAsFraction: "boolean",
+  fractionDisplay: "boolean",
   slider: schemaL({
     playing: "boolean",
     reversed: "boolean",

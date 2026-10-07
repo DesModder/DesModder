@@ -96,7 +96,7 @@ export const expression: Hydrated.Expression = {
   glesmos: false,
   fill: undefined,
   logMode: false,
-  displayEvaluationAsFraction: false,
+  fractionDisplay: false,
   slider: {
     playing: false,
     reversed: false,

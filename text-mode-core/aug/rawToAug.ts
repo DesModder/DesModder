@@ -195,7 +195,7 @@ function tryRawNonFolderToAug(
         },
         glesmos: dsmMetadata.expressions[item.id]?.glesmos ?? false,
         errorHidden: dsmMetadata.expressions[item.id]?.errorHidden ?? false,
-        displayEvaluationAsFraction: item.displayEvaluationAsFraction ?? false,
+        fractionDisplay: item.displayEvaluationAsFraction ?? false,
         polarDomain: parseMapDomain(cfg, item.polarDomain, "0", "12\\pi"),
         parametricDomain: parseMapDomain(cfg, item.parametricDomain),
         parametricDomain3Du: parseMapDomain(cfg, item.parametricDomain3Du),
