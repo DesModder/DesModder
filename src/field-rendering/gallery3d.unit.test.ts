@@ -22,3 +22,36 @@ describe("every gallery preset has a 3D form", () => {
     }
   );
 });
+
+describe("every gallery preset says where its matter is, in a form that compiles", () => {
+  const plane = EMPTY_ENVIRONMENT;
+  const space = { ...EMPTY_ENVIRONMENT, dimensions: 3 as const };
+
+  test.each(FIELD_GALLERY.map((preset) => [preset.id, preset] as const))(
+    "%s: its 2D field and seed compile in 2D, its 3D seed in 3D",
+    (_id, preset) => {
+      for (const latex of [preset.xLatex, preset.yLatex, preset.seedLatex]) {
+        if (latex === undefined) continue;
+        const result = compileFieldComponentToGLSL(latex, plane);
+        expect([latex, result.ok]).toEqual([latex, true]);
+      }
+      if (preset.space.seedLatex !== undefined) {
+        const result = compileFieldComponentToGLSL(
+          preset.space.seedLatex,
+          space
+        );
+        expect([preset.space.seedLatex, result.ok]).toEqual([
+          preset.space.seedLatex,
+          true,
+        ]);
+      }
+    }
+  );
+
+  test("the black hole is a black hole in both: it has a horizon", () => {
+    const hole = FIELD_GALLERY.find((preset) => preset.id === "black-hole")!;
+    expect(hole.lensHorizon).toBeGreaterThan(0);
+    expect(hole.space.lensHorizon).toBeGreaterThan(0);
+    expect(hole.space.seedLatex).toBeDefined();
+  });
+});

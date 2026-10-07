@@ -20,6 +20,7 @@ import {
   cloneDefaultConfig,
   FLOW_LOOK_PRESETS,
   type SamplingAxisConfig,
+  type Space3DConfig,
   type VectorFieldConfig,
 } from "./model";
 
@@ -62,7 +63,66 @@ export function colorsFromGallery(
       palette: preset.palette,
       backdropEnabled: true,
       backdropColor: preset.backdrop ?? GALLERY_DEFAULT_BACKDROP,
+      ...flowMatterFor(preset, base.flow),
     },
+    space3d: dimensions === 3 ? matterFor(preset, base.space3d) : base.space3d,
+  };
+}
+
+/**
+ * In 2D, what a preset's field carries besides its formula, as in 3D: where
+ * its matter is, a black hole if it has one, and the speed its colours span.
+ */
+function flowMatterFor(
+  preset: GalleryPreset,
+  base: VectorFieldConfig["flow"]
+): Partial<VectorFieldConfig["flow"]> {
+  return {
+    seedLatex: preset.seedLatex ?? "",
+    lens: preset.lensHorizon !== undefined,
+    lensHorizon: preset.lensHorizon ?? base.lensHorizon,
+    colorScaleAuto: preset.colorScale === undefined,
+    colorScale: preset.colorScale ?? base.colorScale,
+  };
+}
+
+/**
+ * On Desmos 3D, what a preset's field carries besides its formula: where its
+ * matter is and whether a black hole bends its light. Part of the field, not
+ * of the look — a black hole's field with particles born all through the box
+ * is a cube of fuzz — so even the colours-only load brings them.
+ */
+function matterFor(preset: GalleryPreset, base: Space3DConfig): Space3DConfig {
+  return {
+    ...base,
+    seedLatex: preset.space.seedLatex ?? "",
+    lens: preset.space.lensHorizon !== undefined,
+    lensHorizon: preset.space.lensHorizon ?? base.lensHorizon,
+  };
+}
+
+/** The 3D flow as the preset draws it, over the field's current settings. */
+function spaceLookFor(
+  preset: GalleryPreset,
+  base: Space3DConfig
+): Space3DConfig {
+  const look = preset.space.look ?? {};
+  const s = matterFor(preset, base);
+  return {
+    ...s,
+    flowLook: "particles",
+    particlesAuto: look.particles === undefined,
+    particles: look.particles ?? s.particles,
+    particleSpeed: look.speed ?? s.particleSpeed,
+    particleTrail: look.trail ?? s.particleTrail,
+    particleLifetime: look.lifetime ?? s.particleLifetime,
+    particleOpacity: look.opacity ?? s.particleOpacity,
+    particleGlow: look.glow ?? s.particleGlow,
+    particleNormalize: look.normalizeSpeed ?? s.particleNormalize,
+    particleAbsorb: look.absorb ?? s.particleAbsorb,
+    backdrop: true,
+    backdropColor: look.backdrop ?? s.backdropColor,
+    backdropOpacity: look.backdropOpacity ?? s.backdropOpacity,
   };
 }
 
@@ -104,7 +164,33 @@ export function configFromGallery(
       backdropEnabled: true,
       backdropColor: preset.backdrop ?? GALLERY_DEFAULT_BACKDROP,
       ...preset.flow,
+      ...flowMatterFor(preset, base.flow),
+      ...(preset.fixedColor !== undefined
+        ? { colorMode: "fixed" as const }
+        : {}),
+      ...(dimensions === 3 && preset.space.look?.colorMode !== undefined
+        ? { colorMode: preset.space.look.colorMode }
+        : {}),
+      ...(dimensions === 3 && preset.space.look?.palette !== undefined
+        ? { palette: preset.space.look.palette }
+        : {}),
     },
+    ...((dimensions === 3
+      ? preset.space.look?.fixedColor
+      : preset.fixedColor) !== undefined
+      ? {
+          color: {
+            ...base.color,
+            palette: preset.palette,
+            fixedColor:
+              (dimensions === 3
+                ? preset.space.look?.fixedColor
+                : preset.fixedColor) ?? base.color.fixedColor,
+          },
+        }
+      : {}),
+    space3d:
+      dimensions === 3 ? spaceLookFor(preset, base.space3d) : base.space3d,
   };
 }
 

@@ -81,6 +81,12 @@ export interface Volume3DOptions {
   cut: CutSettings;
   occlusion: Occlusion3D;
   surfaceResolution: number | "auto";
+  /**
+   * A dark laid over the graph, as the particle flow is drawn on; "" for
+   * none. On it, light builds up where lines cross.
+   */
+  backdrop?: string;
+  backdropOpacity?: number;
 }
 
 export const DEFAULT_VOLUME_3D_OPTIONS: Volume3DOptions = {
@@ -456,7 +462,10 @@ export class Volume3DRenderer implements Overlay3DRenderer {
   draw(camera: Camera3D, box: Box3D, clock: number) {
     const { gl, options: o, field } = this;
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-    gl.clearColor(0, 0, 0, 0);
+    const dark = o.backdrop !== undefined && o.backdrop !== "";
+    const [br, bg, bb] = hexToUnitRGB(dark ? o.backdrop! : "#000000");
+    const ba = dark ? Math.min(1, Math.max(0, o.backdropOpacity ?? 0.9)) : 0;
+    gl.clearColor(br * ba, bg * ba, bb * ba, ba);
     gl.clearDepth(1);
     gl.depthMask(true);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -488,7 +497,16 @@ export class Volume3DRenderer implements Overlay3DRenderer {
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.bindVertexArray(this.vao);
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    // On the backdrop, screen blending, as the particle flow: crossings
+    // brighten towards white without passing it.
+    if (ba > 0) {
+      gl.blendFuncSeparate(
+        gl.ONE,
+        gl.ONE_MINUS_SRC_COLOR,
+        gl.ONE,
+        gl.ONE_MINUS_SRC_ALPHA
+      );
+    } else gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
     const cut = cutUniforms(mathToView, box, o.cut);
     const occluding = o.occlusion !== "over" && this.surfaceDepth.count > 0;

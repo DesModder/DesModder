@@ -38,6 +38,12 @@ export interface FieldDependencies {
    */
   usesTime?: boolean;
   /**
+   * Where a flow's particles are born, as GLSL over `vec2 p`: a chance from
+   * 0 to 1 at each point. Absent, they are born evenly. Read only by the
+   * flow; every other renderer ignores the `vtSeed` it is given.
+   */
+  seed?: string;
+  /**
    * Perturbations layered on top of the compiled components.
    *
    * Absent by default, and absent means the shader is emitted exactly as it
@@ -497,6 +503,10 @@ ${body}
   // Disturbances are added after the guard rather than before it, so a pole in
   // the expression cannot take the ripples down with it.
   return vec2(u, v)${disturbanceSum(field)};
+}
+float vtSeed(vec2 p) {
+  float s = ${field.seed ?? "1.0"};
+  return isnan(s) || isinf(s) ? 0.0 : clamp(s, 0.0, 1.0);
 }
 `;
 }

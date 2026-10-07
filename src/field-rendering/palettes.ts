@@ -39,6 +39,7 @@ export type PaletteID =
   | "sunset"
   | "ocean"
   | "ember"
+  | "blackbody"
   | "neon"
   | "nebula"
   | "aurora"
@@ -259,6 +260,22 @@ export const PALETTES: Record<PaletteID, Palette> = {
       { at: 0.6, rgb: [230, 90, 15] },
       { at: 0.85, rgb: [250, 190, 60] },
       { at: 1, rgb: [255, 247, 214] },
+    ],
+  },
+  // The colour of a glowing body as it heats, from a dull red near 1,000 K
+  // through orange and yellow to a bluish white past 10,000 K: what an
+  // accretion disk's colour is, hotter inward. Without Ember's crimson, which
+  // brightens to pink when thousands of trails pile up.
+  blackbody: {
+    name: "Blackbody",
+    group: "expressive",
+    stops: [
+      { at: 0, rgb: [12, 3, 0] },
+      { at: 0.25, rgb: [130, 28, 0] },
+      { at: 0.5, rgb: [225, 92, 8] },
+      { at: 0.7, rgb: [255, 158, 45] },
+      { at: 0.86, rgb: [255, 214, 140] },
+      { at: 1, rgb: [250, 244, 255] },
     ],
   },
   neon: {

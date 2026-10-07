@@ -115,6 +115,18 @@ export interface FlowOptions {
    * thing on every screen.
    */
   renderScale: number;
+  /**
+   * The speed the colour ramp is spread over, in math units per second, or
+   * Auto: a third of the view's width.
+   */
+  colorScale?: number | "auto";
+  /**
+   * A black hole at the origin, seen from above: the horizon absorbs what
+   * reaches it, and its shadow and photon ring are drawn over the flow.
+   */
+  lens?: boolean;
+  /** Its horizon radius, in math units. */
+  lensHorizon?: number;
 }
 
 export const DEFAULT_FLOW_OPTIONS: FlowOptions = {
@@ -543,6 +555,10 @@ export class FlowRenderer {
       this.options.normalizeSpeed ? 1 : 0
     );
     gl.uniform1f(program.uniforms.u_dropRate, this.options.dropRate);
+    gl.uniform1f(
+      program.uniforms.u_horizon,
+      this.options.lens === true ? (this.options.lensHorizon ?? 0) : 0
+    );
     gl.uniform1f(program.uniforms.u_seed, this.frameSeed / 2147483647);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
@@ -640,9 +656,12 @@ export class FlowRenderer {
     );
     gl.uniform1f(program.uniforms.u_saturation, this.options.saturation);
     gl.uniform1f(program.uniforms.u_contrast, this.options.contrast);
+    const { colorScale } = this.options;
     gl.uniform1f(
       program.uniforms.u_speedScale,
-      Math.max(1e-6, (xMax - xMin) / 3)
+      typeof colorScale === "number" && colorScale > 0
+        ? colorScale
+        : Math.max(1e-6, (xMax - xMin) / 3)
     );
 
     gl.drawArrays(gl.POINTS, 0, this.particleCount);
@@ -660,6 +679,25 @@ export class FlowRenderer {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.trailFront!);
     gl.uniform1i(program.uniforms.u_screen, 0);
+    const { xMin, xMax, yMin, yMax } = this.bounds;
+    const horizon =
+      this.options.lens === true ? (this.options.lensHorizon ?? 0) : 0;
+    const shadow = ((3 * Math.sqrt(3)) / 2) * horizon;
+    gl.uniform2f(program.uniforms.u_min, xMin, yMin);
+    gl.uniform2f(program.uniforms.u_max, xMax, yMax);
+    gl.uniform1f(program.uniforms.u_shadow, shadow);
+    // About one and a half pixels wide, whatever the zoom.
+    const pixel = (xMax - xMin) / Math.max(1, this.trailWidth);
+    gl.uniform1f(
+      program.uniforms.u_ringWidth,
+      shadow > 0 ? (1.5 * pixel) / shadow : 1
+    );
+    const palette = paletteUniforms(this.options.palette);
+    const n = palette.count;
+    gl.uniform3fv(
+      program.uniforms.u_ringColor,
+      palette.colors.slice((n - 1) * 3, n * 3)
+    );
 
     // The backdrop is *cleared* to rather than drawn, so the trails composite
     // over it in one pass. Trail colours are premultiplied, which is what makes
@@ -784,9 +822,15 @@ export class FlowRenderer {
     const resolution = this.particleResolution;
     const data = new Float32Array(resolution * resolution * 4);
     const { xMin, xMax, yMin, yMax } = this.bounds;
+    // A field that says where its particles are born has them born there:
+    // placed far outside, so the first step finds them escaped and gives
+    // each a birth from the seed, rather than an even scatter the seed never
+    // chose lingering for a lifetime.
+    const seeded = this.linkedField?.seed !== undefined;
+    const far = xMax + 10 * (xMax - xMin);
     for (let i = 0; i < resolution * resolution; i++) {
-      data[i * 4] = xMin + Math.random() * (xMax - xMin);
-      data[i * 4 + 1] = yMin + Math.random() * (yMax - yMin);
+      data[i * 4] = seeded ? far : xMin + Math.random() * (xMax - xMin);
+      data[i * 4 + 1] = seeded ? far : yMin + Math.random() * (yMax - yMin);
       // Stagger initial ages so the whole field does not respawn in lockstep.
       data[i * 4 + 2] = Math.random() * MAX_PARTICLE_AGE;
       data[i * 4 + 3] = Math.random();
@@ -983,12 +1027,31 @@ void main() {
 }
 `;
 
+/**
+ * The trails onto the canvas, and a black hole's shadow and photon ring over
+ * them when there is one: a disc of radius (3√3 / 2) r_s, the photon
+ * sphere's capture radius, black and opaque, and a thin ring of light at its
+ * edge in the palette's hottest colour.
+ */
 const BLIT_FRAGMENT_SHADER = `#version 300 es
 precision highp float;
 uniform sampler2D u_screen;
+uniform vec2 u_min;
+uniform vec2 u_max;
+uniform float u_shadow;
+uniform float u_ringWidth;
+uniform vec3 u_ringColor;
 in vec2 v_uv;
 out vec4 outColor;
-void main() { outColor = texture(u_screen, v_uv); }
+void main() {
+  outColor = texture(u_screen, v_uv);
+  if (u_shadow <= 0.0) return;
+  float r = length(mix(u_min, u_max, v_uv)) / u_shadow;
+  float hole = 1.0 - smoothstep(0.97, 1.0, r);
+  outColor = mix(outColor, vec4(0.0, 0.0, 0.0, 1.0), hole);
+  float g = 0.85 * exp(-pow((r - 1.0 - u_ringWidth) / u_ringWidth, 2.0));
+  outColor = vec4(outColor.rgb + (1.0 - outColor.rgb) * u_ringColor * g, max(outColor.a, g));
+}
 `;
 
 /**
@@ -1033,6 +1096,23 @@ float vtRand(vec2 co) {
   return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
+uniform float u_horizon;
+
+/**
+ * Where a particle is born: a point in the view kept with the chance the seed
+ * gives there, tried up to 48 times — rejection sampling, so births follow the
+ * seed's density whatever its shape. None kept is a point far outside, which
+ * the next step finds escaped and tries again.
+ */
+vec2 vtBirth(vec2 seed, vec2 span) {
+  for (int i = 0; i < 48; i++) {
+    vec2 k = seed + vec2(float(i) * 3.17, float(i) * 1.37);
+    vec2 p = vec2(vtRand(k + 1.9), vtRand(k + 8.4)) * span + u_min;
+    if (vtRand(k + 5.3) < vtSeed(p)) return p;
+  }
+  return u_max + 10.0 * span;
+}
+
 vec2 vtVelocity(vec2 p) {
   vec2 v = vtField(p);
   float m = length(v);
@@ -1055,7 +1135,7 @@ void main() {
 
   vec2 span = u_max - u_min;
   vec2 seed = (pos + gl_FragCoord.xy) * (u_seed + 0.31);
-  vec2 respawn = vec2(vtRand(seed + 1.9), vtRand(seed + 8.4)) * span + u_min;
+  vec2 respawn = vtBirth(seed, span);
 
   vec2 delta = vtStep(pos);
   vec2 next = pos + delta;
@@ -1065,8 +1145,10 @@ void main() {
   bool stalled = length(delta) < 1e-9 * max(span.x, span.y);
   bool expired = age > ${MAX_PARTICLE_AGE}.0 || vtRand(seed) < u_dropRate;
   bool broken = isnan(next.x) || isnan(next.y) || isinf(next.x) || isinf(next.y);
+  // Nothing comes back out of a horizon.
+  bool fell = length(next) < u_horizon;
 
-  if (escaped || stalled || expired || broken) {
+  if (escaped || stalled || expired || broken || fell) {
     next = respawn;
     age = 0.0;
   } else {

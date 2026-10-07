@@ -397,6 +397,13 @@ describe("Vector Tools field configuration", () => {
       backdropEnabled: false,
       backdropColor: "#080b18",
       backdropOpacity: 0.92,
+      // Where particles are born, the colour scale and the black hole, none
+      // of which a setting saved before them has: evenly, Auto, and none.
+      seedLatex: "",
+      colorScaleAuto: true,
+      colorScale: 1,
+      lens: false,
+      lensHorizon: 0.6,
     });
     expect(
       normalizeVectorFieldConfig({ flow: { particleCount: 1 } }).flow

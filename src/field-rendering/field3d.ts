@@ -21,6 +21,14 @@ export interface Field3D {
   /** Names the field reads from the graph; each is a uniform. */
   params: readonly string[];
   usesTime: boolean;
+  /**
+   * Where the flow's particles are born, as GLSL over `vec3 p`: a chance from
+   * 0 to 1 at each point. Absent, they are born evenly through the box. It is
+   * the matter the field carries — a disk, the arms of a galaxy, a curtain —
+   * which a velocity field alone does not say, and which is most of what
+   * makes a simulation's picture look like the thing simulated.
+   */
+  seed?: string;
 }
 
 /** Whether two compiled fields would build the same shader. */
@@ -30,6 +38,7 @@ export function sameField3D(a: Field3D | undefined, b: Field3D | undefined) {
     a.p === b.p &&
     a.q === b.q &&
     a.r === b.r &&
+    a.seed === b.seed &&
     a.usesTime === b.usesTime &&
     a.params.join() === b.params.join() &&
     a.helpers.map((h) => h.glsl).join() === b.helpers.map((h) => h.glsl).join()
@@ -55,6 +64,10 @@ ${field.helpers.map((helper) => helper.glsl).join("\n")}
 vec3 vtField(vec3 p) {
   vec3 v = vec3(${field.p}, ${field.q}, ${field.r});
   return any(isnan(v)) || any(isinf(v)) ? vec3(0.0) : v;
+}
+float vtSeed(vec3 p) {
+  float s = ${field.seed ?? "1.0"};
+  return isnan(s) || isinf(s) ? 0.0 : clamp(s, 0.0, 1.0);
 }
 `;
 }

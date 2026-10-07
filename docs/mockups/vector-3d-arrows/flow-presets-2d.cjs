@@ -1,10 +1,9 @@
-// Pictures of the 3D flow on gallery presets, in the real Desmos 3D, through
-// the built extension. Run after `npm run build`:
+// The gallery presets as the 2D flow draws them, on the real Desmos
+// calculator through the built extension. Run after `npm run build`:
 //
-//   node docs/mockups/vector-3d-arrows/flow-presets.cjs
+//   node docs/mockups/vector-3d-arrows/flow-presets-2d.cjs
 //
-// Writes docs/assets/vector-3d/flow-presets.png, a contact sheet, and
-// black-hole.png, the black hole nearly edge-on.
+// Writes docs/assets/vector-3d/flow-presets-2d.png, a contact sheet.
 const puppeteer = require("puppeteer");
 const { join } = require("node:path");
 
@@ -19,9 +18,6 @@ const PRESETS = [
   "cellular",
   "dipole",
 ];
-// Tilt for the black hole's own picture, radians from looking straight down:
-// nearly edge-on, as the classic renderings are.
-const HERO_TILT = Number(process.env.TILT ?? 1.4);
 
 (async () => {
   const extension = join(root, "dist");
@@ -34,7 +30,7 @@ const HERO_TILT = Number(process.env.TILT ?? 1.4);
   });
   const page = await browser.newPage();
   await page.setViewport({ width: 1100, height: 760 });
-  await page.goto("https://www.desmos.com/3d");
+  await page.goto("https://www.desmos.com/calculator");
   await page.waitForSelector(".dsm-pillbox-and-popover", { timeout: 60000 });
   await page.evaluate(() => DSM.enablePlugin("vector-tools"));
   await page.waitForFunction(
@@ -48,53 +44,27 @@ const HERO_TILT = Number(process.env.TILT ?? 1.4);
       vt.applyGalleryPreset(id, true);
       if (!vt.isFlowRunning) vt.toggleFlow();
     }, id);
-    // Long enough for the trails to grow and the flow to settle.
-    await new Promise((r) => setTimeout(r, 4000));
+    await new Promise((r) => setTimeout(r, 5000));
     const message = await page.evaluate(
       () => DSM.enabledPlugins["vector-tools"].flowMessage
     );
     if (message) console.log(id, message);
-    const rect = await page.evaluate(() =>
-      Calc.controller.grapher3d.webglCanvas.getBoundingClientRect().toJSON()
-    );
+    const rect = await page.evaluate(() => {
+      const r = document.querySelector(".dcg-grapher").getBoundingClientRect();
+      const side = Math.min(r.width, r.height);
+      return {
+        x: r.x + (r.width - side) / 2,
+        y: r.y + (r.height - side) / 2,
+        width: side,
+        height: side,
+      };
+    });
     const png = await page.screenshot({ encoding: "base64", clip: rect });
     const name = await page.evaluate(
       () => DSM.enabledPlugins["vector-tools"].getConfig().name
     );
     shots.push({ png, caption: name });
   }
-  // The black hole again, nearly edge-on.
-  await page.evaluate(() => {
-    const vt = DSM.enabledPlugins["vector-tools"];
-    if (vt.isFlowRunning) vt.toggleFlow();
-    vt.applyGalleryPreset("black-hole", true);
-    if (!vt.isFlowRunning) vt.toggleFlow();
-  });
-  const box = await page.evaluate(() =>
-    Calc.controller.grapher3d.webglCanvas.getBoundingClientRect().toJSON()
-  );
-  // Set outright, as camera3d.int.test.ts does: a drag carries momentum
-  // and keeps turning after the mouse lets go.
-  await page.evaluate((tilt) => {
-    const g = Calc.controller.grapher3d;
-    const [cz, sz, cx, sx] = [
-      Math.cos(tilt),
-      Math.sin(tilt),
-      Math.cos(0.6),
-      Math.sin(0.6),
-    ];
-    const m = g.controls.worldRotation3D
-      .clone()
-      .set(cz * sx, cz * cx, -sz, -cx, sx, 0, sz * sx, sz * cx, cz);
-    g.controls.worldRotation3D = m;
-    g.viewportController.animateToOrientation(m);
-    g.transition.duration = 0;
-  }, HERO_TILT);
-  await new Promise((r) => setTimeout(r, 4000));
-  await page.screenshot({
-    path: join(root, "docs", "assets", "vector-3d", "black-hole.png"),
-    clip: box,
-  });
   const sheet = await browser.newPage();
   await sheet.setViewport({ width: 4 * 410 + 40, height: 400 });
   await sheet.setContent(`<style>body{margin:0;padding:14px;font:13px Arial;background:#fff}
@@ -107,7 +77,7 @@ const HERO_TILT = Number(process.env.TILT ?? 1.4);
       )
       .join("")}</div>`);
   await sheet.screenshot({
-    path: join(root, "docs", "assets", "vector-3d", "flow-presets.png"),
+    path: join(root, "docs", "assets", "vector-3d", "flow-presets-2d.png"),
     fullPage: true,
   });
   await browser.close();

@@ -60,8 +60,8 @@ describe("loading one", () => {
     // These are flow pictures: an arrow grid is how you read a field, not how
     // you watch one.
     expect(config.arrowMode).toBe("off");
-    expect(config.flow.palette).toBe("nebula");
-    expect(config.color.palette).toBe("nebula");
+    expect(config.flow.palette).toBe("starfield");
+    expect(config.color.palette).toBe("starfield");
     // The backdrop is what keeps a near-black palette from disappearing into
     // white graph paper.
     expect(config.flow.backdropEnabled).toBe(true);
@@ -93,7 +93,7 @@ describe("loading one", () => {
     // Taken: the formula, the name and the colours.
     expect(config.components.xLatex).toBe(galleryPreset("black-hole")!.xLatex);
     expect(config.name).toBe("Black hole");
-    expect(config.flow.palette).toBe("ember");
+    expect(config.flow.palette).toBe("blackbody");
     // The backdrop comes with the palette rather than separately: a ramp that
     // starts near black is not separable from the dark it is drawn on.
     expect(config.flow.backdropEnabled).toBe(true);

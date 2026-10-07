@@ -97,3 +97,36 @@ describe("the 3D flow", () => {
     expect(gl.counts.createTexture).toBeGreaterThan(textures);
   });
 });
+
+describe("the black hole's lens", () => {
+  test("draws the flow behind the hole twice, its two images, then what is in front", () => {
+    const gl = fakeGL();
+    const renderer = new Flow3DRenderer(fakeCanvas(gl));
+    renderer.setField(swirl);
+    renderer.resize(800, 600, 1);
+    renderer.setOptions({
+      ...DEFAULT_FLOW_3D_OPTIONS,
+      particles: 1000,
+      lens: true,
+      horizon: 0.5,
+    });
+    const before = gl.counts.instancesDrawn;
+    // A camera looking at the hole from in front, so it is not behind us.
+    const facing: Camera3D = {
+      ...flat,
+      view: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, -20, 1],
+    };
+    renderer.draw(facing, box);
+    expect(gl.counts.instancesDrawn - before).toBe(3 * 1000);
+  });
+
+  test("with no lens, one pass", () => {
+    const gl = fakeGL();
+    const renderer = new Flow3DRenderer(fakeCanvas(gl));
+    renderer.setField(swirl);
+    renderer.resize(800, 600, 1);
+    renderer.setOptions({ ...DEFAULT_FLOW_3D_OPTIONS, particles: 1000 });
+    renderer.draw(flat, box);
+    expect(gl.counts.instancesDrawn).toBe(1000);
+  });
+});

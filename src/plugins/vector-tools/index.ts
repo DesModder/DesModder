@@ -163,7 +163,12 @@ type TestChecklistID = "visual" | "zero" | "colors" | "responsiveness";
  * The field's three slots plus the curve's two. Mirrors the union in
  * `globals/Calc.ts`, which is where the calculator learns about them.
  */
-export type VectorToolsFocusKind = ComponentSlot | "r" | "curve-x" | "curve-y";
+export type VectorToolsFocusKind =
+  | ComponentSlot
+  | "r"
+  | "seed"
+  | "curve-x"
+  | "curve-y";
 
 /** The compiled shader field, or the reason it could not be put on the GPU. */
 type FlowCompilation =
@@ -218,11 +223,20 @@ function compileFlowField(
   if (!p.ok) return { ok: false, error: `P(x, y): ${p.error}` };
   const q = compileFieldComponentToGLSL(config.components.yLatex, environment);
   if (!q.ok) return { ok: false, error: `Q(x, y): ${q.error}` };
+  // Where the flow's particles are born rides along with the field: the same
+  // names, the same clock.
+  const seedLatex = config.flow.seedLatex.trim();
+  const seed =
+    seedLatex === ""
+      ? undefined
+      : compileFieldComponentToGLSL(seedLatex, environment);
+  if (seed !== undefined && !seed.ok)
+    return { ok: false, error: `Where particles are born: ${seed.error}` };
   // P and Q share one shader, so their helpers merge. Both lists are already in
   // dependency order and a name means one definition, so keeping the first of
   // each name preserves that order for the union.
   const helpers = [...p.helpers];
-  for (const helper of q.helpers) {
+  for (const helper of [...q.helpers, ...(seed?.helpers ?? [])]) {
     if (!helpers.some((existing) => existing.name === helper.name)) {
       helpers.push(helper);
     }
@@ -233,9 +247,10 @@ function compileFlowField(
       kind: "components",
       p: p.glsl,
       q: q.glsl,
+      ...(seed === undefined ? {} : { seed: seed.glsl }),
       helpers,
-      params: [...new Set([...p.params, ...q.params])],
-      usesTime: p.usesTime || q.usesTime,
+      params: [...new Set([...p.params, ...q.params, ...(seed?.params ?? [])])],
+      usesTime: p.usesTime || q.usesTime || (seed?.usesTime ?? false),
     },
   };
 }
@@ -255,6 +270,7 @@ function compileField3D(
   config: VectorFieldConfig,
   environment: FieldEnvironment
 ): Field3DCompilation {
+  const seedLatex = config.space3d.seedLatex.trim();
   if (config.source === "gradient") {
     return {
       ok: false,
@@ -267,6 +283,8 @@ function compileField3D(
     ["P(x, y, z)", config.components.xLatex],
     ["Q(x, y, z)", config.components.yLatex],
     ["R(x, y, z)", config.components.zLatex],
+    // Where particles are born rides along: the same names, the same clock.
+    ...(seedLatex === "" ? [] : [["Where particles are born", seedLatex]]),
   ].map(([name, latex]) => ({
     name,
     result: compileFieldComponentToGLSL(
@@ -296,6 +314,7 @@ function compileField3D(
       p: glsl[0],
       q: glsl[1],
       r: glsl[2],
+      seed: glsl[3],
       helpers,
       params: [...params],
       usesTime,
@@ -445,6 +464,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     xLatex: string;
     yLatex: string;
     zLatex: string;
+    seedLatex: string;
     revision: number;
     result: Field3DCompilation;
   };
@@ -466,6 +486,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
     xLatex: string;
     yLatex: string;
     fLatex: string;
+    seedLatex: string;
     revision: number;
     result: FlowCompilation;
   };
@@ -1114,12 +1135,22 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       cut: shared.cut,
       occlusion: s.occlusion,
       surfaceResolution: shared.surfaceResolution,
+      lens: s.lens,
+      horizon: s.lensHorizon,
+      beaming: s.beaming,
     };
   }
 
   /** What the traced streamlines are told: the volume options, as lines. */
   get tracedOptions(): Volume3DOptions {
-    return { ...this.volume3dOptions, look: "streamlines" };
+    const s = this.getConfig().space3d;
+    return {
+      ...this.volume3dOptions,
+      look: "streamlines",
+      // The Flow tab's backdrop is the whole tab's, not only the particles'.
+      backdrop: s.backdrop ? s.backdropColor : "",
+      backdropOpacity: s.backdropOpacity,
+    };
   }
 
   get flow3dFrame() {
@@ -1217,6 +1248,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       cached.xLatex === config.components.xLatex &&
       cached.yLatex === config.components.yLatex &&
       cached.zLatex === config.components.zLatex &&
+      cached.seedLatex === config.space3d.seedLatex &&
       cached.revision === this.environmentRevision
     ) {
       return cached.result;
@@ -1227,6 +1259,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       xLatex: config.components.xLatex,
       yLatex: config.components.yLatex,
       zLatex: config.components.zLatex,
+      seedLatex: config.space3d.seedLatex,
       revision: this.environmentRevision,
       result,
     };
@@ -2372,6 +2405,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       cached.xLatex === config.components.xLatex &&
       cached.yLatex === config.components.yLatex &&
       cached.fLatex === config.scalar.fLatex &&
+      cached.seedLatex === config.flow.seedLatex &&
       // The same component compiles to different GLSL against a different set
       // of definitions, so the environment is part of what this identifies.
       cached.revision === this.environmentRevision
@@ -2384,6 +2418,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       xLatex: config.components.xLatex,
       yLatex: config.components.yLatex,
       fLatex: config.scalar.fLatex,
+      seedLatex: config.flow.seedLatex,
       revision: this.environmentRevision,
       result,
     };
@@ -2473,6 +2508,7 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       config.components.xLatex,
       config.components.yLatex,
       config.scalar.fLatex,
+      config.flow.seedLatex,
       this.fluid.isSimulating,
     ]);
   }
@@ -2487,6 +2523,9 @@ export default class VectorTools extends PluginController<VectorToolsSettings> {
       // it back on gives back the strength that was set.
       glow: config.flow.glowEnabled ? config.flow.glow : 0,
       backdrop: config.flow.backdropEnabled ? config.flow.backdropColor : "",
+      colorScale: config.flow.colorScaleAuto
+        ? ("auto" as const)
+        : config.flow.colorScale,
       ...effectiveFlowColor(config),
       fixedColor: config.color.fixedColor,
     };

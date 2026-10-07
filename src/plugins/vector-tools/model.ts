@@ -230,6 +230,17 @@ export interface FlowConfig {
    * cheapest way to buy back frame rate on a dense display.
    */
   renderScale: number;
+  /**
+   * Where particles are born, a chance from 0 to 1 over x and y in Desmos
+   * LaTeX; empty for evenly across the view.
+   */
+  seedLatex: string;
+  /** The speed the colour ramp spans: Auto is a third of the view's width. */
+  colorScaleAuto: boolean;
+  colorScale: number;
+  /** A black hole at the origin: its horizon absorbs, its shadow is drawn. */
+  lens: boolean;
+  lensHorizon: number;
 }
 
 /** Below this the flow is too soft to read, whatever it buys back. */
@@ -362,6 +373,17 @@ export interface Space3DConfig {
   backdrop: boolean;
   backdropColor: string;
   backdropOpacity: number;
+  /**
+   * Where the flow's particles are born, a chance from 0 to 1 over x, y, z in
+   * Desmos LaTeX; empty for evenly through the box.
+   */
+  seedLatex: string;
+  /** A black hole at the origin, bending the light of the flow behind it. */
+  lens: boolean;
+  /** Its horizon radius in math units. */
+  lensHorizon: number;
+  /** With the lens: Doppler beaming and gravitational redshift. */
+  beaming: boolean;
 }
 
 /** What the Arrows tab draws on Desmos 3D. */
@@ -434,6 +456,10 @@ export const DEFAULT_SPACE_3D: Space3DConfig = {
   backdrop: true,
   backdropColor: "#05070d",
   backdropOpacity: 0.9,
+  seedLatex: "",
+  lens: false,
+  lensHorizon: 0.45,
+  beaming: true,
 };
 
 export const TIME_SPEED_MINIMUM = 0.05;
@@ -928,6 +954,11 @@ export const DEFAULT_VECTOR_FIELD_CONFIG: VectorFieldConfig = {
     look: "streamlines",
     normalizeSpeed: true,
     renderScale: 1,
+    seedLatex: "",
+    colorScaleAuto: true,
+    colorScale: 1,
+    lens: false,
+    lensHorizon: 0.6,
   },
   curve: {
     enabled: false,
@@ -1471,6 +1502,11 @@ export function normalizeSpace3D(
         ? v.backdropColor
         : fallback.backdropColor,
     backdropOpacity: num("backdropOpacity", 0, 1),
+    seedLatex:
+      typeof v?.seedLatex === "string" ? v.seedLatex : fallback.seedLatex,
+    lens: flag("lens"),
+    lensHorizon: num("lensHorizon", 0.01, 100),
+    beaming: flag("beaming"),
   };
 }
 
@@ -1792,6 +1828,20 @@ function normalizeFlow(value: unknown, fallback: FlowConfig): FlowConfig {
       fallback.renderScale,
       FLOW_RENDER_SCALE_MINIMUM,
       1
+    ),
+    seedLatex:
+      typeof flow?.seedLatex === "string" ? flow.seedLatex : fallback.seedLatex,
+    colorScaleAuto:
+      typeof flow?.colorScaleAuto === "boolean"
+        ? flow.colorScaleAuto
+        : fallback.colorScaleAuto,
+    colorScale: clampNumber(flow?.colorScale, fallback.colorScale, 1e-9, 1e12),
+    lens: typeof flow?.lens === "boolean" ? flow.lens : fallback.lens,
+    lensHorizon: clampNumber(
+      flow?.lensHorizon,
+      fallback.lensHorizon,
+      0.01,
+      100
     ),
   };
 }

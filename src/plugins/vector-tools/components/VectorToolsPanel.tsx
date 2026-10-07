@@ -1541,6 +1541,35 @@ function flow3dTab(vectorTools: VectorTools, config: ConfigGetter) {
               () => s().particleAbsorb,
               (v) => set("particleAbsorb", v)
             )}
+            {seedInput(vectorTools)}
+            {checkboxControl(
+              "Black hole at the origin: bends the light of the flow behind it",
+              () => s().lens,
+              (v) => set("lens", v)
+            )}
+            <If predicate={() => s().lens}>
+              {() => (
+                <div>
+                  {sliderControl(
+                    "dsm-vector-tools-3d-lens-horizon",
+                    "Horizon radius",
+                    () => s().lensHorizon,
+                    { minimum: 0.05, maximum: 3, step: 0.05, decimals: 2 },
+                    (v) => set("lensHorizon", v)
+                  )}
+                  {checkboxControl(
+                    "Doppler beaming: gas coming towards you brighter",
+                    () => s().beaming,
+                    (v) => set("beaming", v)
+                  )}
+                  <p class="dsm-vector-tools-hint">
+                    The thin-lens bending of a point mass, the textbook
+                    approximation; close to the shadow the true images sit a
+                    little nearer in.
+                  </p>
+                </div>
+              )}
+            </If>
             {sliderControl(
               "dsm-vector-tools-3d-particle-trail",
               "Trail (frames)",
@@ -1690,6 +1719,42 @@ function flowTab2D(vectorTools: VectorTools, config: ConfigGetter) {
           () => flow().normalizeSpeed,
           (checked) => vectorTools.setFlow("normalizeSpeed", checked)
         )}
+        {seedInput(vectorTools, 2)}
+        {checkboxControl(
+          "Black hole at the origin: horizon, shadow and photon ring",
+          () => flow().lens,
+          (checked) => vectorTools.setFlow("lens", checked)
+        )}
+        <If predicate={() => flow().lens}>
+          {() =>
+            sliderControl(
+              "dsm-vector-tools-flow-lens-horizon",
+              "Horizon radius",
+              () => flow().lensHorizon,
+              { minimum: 0.05, maximum: 5, step: 0.05, decimals: 2 },
+              (value) => vectorTools.setFlow("lensHorizon", value)
+            )
+          }
+        </If>
+        {checkboxControl(
+          "Auto colour scale (a third of the view's width)",
+          () => flow().colorScaleAuto,
+          (checked) => vectorTools.setFlow("colorScaleAuto", checked)
+        )}
+        <If predicate={() => !flow().colorScaleAuto}>
+          {() => (
+            <div class="dsm-vector-tools-number-grid">
+              {numberControl(
+                "dsm-vector-tools-flow-color-scale",
+                "Speed at which colours reach two-thirds of the ramp",
+                () => flow().colorScale,
+                (value) => {
+                  if (value > 0) vectorTools.setFlow("colorScale", value);
+                }
+              )}
+            </div>
+          )}
+        </If>
         {/* The particles' colour is set on the Color tab, beside the arrows',
             so that what colour the picture is has one place to be answered. */}
         <div class="dsm-vector-tools-hint">
@@ -2400,6 +2465,50 @@ function componentInputR(vectorTools: VectorTools) {
             type: "dsm-focus",
             plugin: "vector-tools",
             kind: "r",
+          },
+        })}
+        controller={vectorTools.cc}
+        readonly={false}
+      />
+    </div>
+  );
+}
+
+/**
+ * Where the 3D flow's particles are born: a chance from 0 to 1 over x, y and
+ * z, in the same LaTeX as the field. Empty is everywhere evenly.
+ */
+function seedInput(vectorTools: VectorTools, dimensions: 2 | 3 = 3) {
+  const latex = () =>
+    dimensions === 3
+      ? vectorTools.space3d.seedLatex
+      : vectorTools.getConfig().flow.seedLatex;
+  return (
+    <div>
+      <label class="dsm-vector-tools-label">
+        Where particles are born, a chance from 0 to 1 (empty: everywhere)
+      </label>
+      <InlineMathInputViewGeneral
+        containerClass={() => ({ "dsm-vector-tools-math-input": true })}
+        placeholder="1"
+        ariaLabel={
+          dimensions === 3
+            ? "Where particles are born, a function of x, y and z"
+            : "Where particles are born, a function of x and y"
+        }
+        latex={latex}
+        handleLatexChanged={(value) =>
+          dimensions === 3
+            ? vectorTools.setSpace3D("seedLatex", value)
+            : vectorTools.setFlow("seedLatex", value)
+        }
+        hasError={() => false}
+        manageFocus={mathquillFocusHelper({
+          controller: vectorTools.cc,
+          location: {
+            type: "dsm-focus",
+            plugin: "vector-tools",
+            kind: "seed",
           },
         })}
         controller={vectorTools.cc}
