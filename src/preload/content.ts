@@ -80,14 +80,21 @@ function _sendHeartbeat(options: WindowHeartbeatOptions) {
       [StorageKeys.pluginSettings]: {},
     },
     (items) => {
-      const s = items?.[StorageKeys.pluginSettings];
-      const wakatime = s?.wakatime;
-      const secretKey = wakatime?.secretKey;
+      const wakatime = items[StorageKeys.pluginSettings]?.wakatime;
+      const appId = wakatime?.appId;
+      const appSecret = wakatime?.appSecret;
+      const accessToken = wakatime?.accessToken;
+      const refreshToken = wakatime?.refreshToken;
+      const expiresAt = wakatime?.expiresAt;
       const projectName = wakatime?.projectName;
       const splitProjects = wakatime?.splitProjects;
       const fullOptions: HeartbeatOptions = {
         ...options,
-        secretKey,
+        appId,
+        appSecret,
+        accessToken,
+        refreshToken,
+        expiresAt,
         projectName,
         splitProjects,
       };
@@ -100,6 +107,8 @@ function _sendHeartbeat(options: WindowHeartbeatOptions) {
           { type: "send-background-heartbeat", options: fullOptions },
           (e) => {
             if (e?.type === "heartbeat-error") {
+              postMessageDown(e);
+            } else if (e?.type === "heartbeat-updated-token") {
               postMessageDown(e);
             }
           }

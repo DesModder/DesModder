@@ -373,6 +373,7 @@ function getDefaultConfig(id: PluginID) {
   const config = plugins.get(id)?.config;
   if (config !== undefined) {
     for (const configItem of config) {
+      if (configItem.type === "button") continue;
       out[configItem.key] = configItem.default;
     }
   }

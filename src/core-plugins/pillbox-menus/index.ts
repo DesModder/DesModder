@@ -126,12 +126,11 @@ export default class PillboxMenus extends PluginController<undefined> {
   }
 
   getDefaultSetting(key: string) {
-    return (
-      this.expandedPlugin &&
-      (
-        plugins.get(this.expandedPlugin)?.config as ConfigItem[] | undefined
-      )?.find((e) => e.key === key)?.default
-    );
+    if (!this.expandedPlugin) return undefined;
+    const item = (
+      plugins.get(this.expandedPlugin)?.config as ConfigItem[] | undefined
+    )?.find((e) => e.key === key);
+    return item && item.type !== "button" ? item.default : undefined;
   }
 
   canResetSetting(key: string) {

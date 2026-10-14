@@ -205,6 +205,7 @@ export default class Menu extends Component<{
                     stringOption(this.pm, item, plugin, pluginSettings),
                   number: () =>
                     numberOption(this.pm, item, plugin, pluginSettings),
+                  button: () => buttonOption(item, plugin, pluginSettings),
                   "color-list": () =>
                     colorListOption(this.pm, item, plugin, pluginSettings),
                   "segmented-options": () =>
@@ -509,6 +510,42 @@ class ResetButton extends Component<{
       </If>
     );
   }
+}
+
+function buttonOption(
+  item: ConfigItem,
+  plugin: SpecificPlugin,
+  settings: GenericSettings
+) {
+  if (item.type !== "button") {
+    throw Error("Expected type `button` in `buttionOption`");
+  }
+
+  let onTap: () => void;
+
+  if (item.behavior === "redirect") {
+    onTap = () => {
+      const redirectURL = item.getUrl(settings.appId);
+      window.open(redirectURL, "_blank", "noopener,noreferrer");
+    };
+  } else {
+    throw Error(
+      `Found unexpected behavior type ${JSON.stringify(item.behavior)}`
+    );
+  }
+
+  return (
+    <div class="dsm-settings-item dsm-settings-button">
+      <Tooltip tooltip={configItemDesc(plugin, item)} gravity="n">
+        <div class="dsm-settings-label">
+          <a target="_blank" tabIndex={0} onTap={onTap}>
+            {" "}
+            {configItemName(plugin, item)}
+          </a>
+        </div>
+      </Tooltip>
+    </div>
+  );
 }
 
 function categoryDisplayName(id: string) {

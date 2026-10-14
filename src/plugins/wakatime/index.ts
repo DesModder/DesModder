@@ -3,7 +3,7 @@ import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
 import { listenToMessageDown, postMessageUp } from "#utils/messages.ts";
 
-const heartbeatInterval = 120 * 1000;
+const heartbeatInterval = 15 * 1000;
 
 export default class Wakatime extends PluginController<Config> {
   static id = "wakatime" as const;
@@ -25,16 +25,31 @@ export default class Wakatime extends PluginController<Config> {
     // TODO: avoid double-listen on disable-re-enable
     listenToMessageDown((msg) => {
       if (msg.type === "heartbeat-error") {
-        if (msg.isAuthError) {
-          this.dsm.disablePlugin("wakatime");
+        const message = `WakaTime heartbeat error${msg.status ? ` (Status ${msg.status})` : ""}: ${msg.message}. Plugin has been deactivated.`;
+        this.dsm.disablePlugin("wakatime");
+        this.util.showToast({
+          message,
+          toastStyle: "error",
+          hideAfter: 0,
+        });
+
+        Console.error(message);
+      }
+      if (msg.type === "heartbeat-updated-token") {
+        for (const key of [
+          "accessToken",
+          "refreshToken",
+          "expiresAt",
+        ] as const) {
+          this.dsm.setPluginSetting("wakatime", key, msg.updatedConfig[key]);
+        }
+
+        if (this.dsm.wakatime?.settings.notifyRefresh) {
           this.util.showToast({
-            message:
-              "WakaTime heartbeat error: check your secret key. Plugin has been deactivated.",
-            toastStyle: "error",
-            hideAfter: 0,
+            message: "Refreshed OAuth WakaTime token!",
+            hideAfter: 5000,
           });
         }
-        Console.error("Wakatime heartbeat error:", msg.message);
       }
       return false;
     });

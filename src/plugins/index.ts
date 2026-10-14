@@ -68,6 +68,12 @@ export interface ConfigItemColorList extends ConfigItemGeneric {
   default: string[];
 }
 
+export interface ConfigItemButton extends ConfigItemGeneric {
+  type: "button";
+  behavior: "redirect";
+  getUrl: (value: any) => string;
+}
+
 interface SegmentedOption {
   name: string;
   /** Localization key, see en.ftl. */
@@ -87,7 +93,8 @@ export type ConfigItem =
   | ConfigItemString
   | ConfigItemNumber
   | ConfigItemColorList
-  | ConfigSegmentedOptions;
+  | ConfigSegmentedOptions
+  | ConfigItemButton;
 
 export type GenericSettings = Record<string, any>;
 
