@@ -673,6 +673,8 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         left: childNodeToTree(node._lhs),
         right: childNodeToTree(node._rhs),
       };
+    case "Paren":
+      return childNodeToTree(node.args[0]);
     case "Error":
       throw new Error("Parsing threw an error");
     case "Equation":
