@@ -29,7 +29,7 @@ export default class ReplaceBar extends Component<{
               onUserChangedLatex={(e: string) => this.fr.setReplaceLatex(e)}
               onUserPressedKey={(key: string, e: KeyboardEvent) => {
                 if (key === "Enter") {
-                  this.fr.refactorAll();
+                  this.refactorAll();
                 } else if (key === "Esc") {
                   this.closeReplace();
                 } else if (key === "Ctrl-F") {
@@ -66,7 +66,7 @@ export default class ReplaceBar extends Component<{
             })}
             role="button"
             tabIndex={0}
-            onTap={() => this.fr.refactorAll()}
+            onTap={() => this.refactorAll()}
           >
             {format("find-and-replace-replace-all")}
           </span>
@@ -83,5 +83,11 @@ export default class ReplaceBar extends Component<{
 
   didMount() {
     this.fr.focusSearch();
+  }
+
+  refactorAll() {
+    this.fr.cc.dispatch({
+      type: "dsm-fr-refactor-all",
+    });
   }
 }
