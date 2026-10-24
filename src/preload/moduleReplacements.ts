@@ -37,6 +37,7 @@ const pluginNames = [
   "intellisense",
   "override-keystroke",
   "quake-pro",
+  "color-input",
 ];
 
 replacements.forEach((r) => {
