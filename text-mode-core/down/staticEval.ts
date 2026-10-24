@@ -17,7 +17,16 @@ export function evalExpr(
       return expr.value;
     case "PrefixExpression": {
       const value = evalExpr(diagnostics, expr.expr);
-      return value !== null ? -value : null;
+      if (value === null) return null;
+      switch (expr.op) {
+        case "+":
+          return value;
+        case "-":
+          return -value;
+        default:
+          expr satisfies never;
+          return null;
+      }
     }
     case "ListExpression": {
       let someNotNumber = false;

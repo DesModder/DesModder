@@ -580,7 +580,7 @@ function exprToTextNoParen(
       return group(g);
     }
     case "PrefixExpression":
-      return ["-", exprToText(ctx, path.withChild(e.expr, "expr"))];
+      return [e.op, exprToText(ctx, path.withChild(e.expr, "expr"))];
     case "Norm":
       return ["|", exprToText(ctx, path.withChild(e.expr, "expr")), "|"];
     case "PostfixExpression":
@@ -678,7 +678,7 @@ function isNumericLikeLiteral(node: TextAST.Expression) {
   return (
     isUnsignedNumericLikeLiteral(node) ||
     (node.type === "PrefixExpression" &&
-      node.op === "-" &&
+      (node.op === "-" || node.op === "+") &&
       isUnsignedNumericLikeLiteral(node.expr))
   );
 }

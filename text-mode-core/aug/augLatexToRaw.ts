@@ -219,6 +219,8 @@ function childNodeToStringNoParen(
     }
     case "Negative":
       return "-" + childNodeToString(cfg, e.arg, e);
+    case "Positive":
+      return "+" + childNodeToString(cfg, e.arg, e);
     case "Norm":
       return "\\left|" + childNodeToString(cfg, e.arg, e) + "\\right|";
     case "Factorial":

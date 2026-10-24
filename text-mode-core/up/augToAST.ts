@@ -622,6 +622,12 @@ export function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         op: "-",
         expr: childLatexToAST(e.arg),
       };
+    case "Positive":
+      return {
+        type: "PrefixExpression",
+        op: "+",
+        expr: childLatexToAST(e.arg),
+      };
     case "Norm":
       return {
         type: "Norm",

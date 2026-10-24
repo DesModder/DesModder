@@ -395,6 +395,16 @@ const initialParselets: TokenMap<InitialParselet> = {
         pos: pos(token, expr),
       };
     },
+    "+": (ps, token): Node => {
+      const bp = Power.prefix;
+      const expr = parseExpr(ps, bp, "Argument of positive", "+x");
+      return {
+        type: "PrefixExpression",
+        op: "+",
+        expr,
+        pos: pos(token, expr),
+      };
+    },
     "[": parseList,
     "{": (ps, token): Node => {
       const branches: TextAST.PiecewiseBranch[] = [];
