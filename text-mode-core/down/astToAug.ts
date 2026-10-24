@@ -201,7 +201,7 @@ function regressionToAug(
     hidden: false,
     glesmos: false,
     fillOpacity: undefined,
-    displayEvaluationAsFraction: false,
+    fractionDisplay: false,
     slider: {},
     vizProps: {},
   };
@@ -243,7 +243,7 @@ function expressionToAug(
     errorHidden: style.errorHidden,
     glesmos: style.glesmos,
     fillOpacity: style.fill,
-    displayEvaluationAsFraction: style.displayEvaluationAsFraction,
+    fractionDisplay: style.fractionDisplay,
     slider: style.slider
       ? {
           period: style.slider.period,

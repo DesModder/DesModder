@@ -45,7 +45,7 @@ const exprDefaults = {
   secret: false,
   glesmos: false,
   fillOpacity: number(0),
-  displayEvaluationAsFraction: false,
+  fractionDisplay: false,
   slider: {},
   vizProps: {},
 } as const;

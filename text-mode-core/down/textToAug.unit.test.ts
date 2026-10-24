@@ -82,7 +82,7 @@ const exprDefaults = {
   pinned: false,
   secret: false,
   fillOpacity: undefined,
-  displayEvaluationAsFraction: false,
+  fractionDisplay: false,
   slider: {},
   vizProps: {},
 } as const;
@@ -606,9 +606,9 @@ describe("Statement metadata", () => {
       ...exprDefaults,
       secret: true,
     });
-    testStmt("Fraction", `1 @{displayEvaluationAsFraction:true}`, {
+    testStmt("Fraction", `1 @{fractionDisplay:true}`, {
       ...exprDefaults,
-      displayEvaluationAsFraction: true,
+      fractionDisplay: true,
     });
     testStmt("Error hidden", `1 @{errorHidden:true}`, {
       ...exprDefaults,

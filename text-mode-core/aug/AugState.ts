@@ -129,7 +129,7 @@ export interface ExpressionAug extends BaseNonFolderAug {
   // fillOpacity=0 corresponds to fill: false in Raw
   fillOpacity?: Latex.AnyChild;
   regression?: RegressionData;
-  displayEvaluationAsFraction: boolean;
+  fractionDisplay: boolean;
   slider: SliderData;
   polarDomain?: DomainAug;
   parametricDomain?: DomainAug;

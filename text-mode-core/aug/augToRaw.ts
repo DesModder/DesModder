@@ -177,7 +177,7 @@ function augNonFolderToRaw(
           max: latexTreeToStringMaybe(cfg, item.slider.max),
           step: latexTreeToStringMaybe(cfg, item.slider.step),
         },
-        displayEvaluationAsFraction: item.displayEvaluationAsFraction,
+        displayEvaluationAsFraction: item.fractionDisplay,
         polarDomain: item.polarDomain && latexMapDomain(cfg, item.polarDomain),
         parametricDomain:
           item.parametricDomain && latexMapDomain(cfg, item.parametricDomain),
