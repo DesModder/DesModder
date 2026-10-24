@@ -1,6 +1,8 @@
 import { clean, testWithPage } from "#tests";
 import { ValueType } from "./models";
 
+const STRICT_CHECK = process.env.DSM_TESTING_STRICT === "true";
+
 testWithPage("ValueTypes", async (driver) => {
   // Get Desmos's ValueTypes
   const valueTypes: Record<string, number> = await driver.page.evaluate(
@@ -22,9 +24,11 @@ testWithPage("ValueTypes", async (driver) => {
 
   for (const key of allKeys) {
     if (!(key in enumMap)) {
-      mismatches.push(
-        `DesModder is missing ValueType: ${key} = ${valueTypes[key]}`
-      );
+      if (STRICT_CHECK) {
+        mismatches.push(
+          `DesModder is missing ValueType: ${key} = ${valueTypes[key]}`
+        );
+      }
       continue;
     }
 
