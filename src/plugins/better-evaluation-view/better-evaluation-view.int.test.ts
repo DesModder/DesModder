@@ -232,3 +232,53 @@ testWithPage("List remeasure", async (driver) => {
   await driver.clean();
   return clean;
 });
+
+testWithPage("Fraction display", async (driver) => {
+  // Setup
+  await disableBevLists(driver);
+  await driver.setPluginSetting("better-evaluation-view", "fractions", true);
+  await driver.focusIndex(0);
+
+  // List of integers
+  await driver.setLatexAndSync("[1,2]+0");
+  await driver.assertSelectorNot(".dcg-icon-fraction");
+
+  // List of non-fraction numbers
+  await driver.setLatexAndSync("[1,\\sqrt{2}]+0");
+  await driver.assertSelectorNot(".dcg-icon-fraction");
+
+  // List with fraction
+  await driver.setLatexAndSync("[0.5,2,\\sqrt{2}]+0");
+  await driver.assertSelector(".dcg-icon-fraction");
+
+  // Matrix of integers
+  await driver.setLatexAndSync(
+    String.raw`\begin{bmatrix}1&2\\3&4\end{bmatrix}\cdot1`
+  );
+  await driver.assertSelectorNot(".dcg-icon-fraction");
+
+  // Matrix of non-fraction numbers
+  await driver.setLatexAndSync(
+    String.raw`\begin{bmatrix}1&\sqrt{2}\\3&4\end{bmatrix}\cdot1`
+  );
+  await driver.assertSelectorNot(".dcg-icon-fraction");
+
+  // Matrices with fractions
+  await driver.setLatexAndSync(
+    String.raw`\begin{bmatrix}\sqrt{2}&2\\3&0.5\end{bmatrix}\cdot1`
+  );
+  await driver.assertSelector(".dcg-icon-fraction");
+  await driver.setLatexAndSync(
+    String.raw`\begin{bmatrix}1&\pi\\0.34&9\end{bmatrix}\cdot1`
+  );
+  await driver.assertSelector(".dcg-icon-fraction");
+
+  // Does not show when plugin disabled
+  await driver.setPluginSetting("better-evaluation-view", "fractions", false);
+  await driver.setLatexAndSync("[0.5,2,\\sqrt{2}]+0");
+  await driver.assertSelectorNot(".dcg-icon-fraction");
+
+  // Clean up
+  await driver.clean();
+  return clean;
+});

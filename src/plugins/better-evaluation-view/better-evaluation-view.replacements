@@ -188,3 +188,18 @@ evaluationRHS: this.cachedEvaluationRHS,
 evaluationRHS: this.cachedEvaluationRHS,
 dsmBevSettings: DSM.betterEvaluationView?.settings && {...DSM.betterEvaluationView.settings},
 ```
+
+## Show fraction -> decimal toggle
+
+*Description* `Delegates processing to BetterEvaluationView.canDisplayEvaluationForItemAsFraction`
+
+*Find* => `from`
+
+```js
+return ($o == null ? void 0 : $o.valueType) !== $exports[__allow__] ? !1 : $exports[__check__]($o.value)
+```
+
+*Replace* `from` with
+```js
+return ($o == null ? void 0 : $o.valueType) !== $exports[__allow__] ? !!DSM.betterEvaluationView?.canDisplayEvaluationForItemAsFraction($o, $exports[__check__]) : $exports[__check__]($o.value)
+```

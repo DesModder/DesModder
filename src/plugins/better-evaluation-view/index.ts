@@ -122,4 +122,21 @@ export default class BetterEvaluationView extends PluginController<Config> {
     if (model?.type !== "expression") return undefined;
     return model.formula?.typed_constant_value as EvaluableConstantValue;
   }
+
+  canDisplayEvaluationForItemAsFraction(
+    o: TypedConstantValue | undefined,
+    canDisplayAsFraction: (c: number) => boolean
+  ) {
+    if (!this.settings.fractions || this.settings.lists !== "new" || o == null)
+      return false;
+
+    switch (o.valueType) {
+      case ValueType.ListOfNumber:
+        return o.value.some((e) => canDisplayAsFraction(e));
+      case ValueType.Matrix:
+        return o.value.some((row) => row.some((e) => canDisplayAsFraction(e)));
+      default:
+        return false;
+    }
+  }
 }

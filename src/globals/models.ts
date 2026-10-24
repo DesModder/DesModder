@@ -69,6 +69,10 @@ export enum ValueType {
   ListOfColor = 15,
   Polygon = 16,
   ListOfPolygon = 17,
+  TrapezoidDescriptor = 40,
+  ListOfTrapezoidDescriptor = 41,
+  Matrix = 42,
+  ListOfMatrix = 43,
   Segment = 18,
   ListOfSegment = 19,
   Circle = 20,
@@ -99,6 +103,8 @@ export enum ValueType {
   ListOfVector3D = 109,
   Tone = 50,
   ListOfTone = 51,
+  StringType = 52,
+  ListOfString = 53,
   ConfidenceInterval = 60,
   ListOfConfidenceInterval = 61,
   OneSampleTInference = 62,
@@ -177,6 +183,10 @@ export interface ValueTypeMap {
   [ValueType.ListOfColor]: ValueTypeMap[ValueType.RGBColor][];
   [ValueType.Polygon]: ValueTypeMap[ValueType.Point][];
   [ValueType.ListOfPolygon]: ValueTypeMap[ValueType.Polygon][];
+  // [ValueType.TrapezoidDescriptor]: unknown;
+  // [ValueType.ListOfTrapezoidDescriptor]: ValueTypeMap[ValueType.TrapezoidDescriptor][];
+  [ValueType.Matrix]: ValueTypeMap[ValueType.Number][][];
+  [ValueType.ListOfMatrix]: ValueTypeMap[ValueType.Matrix][];
   [ValueType.Segment]: [
     start: ValueTypeMap[ValueType.Point],
     end: ValueTypeMap[ValueType.Point],
@@ -250,6 +260,8 @@ export interface ValueTypeMap {
   [ValueType.ListOfVector3D]: ValueTypeMap[ValueType.Vector3D][];
   [ValueType.Tone]: [frequency: number, gain: number];
   [ValueType.ListOfTone]: ValueTypeMap[ValueType.Tone][];
+  // [ValueType.StringType]: unknown;
+  // [ValueType.ListOfString]: ValueTypeMap[ValueType.StringType][];
   [ValueType.ConfidenceInterval]: [
     min: number,
     max: number,
@@ -378,6 +390,7 @@ export type ActionRHSValueType =
       | ValueType.Point3D
       | ValueType.RGBColor
       | ValueType.Polygon
+      | ValueType.Matrix
       | ValueType.Segment
       | ValueType.Line
       | ValueType.Ray
@@ -409,6 +422,8 @@ export interface ListElementTypeMap {
   [ValueType.ListOfDistribution]: ValueType.Distribution;
   [ValueType.ListOfColor]: ValueType.RGBColor;
   [ValueType.ListOfPolygon]: ValueType.Polygon;
+  [ValueType.ListOfTrapezoidDescriptor]: ValueType.TrapezoidDescriptor;
+  [ValueType.ListOfMatrix]: ValueType.Matrix;
   [ValueType.ListOfSegment]: ValueType.Segment;
   [ValueType.ListOfCircle]: ValueType.Circle;
   [ValueType.ListOfArc]: ValueType.Arc;
@@ -423,6 +438,7 @@ export interface ListElementTypeMap {
   [ValueType.ListOfTriangle3D]: ValueType.Triangle3D;
   [ValueType.ListOfSphere3D]: ValueType.Sphere3D;
   [ValueType.ListOfTone]: ValueType.Tone;
+  [ValueType.ListOfString]: ValueType.StringType;
   [ValueType.ListOfConfidenceInterval]: ValueType.ConfidenceInterval;
   [ValueType.ListOfOneSampleTInference]: ValueType.OneSampleTInference;
   [ValueType.ListOfTwoSampleTInference]: ValueType.TwoSampleTInference;

@@ -249,6 +249,8 @@ better-evaluation-view-opt-colors-name = Show colors
 better-evaluation-view-opt-colors-desc = Show colors as rgb values
 better-evaluation-view-opt-colorLists-name = Show lists of colors
 better-evaluation-view-opt-colorLists-desc = Show lists of colors as lists of rgb values
+better-evaluation-view-opt-fractions-name = Better Fractions
+better-evaluation-view-opt-fractions-desc = Show the decimal → fraction toggle for matrices and lists of numbers
 
 ## Pillbox Menus
 pillbox-menus-name = Pillbox Menus (Core)
