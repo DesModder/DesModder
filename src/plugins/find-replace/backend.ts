@@ -48,6 +48,7 @@ export const nestedKeys = [
   "axisOffset",
 ] as const;
 
+/** Inside dispatch */
 function replace(
   calc: Calc,
   replaceLatex: (s: string) => string,
@@ -59,9 +60,9 @@ function replace(
     // `from` should have "global" flag enabled in order to replace all
     return s.replace(/(?<=\$\{)((?:[^{}]|\{[^}]*\})+)(?=\})/g, replaceLatex);
   }
-  const state = calc.getState();
+  const { listModel } = calc.controller;
   if (!filter) {
-    const { ticker } = state.expressions;
+    const { ticker } = listModel;
     if (ticker?.handlerLatex !== undefined) {
       ticker.handlerLatex = replaceLatex(ticker.handlerLatex);
     }
@@ -69,7 +70,7 @@ function replace(
       ticker.minStepLatex = replaceLatex(ticker.minStepLatex);
     }
   }
-  state.expressions.list.forEach((expr: any) => {
+  listModel.__itemModelArray.forEach((expr: any) => {
     if (filter?.(expr) === false) return;
 
     rootKeys.forEach((k) => {
@@ -102,9 +103,6 @@ function replace(
     if (expr.clickableInfo?.latex) {
       expr.clickableInfo.latex = replaceLatex(expr.clickableInfo.latex);
     }
-  });
-  calc.setState(state, {
-    allowUndo: true,
   });
 }
 
@@ -277,10 +275,12 @@ export function replacer(from: string, to: string) {
   }
 }
 
+/** Inside dispatch */
 export function refactor(calc: Calc, from: string, to: string) {
   replace(calc, replacer(from, to));
 }
 
+/** Inside dispatch */
 export function refactorInItem(
   calc: Calc,
   from: string,
