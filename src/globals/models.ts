@@ -37,6 +37,15 @@ interface ItemModelBase {
   rootViewNode: HTMLElement;
 }
 
+/**
+ * Enum of all value types.
+ *
+ * We have a test to check that this is complete, but it is disabled by default
+ * (so that new types Desmos adds doesn't break CI). Command to run that test is:
+ * ```
+ * DSM_TESTING_STRICT=true npm run test:integration -- -t ValueTypes
+ * ```
+ */
 export enum ValueType {
   Any = 0,
   Number = 1,
