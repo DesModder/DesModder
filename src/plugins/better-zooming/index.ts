@@ -1,28 +1,5 @@
-import { Grapher3d } from "#globals";
+import { Grapher2d, Grapher3d, PixelRect, Viewport3d } from "#globals";
 import { PluginController } from "../PluginController";
-
-type ExtendedGrapher3d = Grapher3d & {
-  controls: {
-    isLocked: () => boolean;
-    state: number;
-    lastWheelEventTime: number;
-    updateViewport: (param: any) => any;
-  };
-  startZoom: () => any;
-  getZoomScrollWheelPickResult: () => {
-    point: { x: number; y: number; z: number };
-  };
-  getProjection: () => {
-    viewport: {
-      xmin: number;
-      xmax: number;
-      ymin: number;
-      ymax: number;
-      zmin: number;
-      zmax: number;
-    };
-  };
-};
 
 export default class BetterZooming extends PluginController {
   static id = "better-zooming" as const;
@@ -76,37 +53,12 @@ export default class BetterZooming extends PluginController {
       const active = grapher();
       if (!active) return false;
       return active.is3d
-        ? zoom3d(
-            active.g as unknown as Parameters<typeof zoom3d>[0], // this might be frowned upon here but the types I need are not defined on this
-            factor
-          )
-        : zoom2d(
-            active.g as unknown as Parameters<typeof zoom2d>[0], // this might be frowned upon here but the types I need are not defined on this
-            point,
-            factor
-          );
+        ? zoom3d(active.g, factor)
+        : zoom2d(active.g, point, factor);
     };
 
     const zoom2d = (
-      g: {
-        scaleAxis: string;
-        debounceUserRequestedViewportChange: () => any;
-        viewportController: {
-          getTransformedViewport: (transform: any) => any;
-          tooBig: (param: any) => boolean;
-          tooSmall: (param: any) => boolean;
-          transformViewport: (transform: any) => any;
-          isViewportLocked: () => boolean;
-          getProjection: () => {
-            mathToPixels: {
-              mapPoint: (point: { x: number; y: number }) => {
-                x: number;
-                y: number;
-              };
-            };
-          };
-        };
-      },
+      g: Grapher2d,
       point: { x: number; y: number },
       factor: number
     ) => {
@@ -126,12 +78,7 @@ export default class BetterZooming extends PluginController {
       const sx = g.scaleAxis === "y" ? 1 : factor;
       const sy = g.scaleAxis === "x" ? 1 : factor;
       const transform = {
-        mapRect: (r: {
-          left: number;
-          right: number;
-          top: number;
-          bottom: number;
-        }) => ({
+        mapRect: (r: PixelRect) => ({
           left: point.x + (r.left - point.x) * sx,
           right: point.x + (r.right - point.x) * sx,
           top: point.y + (r.top - point.y) * sy,
@@ -151,7 +98,7 @@ export default class BetterZooming extends PluginController {
      it's picked when a zoom starts or the mouse moves */
     let center3d: { x: number; y: number; z: number } | undefined;
 
-    const pickCenter3d = (g: ExtendedGrapher3d, zoomIn: boolean) => {
+    const pickCenter3d = (g: Grapher3d, zoomIn: boolean) => {
       const hit = zoomIn ? g.getZoomScrollWheelPickResult()?.point : undefined;
       if (hit) return { x: hit.x, y: hit.y, z: hit.z };
       const v = g.getProjection().viewport;
@@ -165,7 +112,7 @@ export default class BetterZooming extends PluginController {
       return hasOrigin ? { x: 0, y: 0, z: 0 } : undefined;
     };
 
-    const zoom3d = (g: ExtendedGrapher3d, factor: number) => {
+    const zoom3d = (g: Grapher3d, factor: number) => {
       const { controls } = g;
       // locked, or rotating with the mouse
       if (controls.isLocked() || controls.state !== -1) return false;
@@ -176,7 +123,14 @@ export default class BetterZooming extends PluginController {
         y: [v.ymin, v.ymax],
         z: [v.zmin, v.zmax],
       };
-      const next = { xmin: 0, xmax: 0, ymin: 0, ymax: 0, zmin: 0, zmax: 0 };
+      const next: Viewport3d = {
+        xmin: 0,
+        xmax: 0,
+        ymin: 0,
+        ymax: 0,
+        zmin: 0,
+        zmax: 0,
+      };
       for (const axis of ["x", "y", "z"] as const) {
         const [min, max] = axes[axis];
         const c = center3d?.[axis] ?? (min + max) / 2;
@@ -245,10 +199,7 @@ export default class BetterZooming extends PluginController {
         active?.is3d &&
         (!frame || point.x !== anchor.x || point.y !== anchor.y)
       ) {
-        center3d = pickCenter3d(
-          active.g as unknown as ExtendedGrapher3d,
-          logZoom > 0
-        );
+        center3d = pickCenter3d(active.g, logZoom > 0);
       }
       target += logZoom;
       anchor = point;
@@ -280,8 +231,7 @@ export default class BetterZooming extends PluginController {
       if (e.deltaX !== 0) return true;
       if (!Number.isInteger(e.deltaY) || Math.abs(e.deltaY) < 50) return true;
       // macOS trackpads can send large whole deltas, but with wheelDeltaY = -3 * deltaY (a wheel's is -1.2 * deltaY)
-      const legacy = (e as WheelEvent & { wheelDeltaY?: number }).wheelDeltaY;
-      return legacy === -3 * e.deltaY;
+      return e.wheelDeltaY === -3 * e.deltaY;
     };
 
     const onWheel = (e: WheelEvent) => {
@@ -311,23 +261,25 @@ export default class BetterZooming extends PluginController {
     // safari sends pinches as GestureEvent with a cumulative scale
     // theoretically this should work but i dont have a mac to test it
     let lastScale = 1;
-    const onGestureStart = (e: Event) => {
-      if (!graphPoint(e as GestureEvent)) return;
+    const onGestureStart = (e: GestureEvent) => {
+      if (!graphPoint(e)) return;
       e.preventDefault();
       lastScale = 1;
     };
-    const onGestureChange = (e: Event) => {
-      const ge = e as GestureEvent;
-      const point = graphPoint(ge);
+    const onGestureChange = (e: GestureEvent) => {
+      const point = graphPoint(e);
       if (!point) return;
       e.preventDefault();
-      moveTarget(point, Math.log(ge.scale / lastScale));
-      lastScale = ge.scale;
+      moveTarget(point, Math.log(e.scale / lastScale));
+      lastScale = e.scale;
     };
 
     // capture on the calculators root element, runs before desmos' listeners on the graphpaper
-    const container = document.querySelector(".dcg-dom-change-wrapper")!;
-    container.addEventListener("wheel", onWheel as EventListener, {
+    const container = document.querySelector<HTMLElement>(
+      ".dcg-dom-change-wrapper"
+    );
+    if (!container) return;
+    container.addEventListener("wheel", onWheel, {
       capture: true,
       passive: false,
     });
@@ -342,7 +294,7 @@ export default class BetterZooming extends PluginController {
 
     return () => {
       cancelAnimationFrame(frame);
-      container.removeEventListener("wheel", onWheel as EventListener, {
+      container.removeEventListener("wheel", onWheel, {
         capture: true,
       });
       container.removeEventListener("gesturestart", onGestureStart, {
@@ -379,9 +331,21 @@ interface SpringZoomOptions {
   dampingRatio?: number;
 }
 
-/** safari pinch events, need to define bc it's not standard */
-interface GestureEvent extends UIEvent {
-  scale: number;
-  clientX: number;
-  clientY: number;
+declare global {
+  /** safari pinch events, need to define bc it's not standard */
+  interface GestureEvent extends UIEvent {
+    scale: number;
+    clientX: number;
+    clientY: number;
+  }
+
+  interface HTMLElementEventMap {
+    gesturestart: GestureEvent;
+    gesturechange: GestureEvent;
+  }
+
+  interface WheelEvent {
+    /** non-standard legacy property, not sent by every browser */
+    readonly wheelDeltaY?: number;
+  }
 }

@@ -238,12 +238,34 @@ export interface Viewport {
 
 type ViewportClass = Viewport & { __isViewportClass: unknown };
 
+export interface Viewport3d extends Viewport {
+  zmin: number;
+  zmax: number;
+}
+
+export interface PixelRect {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
+export interface ViewportTransform {
+  mapRect: (r: PixelRect) => PixelRect;
+}
+
 export interface Grapher3d {
   controls: {
     worldRotation3D: Matrix3;
     axis3D: readonly [number, number, number];
     speed3D: number;
     lastRotateTime: number;
+    /** -1 when idle, otherwise the mouse is rotating/panning */
+    state: number;
+    /** 0 when not zooming */
+    lastWheelEventTime: number;
+    isLocked: () => boolean;
+    updateViewport: (vp: Viewport3d) => void;
     setWorldRotation: (rotation: Matrix3) => void;
     onTapStart: () => void;
     onTapMove: () => void;
@@ -257,6 +279,38 @@ export interface Grapher3d {
     duration: number;
   };
   redrawAllLayers: () => void;
+  startZoom: () => void;
+  getZoomScrollWheelPickResult: () =>
+    | { point: { x: number; y: number; z: number } }
+    | undefined;
+  getProjection: () => { viewport: Viewport3d };
+}
+
+export interface Grapher2d {
+  // Same API as the `Calc.asyncScreenshot` method, but this doesn't
+  // create and wait for a shared calculator, so this is
+  // actually a synchronous screenshot but with the extra
+  // permitted options from the `asyncScreenshot` API.
+  asyncScreenshot: Desmos.Calculator["asyncScreenshot"];
+  /** "x" or "y" when only that axis is being scaled */
+  scaleAxis: string | undefined;
+  debounceUserRequestedViewportChange: () => void;
+  viewportController: {
+    setEvaluatedViewport: (vp: ViewportClass) => void;
+    getTransformedViewport: (transform: ViewportTransform) => ViewportClass;
+    tooBig: (vp: ViewportClass) => boolean;
+    tooSmall: (vp: ViewportClass) => boolean;
+    transformViewport: (transform: ViewportTransform) => void;
+    isViewportLocked: () => boolean;
+    getProjection: () => {
+      mathToPixels: {
+        mapPoint: (point: { x: number; y: number }) => {
+          x: number;
+          y: number;
+        };
+      };
+    };
+  };
 }
 
 export type Scale = "linear" | "logarithmic";
@@ -374,17 +428,7 @@ interface CalcPrivate {
     }) => MathQuillConfig;
     is3dProduct: () => boolean;
     grapher3d?: Grapher3d;
-    getGrapher: () => {
-      // Same API as the `Calc.asyncScreenshot` method, but this doesn't
-      // create and wait for a shared calculator, so this is
-      // actually a synchronous screenshot but with the extra
-      // permitted options from the `asyncScreenshot` API.
-      asyncScreenshot: Desmos.Calculator["asyncScreenshot"];
-      // 2d only?
-      viewportController: {
-        setEvaluatedViewport: (vp: ViewportClass) => void;
-      };
-    };
+    getGrapher: () => Grapher2d;
     __nextItemId: number;
     __pendingImageUploads: Record<`${number}`, true>;
     isUploadingImages: () => boolean;
