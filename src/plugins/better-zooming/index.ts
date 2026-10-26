@@ -3,16 +3,16 @@ import { PluginController } from "../PluginController";
 
 type ExtendedGrapher3d = Grapher3d & {
   controls: {
-    isLocked(): boolean;
+    isLocked: () => boolean;
     state: number;
     lastWheelEventTime: number;
-    updateViewport(param: any): any;
+    updateViewport: (param: any) => any;
   };
-  startZoom(): any;
-  getZoomScrollWheelPickResult(): {
+  startZoom: () => any;
+  getZoomScrollWheelPickResult: () => {
     point: { x: number; y: number; z: number };
   };
-  getProjection(): {
+  getProjection: () => {
     viewport: {
       xmin: number;
       xmax: number;
@@ -90,16 +90,16 @@ export default class BetterZooming extends PluginController {
     const zoom2d = (
       g: {
         scaleAxis: string;
-        debounceUserRequestedViewportChange(): any;
+        debounceUserRequestedViewportChange: () => any;
         viewportController: {
-          getTransformedViewport(transform: any): any;
-          tooBig(param: any): boolean;
-          tooSmall(param: any): boolean;
-          transformViewport(transform: any): any;
-          isViewportLocked(): boolean;
-          getProjection(): {
+          getTransformedViewport: (transform: any) => any;
+          tooBig: (param: any) => boolean;
+          tooSmall: (param: any) => boolean;
+          transformViewport: (transform: any) => any;
+          isViewportLocked: () => boolean;
+          getProjection: () => {
             mathToPixels: {
-              mapPoint(point: { x: number; y: number }): {
+              mapPoint: (point: { x: number; y: number }) => {
                 x: number;
                 y: number;
               };
@@ -160,8 +160,8 @@ export default class BetterZooming extends PluginController {
         v.xmax >= 0 &&
         v.ymin <= 0 &&
         v.ymax >= 0 &&
-        v.zmin! <= 0 &&
-        v.zmax! >= 0;
+        v.zmin <= 0 &&
+        v.zmax >= 0;
       return hasOrigin ? { x: 0, y: 0, z: 0 } : undefined;
     };
 
@@ -174,7 +174,7 @@ export default class BetterZooming extends PluginController {
       const axes = {
         x: [v.xmin, v.xmax],
         y: [v.ymin, v.ymax],
-        z: [v.zmin!, v.zmax!],
+        z: [v.zmin, v.zmax],
       };
       const next = { xmin: 0, xmax: 0, ymin: 0, ymax: 0, zmin: 0, zmax: 0 };
       for (const axis of ["x", "y", "z"] as const) {
