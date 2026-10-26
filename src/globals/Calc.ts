@@ -66,7 +66,8 @@ export type VanillaDispatchedEvent =
         | "new-expression"
         | "new-expression-at-end"
         | "set-lock-rotation"
-        | "toggle-disable-lighting";
+        | "toggle-disable-lighting"
+        | "render";
     }
   | {
       type: "commit-user-requested-viewport";
