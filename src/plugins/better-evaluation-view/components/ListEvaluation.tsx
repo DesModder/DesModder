@@ -67,7 +67,7 @@ function formatLabels<T extends NormalListValueType>(
       return iterator.map(
         (points) => `ray\\left(${points.map(pointLabel).join(",")}\\right)`
       );
-    case ValueType.ListOfVector:
+    case ValueType.ListOfLegacyVector:
       return iterator.map(
         ([vector, start]) =>
           `vector\\left(${pointLabel(start)},${pointLabel(zipWith((a, b) => a + b, start, vector))}\\right)`
@@ -87,7 +87,7 @@ function formatLabels<T extends NormalListValueType>(
         ([center, radius]) =>
           `sphere\\left(${point3dLabel(center)},${truncatedLatexLabel(radius)}\\right)`
       );
-    case ValueType.ListOfVector3D:
+    case ValueType.ListOfLegacyVector3D:
       return iterator.map(
         ([vector, start]) =>
           `vector\\left(${point3dLabel(start)},${point3dLabel(zipWith((a, b) => a + b, start, vector))}\\right)`
