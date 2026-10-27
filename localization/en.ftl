@@ -386,3 +386,7 @@ quake-pro-opt-dollyMagnification-name = Dolly Multiplier
 quake-pro-opt-dollyMagnification-desc = Heightens the zoom behavior by multiplying (dollying) the camera's viewport slider.
 quake-pro-opt-scalarZoomed-name = Scalar Cancellation
 quake-pro-opt-scalarZoomed-desc = Combats perspective distortion by multiplying (enlarging) the screen viewport (requires max zoom to be fully seen).
+
+## Better Zooming
+better-zooming-name = Better Zooming
+better-zooming-desc = Makes zooming a lot smoother, especially on trackpads.
