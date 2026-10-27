@@ -83,8 +83,8 @@ export enum ValueType {
   ListOfLine = 25,
   Ray = 26,
   ListOfRay = 27,
-  Vector = 34,
-  ListOfVector = 35,
+  LegacyVector = 34,
+  ListOfLegacyVector = 35,
   Restriction = 36,
   ListOfRestriction = 37,
   AngleMarker = 28,
@@ -99,8 +99,8 @@ export enum ValueType {
   ListOfTriangle3D = 105,
   Sphere3D = 106,
   ListOfSphere3D = 107,
-  Vector3D = 108,
-  ListOfVector3D = 109,
+  LegacyVector3D = 108,
+  ListOfLegacyVector3D = 109,
   Tone = 50,
   ListOfTone = 51,
   StringType = 52,
@@ -210,11 +210,11 @@ export interface ValueTypeMap {
     direction: ValueTypeMap[ValueType.Point],
   ];
   [ValueType.ListOfRay]: ValueTypeMap[ValueType.Ray][];
-  [ValueType.Vector]: [
+  [ValueType.LegacyVector]: [
     vector: ValueTypeMap[ValueType.Point],
     start: ValueTypeMap[ValueType.Point],
   ];
-  [ValueType.ListOfVector]: ValueTypeMap[ValueType.Vector][];
+  [ValueType.ListOfLegacyVector]: ValueTypeMap[ValueType.LegacyVector][];
   // [ValueType.Restriction]: unknown;
   // [ValueType.ListOfRestriction]: ValueTypeMap[ValueType.Restriction][];
   [ValueType.AngleMarker]: [
@@ -253,11 +253,11 @@ export interface ValueTypeMap {
     radius: number,
   ];
   [ValueType.ListOfSphere3D]: ValueTypeMap[ValueType.Sphere3D][];
-  [ValueType.Vector3D]: [
+  [ValueType.LegacyVector3D]: [
     vector: ValueTypeMap[ValueType.Point3D],
     start: ValueTypeMap[ValueType.Point3D],
   ];
-  [ValueType.ListOfVector3D]: ValueTypeMap[ValueType.Vector3D][];
+  [ValueType.ListOfLegacyVector3D]: ValueTypeMap[ValueType.LegacyVector3D][];
   [ValueType.Tone]: [frequency: number, gain: number];
   [ValueType.ListOfTone]: ValueTypeMap[ValueType.Tone][];
   // [ValueType.StringType]: unknown;
@@ -394,7 +394,7 @@ export type ActionRHSValueType =
       | ValueType.Segment
       | ValueType.Line
       | ValueType.Ray
-      | ValueType.Vector
+      | ValueType.LegacyVector
       | ValueType.Circle
       | ValueType.Arc
       | ValueType.AngleMarker
@@ -429,12 +429,12 @@ export interface ListElementTypeMap {
   [ValueType.ListOfArc]: ValueType.Arc;
   [ValueType.ListOfLine]: ValueType.Line;
   [ValueType.ListOfRay]: ValueType.Ray;
-  [ValueType.ListOfVector]: ValueType.Vector;
+  [ValueType.ListOfLegacyVector]: ValueType.LegacyVector;
   [ValueType.ListOfAngleMarker]: ValueType.AngleMarker;
   [ValueType.ListOfDirectedAngleMarker]: ValueType.DirectedAngleMarker;
   [ValueType.ListOfTransformation]: ValueType.Transformation;
   [ValueType.ListOfSegment3D]: ValueType.Segment3D;
-  [ValueType.ListOfVector3D]: ValueType.Vector3D;
+  [ValueType.ListOfLegacyVector3D]: ValueType.LegacyVector3D;
   [ValueType.ListOfTriangle3D]: ValueType.Triangle3D;
   [ValueType.ListOfSphere3D]: ValueType.Sphere3D;
   [ValueType.ListOfTone]: ValueType.Tone;
