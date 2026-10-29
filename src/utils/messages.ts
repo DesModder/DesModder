@@ -7,6 +7,7 @@ Post message conventions:
 */
 import { WindowHeartbeatOptions } from "#plugins/wakatime/heartbeat.ts";
 import { GenericSettings, PluginID } from "#plugins/index.ts";
+import { Config as WakatimeConfig } from "#plugins/wakatime/config.ts";
 
 type MessageWindowToContent =
   | {
@@ -37,13 +38,22 @@ type MessageContentToWindow =
       pluginSettings: Record<PluginID, GenericSettings | undefined>;
       scriptURL: string;
     }
-  | HeartbeatError;
+  | HeartbeatResult;
 
-export interface HeartbeatError {
+interface HeartbeatError {
   type: "heartbeat-error";
-  isAuthError: boolean;
+  status: number | null;
   message: string;
 }
+interface HeartbeatTokenRefresh {
+  type: "heartbeat-updated-token";
+  updatedConfig: Pick<
+    WakatimeConfig,
+    "accessToken" | "refreshToken" | "expiresAt"
+  >;
+}
+
+export type HeartbeatResult = HeartbeatError | HeartbeatTokenRefresh;
 
 function postMessage<T extends { type: string }>(message: T) {
   window.postMessage(message, "*");
