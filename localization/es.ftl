@@ -259,6 +259,8 @@ better-evaluation-view-opt-colors-name = Mostrar colores
 better-evaluation-view-opt-colors-desc = Mostrar colores como valores RGB
 better-evaluation-view-opt-colorLists-name = Mostrar listas de color
 better-evaluation-view-opt-colorLists-desc = Mostrar listas de color como listas de valores RGB
+better-evaluation-view-opt-fractions-name = Fracciones Mejoradas
+better-evaluation-view-opt-fractions-desc = Mostar conversión a fracción para matrices y listas
 
 ## Pillbox Menus
 pillbox-menus-name = Menú de Botones (Funciones Principales)
