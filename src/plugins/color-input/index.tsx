@@ -25,11 +25,16 @@ export default class ColorInput extends PluginController {
   }
 
   getPlaceholder(): string {
-    if (!this.exprModel?.color) {
+    const color = this.exprModel?.color;
+    if (!color) {
       return "";
     }
 
-    const hexColor = parseInt(this.exprModel.color.slice(1), 16);
+    if (!/^#[0-9a-f]{6}$/i.test(color)) {
+      return "";
+    }
+
+    const hexColor = parseInt(color.slice(1), 16);
     const r = (hexColor >> 16) & 255;
     const g = (hexColor >> 8) & 255;
     const b = hexColor & 255;

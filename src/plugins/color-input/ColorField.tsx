@@ -1,7 +1,6 @@
 import ColorInput from ".";
 import { Component, jsx } from "#DCGView";
 import { InlineMathInputView, MathQuillView } from "#components";
-// import { format } from "#i18n";
 import { mathquillFocusHelper } from "../../globals";
 import "./ColorField.less";
 
