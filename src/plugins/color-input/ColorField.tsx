@@ -28,11 +28,11 @@ export default class ColorField extends Component<{ ci: ColorInput }> {
         </div>
         <div class="dsm-color-input-container">
           <InlineMathInputView
-            placeholder={() => this.ci.getPlaceholder()}
+            placeholder={() => this.getPlaceholder()}
             ariaLabel={""}
             handleLatexChanged={(latex) => this.setColorLatex(latex)}
-            latex={() => this.ci.getColorLatex()}
-            hasError={() => this.ci.hasError()}
+            latex={() => this.getColorLatex()}
+            hasError={() => this.hasError()}
             manageFocus={mathquillFocusHelper({
               controller: this.ci.cc,
               location: {
@@ -61,5 +61,30 @@ export default class ColorField extends Component<{ ci: ColorInput }> {
       id: this.ci.exprModel.id,
       colorLatex: latex,
     });
+  }
+
+  getColorLatex(): string {
+    return this.ci.exprModel?.colorLatex ?? "";
+  }
+
+  hasError(): boolean {
+    return !this.ci.exprModel?.formula?.color_latex_valid;
+  }
+
+  getPlaceholder(): string {
+    const color = this.ci.exprModel?.color;
+    if (!color) {
+      return "";
+    }
+
+    if (!/^#[0-9a-f]{6}$/i.test(color)) {
+      return "";
+    }
+
+    const hexColor = parseInt(color.slice(1), 16);
+    const r = (hexColor >> 16) & 255;
+    const g = (hexColor >> 8) & 255;
+    const b = hexColor & 255;
+    return `\\operatorname{rgb}\\left(${r},${g},${b}\\right)`;
   }
 }

@@ -9,31 +9,6 @@ export default class ColorInput extends PluginController {
   exprModel: ExpressionModel | undefined;
   dispatcher: string = "";
 
-  getColorLatex(): string {
-    return this.exprModel?.colorLatex ?? "";
-  }
-
-  hasError(): boolean {
-    return !this.exprModel?.formula?.color_latex_valid;
-  }
-
-  getPlaceholder(): string {
-    const color = this.exprModel?.color;
-    if (!color) {
-      return "";
-    }
-
-    if (!/^#[0-9a-f]{6}$/i.test(color)) {
-      return "";
-    }
-
-    const hexColor = parseInt(color.slice(1), 16);
-    const r = (hexColor >> 16) & 255;
-    const g = (hexColor >> 8) & 255;
-    const b = hexColor & 255;
-    return `\\operatorname{rgb}\\left(${r},${g},${b}\\right)`;
-  }
-
   replaceColorView: Replacer = (ColorPicker: ComponentTemplate) => (
     <div>
       {ColorPicker}
