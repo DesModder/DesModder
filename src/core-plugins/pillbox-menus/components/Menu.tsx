@@ -48,6 +48,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "duplicate-expression-hotkey",
     "folder-tools",
     "custom-mathquill-config",
+    "backslash-commands",
     "code-golf",
     "better-navigation",
   ],
