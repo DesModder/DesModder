@@ -6,18 +6,29 @@
 
 *Description* `Insert the expression bar after the color picker`
 
-*Find* => `colorBar`
+*Find* => `colorPickerContent`
 ```js
 $createElement("div", {
-  class: "dcg-color-picker-container",
-  ____
+  class: "dcg-options-menu-content",
+  children: $createElement($ColorPicker, {
+    __moreOpts__$
+    onColorSelected: this.bindFn(this.handleColorSelected)
   })
+})
 ```
 
-*Replace* `colorBar` with
+*Replace* `colorPickerContent` with
 ```js
-DesModder.replaceElement(
-  () => __colorBar__,
-  () => DSM.colorInput?.replaceColorView
-)
+$createElement("div", {
+  class: "dcg-options-menu-content",
+  children: [
+    $createElement($ColorPicker, {
+        __moreOpts__$
+        onColorSelected: this.bindFn(this.handleColorSelected)
+    }),
+    DesModder.insertElement(
+      () => DSM.colorInput?.insertColorInput
+    )
+  ]
+})
 ```

@@ -1,5 +1,5 @@
-import { PluginController, Replacer } from "#plugins/PluginController.ts";
-import { ComponentTemplate, jsx } from "#DCGView";
+import { Inserter, PluginController } from "#plugins/PluginController.ts";
+import { jsx } from "#DCGView";
 import ColorField from "./ColorField";
 import { ExpressionModel } from "#globals";
 
@@ -9,12 +9,7 @@ export default class ColorInput extends PluginController {
   exprModel: ExpressionModel | undefined;
   dispatcher: string = "";
 
-  replaceColorView: Replacer = (ColorPicker: ComponentTemplate) => (
-    <div>
-      {ColorPicker}
-      <ColorField ci={this} />
-    </div>
-  );
+  insertColorInput: Inserter = () => <ColorField ci={this} />;
 
   afterEnable() {
     this.dispatcher = this.cc.dispatcher.register((e) => {
