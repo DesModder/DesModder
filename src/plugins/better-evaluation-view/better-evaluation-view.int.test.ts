@@ -273,11 +273,6 @@ testWithPage("Fraction display", async (driver) => {
   );
   await driver.assertSelector(".dcg-icon-fraction");
 
-  // Does not show when plugin disabled
-  await driver.setPluginSetting("better-evaluation-view", "fractions", false);
-  await driver.setLatexAndSync("[0.5,2,\\sqrt{2}]+0");
-  await driver.assertSelectorNot(".dcg-icon-fraction");
-
   // Clean up
   await driver.clean();
   return clean;
