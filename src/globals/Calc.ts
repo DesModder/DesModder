@@ -166,7 +166,7 @@ export type VanillaDispatchedEvent =
       toast: Toast;
     }
   | { type: "set-folder-collapsed"; id: string; isCollapsed: boolean }
-  | { type: "set-item-colorLatex"; id: string; colorLatex: string }
+  | { type: "set-item-colorlatex"; id: string; colorLatex: string }
   | { type: "rename-identifier-in-item"; id: string }
   | { type: "set-note-text"; id: string; text: string }
   | {

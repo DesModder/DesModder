@@ -13,13 +13,6 @@ export default class ColorInput extends PluginController {
     return this.exprModel?.colorLatex ?? "";
   }
 
-  setColorLatex(latex: string) {
-    if (this.exprModel) {
-      this.exprModel.colorLatex = latex;
-      this.cc.dispatch({ type: "tick" });
-    }
-  }
-
   hasError(): boolean {
     return !this.exprModel?.formula?.color_latex_valid;
   }

@@ -30,7 +30,7 @@ export default class ColorField extends Component<{ ci: ColorInput }> {
           <InlineMathInputView
             placeholder={() => this.ci.getPlaceholder()}
             ariaLabel={""}
-            handleLatexChanged={(latex) => this.ci.setColorLatex(latex)}
+            handleLatexChanged={(latex) => this.setColorLatex(latex)}
             latex={() => this.ci.getColorLatex()}
             hasError={() => this.ci.hasError()}
             manageFocus={mathquillFocusHelper({
@@ -46,11 +46,20 @@ export default class ColorField extends Component<{ ci: ColorInput }> {
             handlePressedKey={(key, e) => {
               this.handlePressedKey(key, e);
               const mq = MathQuillView.getFocusedMathquill();
-              if (mq) this.ci.setColorLatex(mq.latex());
+              if (mq) this.setColorLatex(mq.latex());
             }}
           />
         </div>
       </div>
     );
+  }
+
+  setColorLatex(latex: string) {
+    if (!this.ci.exprModel) return;
+    this.ci.cc.dispatch({
+      type: "set-item-colorlatex",
+      id: this.ci.exprModel.id,
+      colorLatex: latex,
+    });
   }
 }
