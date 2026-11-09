@@ -231,7 +231,7 @@ export type Or<C extends S = Concrete> = Positioned<C> & {
 
 export type PrefixExpression<C extends S = Concrete> = Positioned<C> & {
   type: "PrefixExpression";
-  op: "-";
+  op: "-" | "+";
   expr: Expression<C>;
 };
 

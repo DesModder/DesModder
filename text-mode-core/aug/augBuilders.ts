@@ -96,6 +96,13 @@ export function negative(arg: Aug.Latex.AnyChild): Aug.Latex.Negative {
   };
 }
 
+export function positive(arg: Aug.Latex.AnyChild): Aug.Latex.Positive {
+  return {
+    type: "Positive",
+    arg,
+  };
+}
+
 export function factorial(arg: Aug.Latex.AnyChild): Aug.Latex.Factorial {
   return {
     type: "Factorial",

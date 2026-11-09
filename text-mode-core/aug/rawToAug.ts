@@ -639,6 +639,11 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         left: childNodeToTree(node.args[0]),
         right: childNodeToTree(node.args[1]),
       };
+    case "Positive":
+      return {
+        type: "Positive",
+        arg: childNodeToTree(node.args[0]),
+      };
     case "Negative":
       return {
         type: "Negative",

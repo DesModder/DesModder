@@ -10,6 +10,7 @@ import {
   listAccess,
   negative,
   number,
+  positive,
   range,
   substitution,
   updateRule,
@@ -295,6 +296,8 @@ describe("Basic exprs", () => {
   describe("PrefixExpression", () => {
     testExpr("negative number", "-5", negative(number(5)));
     testExpr("negated identifier", "-x", negative(id("x")));
+    testExpr("positive number", "+5", positive(number(5)));
+    testExpr("positive identifier", "+x", positive(id("x")));
   });
   describe("PostfixExpression", () => {
     testExpr("factorial", "x!", functionCall(id("factorial"), [id("x")]));
