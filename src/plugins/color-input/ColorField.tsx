@@ -1,10 +1,13 @@
 import ColorInput from ".";
 import { Component, jsx } from "#DCGView";
 import { InlineMathInputView, MathQuillView } from "#components";
-import { mathquillFocusHelper } from "../../globals";
+import { ExpressionModel, mathquillFocusHelper } from "../../globals";
 import "./ColorField.less";
 
-export default class ColorField extends Component<{ ci: ColorInput }> {
+export default class ColorField extends Component<{
+  ci: ColorInput;
+  id: string;
+}> {
   ci!: ColorInput;
 
   handlePressedKey = (key: string, evt: KeyboardEvent) => {
@@ -54,25 +57,32 @@ export default class ColorField extends Component<{ ci: ColorInput }> {
     );
   }
 
+  getModel(): ExpressionModel | undefined {
+    const model = this.ci.cc.getItemModel(this.props.id());
+    if (model?.type !== "expression") return undefined;
+    return model;
+  }
+
   setColorLatex(latex: string) {
-    if (!this.ci.exprModel) return;
+    const model = this.getModel();
+    if (!model) return;
     this.ci.cc.dispatch({
       type: "set-item-colorlatex",
-      id: this.ci.exprModel.id,
+      id: model.id,
       colorLatex: latex,
     });
   }
 
   getColorLatex(): string {
-    return this.ci.exprModel?.colorLatex ?? "";
+    return this.getModel()?.colorLatex ?? "";
   }
 
   hasError(): boolean {
-    return !this.ci.exprModel?.formula?.color_latex_valid;
+    return !this.getModel()?.formula?.color_latex_valid;
   }
 
   getPlaceholder(): string {
-    const color = this.ci.exprModel?.color;
+    const color = this.getModel()?.color;
     if (!color) {
       return "";
     }

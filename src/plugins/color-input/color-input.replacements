@@ -27,7 +27,7 @@ $createElement("div", {
         onColorSelected: this.bindFn(this.handleColorSelected)
     }),
     DesModder.insertElement(
-      () => DSM.colorInput?.insertColorInput
+      () => DSM.colorInput?.insertColorInput(this.model.id)
     )
   ]
 })
