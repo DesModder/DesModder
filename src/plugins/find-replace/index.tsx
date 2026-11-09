@@ -12,6 +12,9 @@ declare module "src/globals/extra-actions" {
       type: "dsm-fr-rename-identifier-in-item";
       id: string;
     };
+    "refactor-all": {
+      type: "dsm-fr-refactor-all";
+    };
   }
 }
 
@@ -38,12 +41,14 @@ export default class FindReplace extends PluginController {
     return renameReplace.length > 0;
   }
 
-  refactorAll() {
+  /** Inside dispatch */
+  private refactorAll() {
     if (!this.isReplaceValid()) return;
     refactor(this.calc, this.cc.getExpressionSearchStr(), this.replaceLatex);
   }
 
-  refactorInItem(id: string) {
+  /** Inside dispatch */
+  private refactorInItem(id: string) {
     if (!this.isReplaceValid()) return;
     refactorInItem(
       this.calc,
@@ -106,9 +111,13 @@ export default class FindReplace extends PluginController {
   }
 
   handleDispatchedAction(evt: DispatchedEvent) {
-    if (evt.type === "dsm-fr-rename-identifier-in-item") {
-      this.cc.runAfterDispatch(() => this.refactorInItem(evt.id));
-      return "abort-later-handlers";
+    switch (evt.type) {
+      case "dsm-fr-rename-identifier-in-item":
+        this.refactorInItem(evt.id);
+        return "abort-later-handlers";
+      case "dsm-fr-refactor-all":
+        this.refactorAll();
+        return "abort-later-handlers";
     }
   }
 }

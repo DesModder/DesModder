@@ -354,6 +354,11 @@ interface CalcPrivate {
       }[];
       __itemIdToModel: Record<string, ItemModel>;
 
+      ticker: {
+        handlerLatex: string;
+        minStepLatex: string;
+      };
+
       drawLayers: { layer: number; drawOrder: string[]; drawSet: string[] }[];
     };
     _addItemToEndFromAPI: (item: ItemModel) => void;

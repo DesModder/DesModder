@@ -375,6 +375,13 @@ export interface Negative extends Expression {
   args: [ChildExprNode];
   type: "Negative";
 }
+
+export interface Positive extends Base {
+  // "+x"
+  type: "Positive";
+  args: [ChildExprNode];
+}
+
 export interface Or extends Expression {
   // "\\{x<1,y>2\\}"
   args: [ChildExprNode, ChildExprNode];
@@ -628,6 +635,11 @@ export interface Ticker extends Base {
   handler: unknown;
 }
 
+export interface Paren extends Base {
+  type: "Paren";
+  args: [ChildExprNode];
+}
+
 export type RootOnlyExprNode =
   | Equation
   | Assignment
@@ -677,12 +689,14 @@ export type ChildExprNode =
   | Divide
   | Exponent
   | Negative
+  | Positive
   | Or
   | Comparator
   | ComparatorChain
   // Seed + ExtendSeed only used in SeededFunctionCalls?
   | Seed
-  | ExtendSeed;
+  | ExtendSeed
+  | Paren;
 
 // These can only occur after further transformation or something
 type IrrelevantExprNode =

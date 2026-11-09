@@ -201,7 +201,7 @@ function regressionToAug(
     hidden: false,
     glesmos: false,
     fillOpacity: undefined,
-    displayEvaluationAsFraction: false,
+    fractionDisplay: false,
     slider: {},
     vizProps: {},
   };
@@ -243,7 +243,7 @@ function expressionToAug(
     errorHidden: style.errorHidden,
     glesmos: style.glesmos,
     fillOpacity: style.fill,
-    displayEvaluationAsFraction: style.displayEvaluationAsFraction,
+    fractionDisplay: style.fractionDisplay,
     slider: style.slider
       ? {
           period: style.slider.period,
@@ -645,11 +645,21 @@ export function childExprToAug(
         throw Error("Invalid or condition");
       return { type: "Or", left, right };
     }
-    case "PrefixExpression":
+    case "PrefixExpression": {
+      const type: "Positive" | "Negative" | undefined = (
+        {
+          "+": "Positive",
+          "-": "Negative",
+        } as const
+      )[expr.op];
+      if (type === undefined) {
+        throw new Error(`Unrecognized PrefixExpression type ${expr.op}`);
+      }
       return {
-        type: "Negative",
+        type,
         arg: childExprToAug(expr.expr),
       };
+    }
     case "Norm":
       return {
         type: "Norm",

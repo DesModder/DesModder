@@ -26,11 +26,11 @@ export type NormalListValueType =
   | ValueType.ListOfArc
   | ValueType.ListOfLine
   | ValueType.ListOfRay
-  | ValueType.ListOfVector
+  | ValueType.ListOfLegacyVector
   | ValueType.ListOfSegment3D
   | ValueType.ListOfTriangle3D
   | ValueType.ListOfSphere3D
-  | ValueType.ListOfVector3D
+  | ValueType.ListOfLegacyVector3D
   | ValueType.ListOfTone;
 
 export type ColorValueType = ValueType.RGBColor | ValueType.ListOfColor;
@@ -81,11 +81,11 @@ export default class BetterEvaluationView extends PluginController<Config> {
       case ValueType.ListOfArc:
       case ValueType.ListOfLine:
       case ValueType.ListOfRay:
-      case ValueType.ListOfVector:
+      case ValueType.ListOfLegacyVector:
       case ValueType.ListOfSegment3D:
       case ValueType.ListOfTriangle3D:
       case ValueType.ListOfSphere3D:
-      case ValueType.ListOfVector3D:
+      case ValueType.ListOfLegacyVector3D:
       case ValueType.ListOfTone:
         return settings.lists === "old"
           ? () => ListEvaluation(value)
@@ -121,5 +121,22 @@ export default class BetterEvaluationView extends PluginController<Config> {
     const model = this.controller.getItemModel(this.props.id());
     if (model?.type !== "expression") return undefined;
     return model.formula?.typed_constant_value as EvaluableConstantValue;
+  }
+
+  canDisplayEvaluationForItemAsFraction(
+    o: TypedConstantValue | undefined,
+    canDisplayAsFraction: (c: number) => boolean
+  ) {
+    if (!this.settings.fractions || this.settings.lists !== "new" || o == null)
+      return false;
+
+    switch (o.valueType) {
+      case ValueType.ListOfNumber:
+        return o.value.some((e) => canDisplayAsFraction(e));
+      case ValueType.Matrix:
+        return o.value.some((row) => row.some((e) => canDisplayAsFraction(e)));
+      default:
+        return false;
+    }
   }
 }

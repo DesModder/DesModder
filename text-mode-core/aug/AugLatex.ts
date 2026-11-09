@@ -41,6 +41,7 @@ export type AnyChild =
   | RepeatedOperator
   | BinaryOperator
   | Negative
+  | Positive
   | Norm
   | Factorial
   | Comparator
@@ -275,6 +276,11 @@ export interface Or {
 
 export interface Negative {
   type: "Negative";
+  arg: AnyChild;
+}
+
+export interface Positive {
+  type: "Positive";
   arg: AnyChild;
 }
 

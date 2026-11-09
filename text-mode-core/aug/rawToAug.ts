@@ -195,7 +195,7 @@ function tryRawNonFolderToAug(
         },
         glesmos: dsmMetadata.expressions[item.id]?.glesmos ?? false,
         errorHidden: dsmMetadata.expressions[item.id]?.errorHidden ?? false,
-        displayEvaluationAsFraction: item.displayEvaluationAsFraction ?? false,
+        fractionDisplay: item.displayEvaluationAsFraction ?? false,
         polarDomain: parseMapDomain(cfg, item.polarDomain, "0", "12\\pi"),
         parametricDomain: parseMapDomain(cfg, item.parametricDomain),
         parametricDomain3Du: parseMapDomain(cfg, item.parametricDomain3Du),
@@ -639,6 +639,11 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         left: childNodeToTree(node.args[0]),
         right: childNodeToTree(node.args[1]),
       };
+    case "Positive":
+      return {
+        type: "Positive",
+        arg: childNodeToTree(node.args[0]),
+      };
     case "Negative":
       return {
         type: "Negative",
@@ -673,6 +678,8 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         left: childNodeToTree(node._lhs),
         right: childNodeToTree(node._rhs),
       };
+    case "Paren":
+      return childNodeToTree(node.args[0]);
     case "Error":
       throw new Error("Parsing threw an error");
     case "Equation":

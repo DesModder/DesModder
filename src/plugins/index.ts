@@ -29,6 +29,7 @@ import VideoCreator from "./video-creator";
 import Wakatime from "./wakatime";
 import WolframToDesmos from "./wolfram2desmos";
 import BetterNavigation from "./better-navigation";
+import BackslashCommands from "./backslash-commands";
 import QuakePro from "./quake-pro";
 import OverrideKeystroke from "../core-plugins/override-keystroke";
 import { DispatchedEvent } from "src/globals/extra-actions";
@@ -168,6 +169,7 @@ export const keyToPlugin = {
   pasteImage: PasteImage,
   quakePro: QuakePro,
   colorInput: ColorInput,
+  backslashCommands: BackslashCommands,
 } satisfies Record<string, Plugin<any>>;
 
 export const pluginList = Object.values(keyToPlugin);
@@ -222,11 +224,11 @@ export class TransparentPlugins implements KeyToPluginInstance {
   get exprActionButtons () { return this.ep["expr-action-buttons"]; }
   get codeGolf () { return this.ep["code-golf"]; }
   get syntaxHighlighting () { return this.ep["syntax-highlighting"]}
-  get betterNavigation () { return this.ep["better-navigation"]} 
+  get betterNavigation () { return this.ep["better-navigation"]}
   get pasteImage () { return this.ep["paste-image"]; }
   get quakePro () { return this.ep["quake-pro"]; }
   get colorInput () { return this.ep["color-input"]; }
-
+  get backslashCommands () { return this.ep["backslash-commands"]; }
 }
 
 export type IDToPluginSettings = {
