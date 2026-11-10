@@ -51,6 +51,7 @@ const categoryPlugins: Record<string, PluginID[]> = {
     "backslash-commands",
     "code-golf",
     "better-navigation",
+    "color-input",
   ],
   visual: [
     "set-primary-color",

@@ -25,6 +25,11 @@ export type FocusLocation =
     }
   | { type: "search-expressions" }
   | {
+      type: "dsm-focus";
+      plugin: "color-input";
+      kind: "color-input-field";
+    }
+  | {
       /**
        * Special type to prevent exhaustive switches on `location.type`
        * while still permitting logic like
@@ -161,9 +166,16 @@ export type VanillaDispatchedEvent =
       toast: Toast;
     }
   | { type: "set-folder-collapsed"; id: string; isCollapsed: boolean }
-  | { type: "set-item-colorLatex"; id: string; colorLatex: string }
+  | { type: "set-item-colorlatex"; id: string; colorLatex: string }
   | { type: "rename-identifier-in-item"; id: string }
-  | { type: "set-note-text"; id: string; text: string };
+  | { type: "set-note-text"; id: string; text: string }
+  | {
+      type: "toggle-item-settings-menu";
+      menu: {
+        type: string;
+        id: string;
+      };
+    };
 
 /**
  * Evaluator change: a change set associated with a single id, passed back from
