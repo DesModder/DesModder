@@ -12,6 +12,7 @@ enum StorageKeys {
   forceDisabled = "_force-disabled",
   forceDisabledVersion = "_force-disabled-version",
   pluginSettings = "_plugin-settings",
+  pluginSecretSettings = "_plugin-secret-settings",
 }
 
 interface InitialData {
@@ -19,6 +20,10 @@ interface InitialData {
   [StorageKeys.forceDisabledVersion]: string;
   [StorageKeys.pluginsEnabled]: Record<PluginID, boolean | undefined>;
   [StorageKeys.pluginSettings]: Record<PluginID, GenericSettings | undefined>;
+  [StorageKeys.pluginSecretSettings]: Record<
+    PluginID,
+    GenericSettings | undefined
+  >;
 }
 
 const initialDataDefaults: InitialData = {
@@ -26,11 +31,17 @@ const initialDataDefaults: InitialData = {
   [StorageKeys.forceDisabledVersion]: "",
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   [StorageKeys.pluginsEnabled]: {} as Record<PluginID, boolean | undefined>,
+  // default: no settings known
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   [StorageKeys.pluginSettings]: {} as Record<
     PluginID,
     GenericSettings | undefined
-  >, // default: no settings known
+  >,
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  [StorageKeys.pluginSecretSettings]: {} as Record<
+    PluginID,
+    GenericSettings | undefined
+  >,
 };
 
 type UntrustedInitialData = Partial<InitialData> | undefined;
@@ -65,24 +76,23 @@ function pluginsForceDisabled(items: UntrustedInitialData) {
   return getItem(items, StorageKeys.forceDisabled);
 }
 
+const DUMMY_SECRET = "????????-????-????-????-????????????";
+
 function pluginSettings(items: UntrustedInitialData) {
-  const settingsDown: Record<PluginID, GenericSettings | undefined> =
-    structuredClone(getItem(items, StorageKeys.pluginSettings));
-  // Hide secret key from web page
-  if (settingsDown.wakatime?.secretKey)
-    settingsDown.wakatime.secretKey = "????????-????-????-????-????????????";
-  return settingsDown;
+  return getItem(items, StorageKeys.pluginSettings);
 }
 
 function _sendHeartbeat(options: WindowHeartbeatOptions) {
   chrome.storage.sync.get(
     {
       [StorageKeys.pluginSettings]: {},
+      [StorageKeys.pluginSecretSettings]: {},
     },
     (items) => {
+      const secretKey =
+        items?.[StorageKeys.pluginSecretSettings]?.wakatime?.secretKey;
       const s = items?.[StorageKeys.pluginSettings];
       const wakatime = s?.wakatime;
-      const secretKey = wakatime?.secretKey;
       const projectName = wakatime?.projectName;
       const splitProjects = wakatime?.splitProjects;
       const fullOptions: HeartbeatOptions = {
@@ -143,11 +153,24 @@ function init() {
           [StorageKeys.forceDisabledVersion]: VERSION,
         });
         break;
-      case "set-plugin-settings":
+      case "set-plugin-settings": {
+        const { wakatime } = message.value;
+        if (
+          wakatime?.secretKey !== undefined &&
+          wakatime.secretKey !== DUMMY_SECRET
+        ) {
+          void chrome.storage.sync.set({
+            [StorageKeys.pluginSecretSettings]: {
+              wakatime: { secretKey: wakatime.secretKey },
+            },
+          });
+          wakatime.secretKey = DUMMY_SECRET;
+        }
         void chrome.storage.sync.set({
           [StorageKeys.pluginSettings]: message.value,
         });
         break;
+      }
       case "send-heartbeat":
         _sendHeartbeat(message.options);
         break;
