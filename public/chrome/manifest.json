@@ -40,7 +40,7 @@
     ]
   },
   "permissions": ["storage", "declarativeNetRequest"],
-  "host_permissions": ["https://*.desmos.com/*", "https://wakatime.com/"],
+  "host_permissions": ["https://*.desmos.com/*"],
   "externally_connectable": {
     "matches": ["https://*.desmos.com/*"]
   }

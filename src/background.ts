@@ -1,4 +1,13 @@
 import "./globals/env";
+import { sendHeartbeat } from "./plugins/wakatime/heartbeat.ts";
+
+// Send requests that would otherwise be blocked by CORS if sent from a content script
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg.type === "send-background-heartbeat") {
+    void sendHeartbeat(msg.options, sendResponse);
+  }
+  return true;
+});
 
 // Open /calculator when the browser action is clicked.
 if (BROWSER === "chrome") {

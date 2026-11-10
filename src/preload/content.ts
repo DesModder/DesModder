@@ -1,7 +1,6 @@
 import { GenericSettings, PluginID } from "../plugins";
 import {
   HeartbeatOptions,
-  sendHeartbeat,
   WindowHeartbeatOptions,
 } from "../plugins/wakatime/heartbeat";
 import injectScript from "#utils/injectScript.ts";
@@ -111,7 +110,17 @@ function _sendHeartbeat(options: WindowHeartbeatOptions) {
         return;
       }
 
-      void sendHeartbeat(fullOptions, (e) => postMessageDown(e));
+      // Background scripts bypass CORS/CSP, so send the heartbeat from the
+      // background script, to avoid the need for special permissions in the manifest.
+      chrome.runtime.sendMessage(
+        chrome.runtime.id,
+        { type: "send-background-heartbeat", options: fullOptions },
+        (e) => {
+          if (e?.type === "heartbeat-error") {
+            postMessageDown(e);
+          }
+        }
+      );
     }
   );
 }
