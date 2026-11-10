@@ -102,6 +102,15 @@ function _sendHeartbeat(options: WindowHeartbeatOptions) {
         splitProjects,
       };
 
+      if (!secretKey || secretKey === DUMMY_SECRET) {
+        postMessageDown({
+          type: "heartbeat-error",
+          isAuthError: true,
+          message: "Missing secret key.",
+        });
+        return;
+      }
+
       if (BROWSER === "chrome") {
         // Chrome can only send wakatime requests from the background page
         // pass message along to the background page
