@@ -111,22 +111,7 @@ function _sendHeartbeat(options: WindowHeartbeatOptions) {
         return;
       }
 
-      if (BROWSER === "chrome") {
-        // Chrome can only send wakatime requests from the background page
-        // pass message along to the background page
-        chrome.runtime.sendMessage(
-          chrome.runtime.id,
-          { type: "send-background-heartbeat", options: fullOptions },
-          (e) => {
-            if (e?.type === "heartbeat-error") {
-              postMessageDown(e);
-            }
-          }
-        );
-      } else {
-        // Firefox can only send wakatime requests from the content script
-        void sendHeartbeat(fullOptions, (e) => postMessageDown(e));
-      }
+      void sendHeartbeat(fullOptions, (e) => postMessageDown(e));
     }
   );
 }
