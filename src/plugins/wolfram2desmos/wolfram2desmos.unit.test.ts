@@ -88,6 +88,9 @@ describe("Wolfram To Desmos (Default Config)", () => {
     ["x->infty", "x→∞"],
     ["1/infty", "\\frac{1}{∞}"],
 
+    ["#fA1b01", "\\operatorname{rgb}\\left(250,27,1\\right)"],
+    ["c=#cBA221", "c=\\operatorname{rgb}\\left(203,162,33\\right)"],
+
     ["{x>y", "illegal"],
     ["x/y)", "illegal"],
     ["a//b", "illegal"],
