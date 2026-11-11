@@ -344,6 +344,10 @@ custom-mathquill-config-opt-extendedGreek-desc = Habilita reemplazos para todas 
 custom-mathquill-config-opt-lessFSpacing-name = Reducir interletraje en la "f"
 custom-mathquill-config-opt-lessFSpacing-desc = Reduce el espacio a los lados de la letra "f" en expresiones
 
+## Backslash Commands
+backslash-commands-name = Commandos LaTeX
+backslash-commands-desc = Te permite ingresar LaTeX usando la barra invertida "\".
+
 ## Code Golf
 # Unchanged
 code-golf-name = Code Golf
@@ -402,3 +406,7 @@ quake-pro-opt-dollyMagnification-name = Multiplicador
 quake-pro-opt-dollyMagnification-desc = Incrementa el valor regular de perspectiva por este factor (normalmente 1).
 quake-pro-opt-scalarZoomed-name = Ajuste de zoom
 quake-pro-opt-scalarZoomed-desc = Ajusta el nivel de zoom sin cambiar la distancia para reducir la distorción de perspectiva.
+
+## Color Input
+color-input-name = Entrada de Color
+color-input-desc = Permite asignar colores directamente en cada expresión.
