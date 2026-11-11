@@ -57,6 +57,7 @@ export async function sendHeartbeat(
           Authorization: `Basic ${btoa(opts.secretKey)}`,
           "content-type": "application/json",
         },
+        credentials: "omit",
         body: JSON.stringify(data),
       }
     );
