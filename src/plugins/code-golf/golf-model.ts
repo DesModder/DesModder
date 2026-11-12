@@ -210,6 +210,7 @@ function golfStatsForItem(
 const cachedGolfStatsPool = new Map<string, GoodGolfStats>();
 
 function golfStatsForExpr(cc: CalcController, latex: string): GolfStats {
+  latex = latex.replace(/(?:\s|\\ )+$/, "");
   if (latex.length === 0) return { width: 0, symbols: 0 };
 
   const cached = cachedGolfStatsPool.get(latex);
