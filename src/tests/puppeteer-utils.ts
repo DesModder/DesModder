@@ -165,12 +165,6 @@ export class Driver {
     await this.waitForSync();
   }
 
-  async waitForFocusedMathquill() {
-    return await this.waitForFunction(() =>
-      Desmos.Private.Fragile.MathquillView.getFocusedMathquill()
-    );
-  }
-
   async enablePlugin(id: PluginID) {
     await this.evaluate((id) => DSM.enablePlugin(id), id);
   }

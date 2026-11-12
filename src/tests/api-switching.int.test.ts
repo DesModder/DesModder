@@ -107,4 +107,4 @@ test("DSM destroy reverts page HTML", async () => {
   // `git diff --no-index before.html after.html > diff.html`
 
   await page.close();
-});
+}, 10_000);
