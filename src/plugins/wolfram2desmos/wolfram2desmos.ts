@@ -46,8 +46,11 @@ export function wolfram2desmos(input: string, config: Config): string {
   }
 
   // replaces all matches with replacement
-  function replace(expr: RegExp, replacement: string): void {
-    input = input.replace(expr, replacement);
+  function replace(
+    expr: RegExp,
+    replacement: string | ((substring: string, ...args: any[]) => string)
+  ): void {
+    input = input.replace(expr, replacement as any);
   }
 
   function replaceAll(replacements: [RegExp, string][]): void {
@@ -138,6 +141,13 @@ export function wolfram2desmos(input: string, config: Config): string {
 
   const functionSymbols = /^[a-wΑ-ωⒶ-ⓏＡ-Ｚ⒜-⒵√%][(_^]/gi;
   input = ` ${input} `; // this gives some breathing space
+
+  // Hex code handling
+  replace(
+    /#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})/g,
+    (_, r, g, b) =>
+      `\\operatorname{rgb}(${parseInt(r, 16)},${parseInt(g, 16)},${parseInt(b, 16)})`
+  );
 
   replaceAll(symbolSubs);
 
