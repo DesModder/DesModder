@@ -8,21 +8,22 @@ export default class GLesmos extends PluginController {
   static enabledByDefault = false;
 
   afterEnable() {
-    this.checkGLesmos();
+    this.checkGLesmos({ insideDispatch: true });
   }
 
   afterDisable() {
-    this.checkGLesmos();
-    // Don't delete the canvas
+    this.checkGLesmos({ insideDispatch: true });
   }
 
-  checkGLesmos() {
+  checkGLesmos({ insideDispatch }: { insideDispatch: boolean }) {
     const glesmosIDs = this.dsm.metadata
       ?.getDsmItemModels()
       .filter((v) => v.glesmos)
       .map((v) => v.id);
     if (glesmosIDs && glesmosIDs.length > 0) {
-      glesmosIDs.map((id) => this.toggleExpr(id));
+      glesmosIDs.map((id) =>
+        insideDispatch ? this.toggleExprInsideDispatch(id) : this.toggleExpr(id)
+      );
       this.killWorker();
     }
   }
@@ -78,6 +79,21 @@ export default class GLesmos extends PluginController {
       obj: { glesmosLinesConfirmed: !this.isGLesmosLinesConfirmed(id) },
     });
     this.forceWorkerUpdate(id);
+  }
+
+  /**
+   * Force the worker to revisit this expression.
+   * Inside dispatch, so we need to make the object actually look different.
+   */
+  toggleExprInsideDispatch(id: string) {
+    const model = this.cc.getItemModel(id);
+    if (!model || model.type !== "expression" || model.latex === undefined)
+      return;
+    if (model.latex.endsWith("\\ ")) {
+      model.latex = model.latex.slice(0, -2);
+    } else {
+      model.latex += "\\ ";
+    }
   }
 
   /**

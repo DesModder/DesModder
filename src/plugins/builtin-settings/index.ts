@@ -22,11 +22,20 @@ export default class BuiltinSettings extends PluginController<Config> {
           }
         )[key] ?? false;
     }
-    this.updateConfig(this.settings);
+    // need to run after dispatch because `afterEnable` is called inside a dispatch,
+    // and updateConfig calls the calc API.
+    this.cc.runAfterDispatch(() => {
+      this.updateConfig(this.settings);
+    });
   }
 
   afterDisable() {
-    if (this.initialSettings !== null) this.updateConfig(this.initialSettings);
+    // need to run after dispatch because `afterDisable` is called inside a dispatch,
+    // and updateConfig calls the calc API.
+    this.cc.runAfterDispatch(() => {
+      if (this.initialSettings !== null)
+        this.updateConfig(this.initialSettings);
+    });
   }
 
   afterConfigChange() {

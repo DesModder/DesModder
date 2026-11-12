@@ -41,7 +41,9 @@ export function initGLesmosCanvas(calc: Calc) {
   });
   if (!gl) {
     showToast(calc, { message: { key: "GLesmos-no-support" } });
-    window.DSM?.setPluginEnabled?.("GLesmos", false);
+    window.DSM?.cc.runAfterDispatch(() =>
+      window.DSM?.disablePlugin?.("GLesmos")
+    );
     return undefined;
   }
 
