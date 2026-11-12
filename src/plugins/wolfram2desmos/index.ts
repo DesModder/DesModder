@@ -1,4 +1,4 @@
-import { MathQuillView } from "../../components/index.ts";
+import { MathQuillField, MathQuillView } from "../../components/index.ts";
 import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
 import { wolfram2desmos, isLegalASCIIMath } from "./wolfram2desmos";
@@ -43,6 +43,11 @@ export default class WolframToDesmos extends PluginController<Config> {
     const mq = MathQuillView.getFocusedMathquill();
     if (!mq) return false;
     mq.write(newLatex);
+    simulateUserChangedLatex(mq);
     return true;
   };
+}
+
+function simulateUserChangedLatex(mq: MathQuillField) {
+  (mq.el() as any)?._mqViewInstance.notifyUserChangedLatex();
 }
