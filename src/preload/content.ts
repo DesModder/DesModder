@@ -160,6 +160,7 @@ function init() {
         const { wakatime } = message.value;
         if (
           wakatime?.secretKey !== undefined &&
+          wakatime.secretKey !== "" &&
           wakatime.secretKey !== DUMMY_SECRET
         ) {
           void chrome.storage.sync.set({
