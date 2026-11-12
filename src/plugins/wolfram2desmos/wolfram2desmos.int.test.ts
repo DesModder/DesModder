@@ -15,8 +15,6 @@ async function paste(driver: Driver, text: string) {
     });
     document.activeElement?.dispatchEvent(event);
   }, text);
-  // For some reason Desmos wasn't updating the state until after another keystroke.
-  await driver.keyboard.press("ArrowRight");
 }
 
 testWithPage("wolfram2desmos", async (driver) => {
