@@ -89,10 +89,10 @@ export default class GLesmos extends PluginController {
     const model = this.cc.getItemModel(id);
     if (!model || model.type !== "expression" || model.latex === undefined)
       return;
-    if (model.latex.endsWith("\\ ")) {
-      model.latex = model.latex.slice(0, -2);
+    if (model.latex.endsWith(" ")) {
+      model.latex = model.latex.slice(0, -1);
     } else {
-      model.latex += "\\ ";
+      model.latex += " ";
     }
   }
 
