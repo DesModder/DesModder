@@ -41,50 +41,6 @@
 }
 ```
 
-
-## Communicate to the 3D worker
-
-*Description* `Sends the necessary Quake Pro data to the 3D worker.`
-
-*Find* => `from`
-```js
-getWorkerData() {
-  __body__$
-  return {
-    __stuff__
-  }
-}
-```
-
-*Replace* `from` with
-```js
-getWorkerData() {
-  __body__$
-  const workerData = {
-    __stuff__
-  };
-
-  const quakePro = DSM.quakePro?.settings;
-  const {settings} = workerData;
-
-  /** This stores a value from 0-1 depending how zoomed the user currently is (based on dragging the slider). */
-  const zoomPercentage = settings.perspectiveDistortion / (quakePro?.dollyMagnification ?? 1) / 6.25;
-
-  const scalarMultiplier = quakePro ? (
-    (quakePro.scalarZoomed - 1) * zoomPercentage + 1
-  ) : 1;
-
-  // Adds the Quake Pro settings
-  settings.quakePro = {
-    ...(quakePro ?? {}),
-    zoomPercentage,
-    scalarMultiplier
-  };
-
-  return workerData
-}
-```
-
 ## Multiply everything by scalar
 
 *Description* `Multiply viewport to act like you are zooming in.`

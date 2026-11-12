@@ -4,6 +4,7 @@ import { MathQuillConfig, MathQuillField } from "#components";
 import { Matrix3 } from "./matrix3";
 import type { DispatchedEvent } from "./extra-actions";
 import { VcFocusedMq } from "../plugins/video-creator/index.ts";
+import { Config as QuakeProConfig } from "../plugins/quake-pro/config.ts";
 
 export type { DispatchedEvent };
 
@@ -249,6 +250,17 @@ export interface Viewport {
 
 type ViewportClass = Viewport & { __isViewportClass: unknown };
 
+export interface WorkerData3d {
+  settings: {
+    perspectiveDistortion: number;
+    // ... a bunch omitted
+    quakePro?: QuakeProConfig & {
+      zoomPercentage: number;
+      scalarMultiplier: number;
+    };
+  };
+}
+
 export interface Grapher3d {
   controls: {
     worldRotation3D: Matrix3;
@@ -268,6 +280,7 @@ export interface Grapher3d {
     duration: number;
   };
   redrawAllLayers: () => void;
+  getWorkerData: () => WorkerData3d;
 }
 
 export type Scale = "linear" | "logarithmic";
