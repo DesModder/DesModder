@@ -18,11 +18,15 @@ export class PluginController<
     public settings: Settings
   ) {}
 
+  /** Called inside a dispatch. */
   afterEnable() {}
+  /** NOT currently called inside a dispatch, for now. */
   afterConfigChange() {}
   /**
    * afterDisable should clean up everything: un-monkeypatch functions,
    * un-register dispatcher calls, clear intervals/timeouts, etc.
+   *
+   * Called inside a dispatch.
    */
   afterDisable() {}
 

@@ -175,7 +175,7 @@ export default class DSM extends TransparentPlugins {
     this.pillboxMenus?.updateMenuView();
     // The graph loaded before DesModder loaded, so DesModder was not available to
     // return true when asked isGlesmosMode. Refresh those expressions now
-    this.glesmos?.checkGLesmos();
+    this.glesmos?.checkGLesmos({ insideDispatch: false });
 
     const oldDestroy = this.cc.destroy.bind(this.cc);
     this.cc.destroy = () => {
