@@ -14,26 +14,65 @@ export interface HeartbeatOptions extends WindowHeartbeatOptions {
   secretKey: string;
 }
 
+/**
+ * If two of the same heartbeat are sent within this interval,
+ * reject the second one.
+ *
+ * This isn't a concern for heartbeats from the same tab: each tab
+ * throttles to one heartbeat every 120s. The concern is the user
+ * opening different tabs containing the same graph, since each
+ * would send their own (otherwise identical) heartbeat.
+ */
+const DEDUPE_THRESHOLD_MS = 110 * 1000;
+
+interface LastHeartbeatObject {
+  project: string;
+  entity: string;
+}
+
+function isEqual(a: LastHeartbeatObject, b: LastHeartbeatObject) {
+  return a.entity === b.entity && a.project === b.project;
+}
+
 class HeartbeatBackend {
+  lastHeartbeatMs = 0;
+  lastHeartbeatObject?: LastHeartbeatObject = undefined;
+
   private preparePayload(opts: HeartbeatOptions) {
+    const dedupeObject: LastHeartbeatObject = {
+      project: opts.splitProjects
+        ? opts.graphName
+        : // Defend against empty string
+          opts.projectName || "Desmos Projects",
+      entity: opts.graphURL,
+    };
+
+    const now = Date.now();
+    if (
+      this.lastHeartbeatMs > now - DEDUPE_THRESHOLD_MS &&
+      this.lastHeartbeatObject &&
+      isEqual(dedupeObject, this.lastHeartbeatObject)
+    ) {
+      return undefined;
+    }
+
+    this.lastHeartbeatMs = now;
+    this.lastHeartbeatObject = dedupeObject;
+
     return {
       // This is background information for WakaTime to handle. These values need no change.
       language: "Desmos",
       category: "coding",
       type: "app",
       dependencies: [],
-      time: Date.now() * 0.001,
+      time: now * 0.001,
       lines: opts.lineCount,
       lineno: null,
       cursorpos: null,
       is_write: opts.isWrite,
 
       // Everything below will show up in your Leaderboard.
-      project: opts.splitProjects
-        ? opts.graphName
-        : // Defend against empty string
-          opts.projectName || "Desmos Projects",
-      entity: opts.graphURL,
+      ...dedupeObject,
       branch: opts.splitProjects ? null : opts.graphName,
     };
   }
@@ -52,6 +91,13 @@ class HeartbeatBackend {
     }
 
     const data = this.preparePayload(opts);
+    if (!data) {
+      sendResponse({
+        type: "heartbeat-error",
+        isAuthError: false,
+        message: "Duplicate heartbeat (same graph open in two tabs?). Ignored.",
+      });
+    }
 
     try {
       const r = await fetch(
