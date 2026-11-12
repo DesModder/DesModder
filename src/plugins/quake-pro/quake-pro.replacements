@@ -48,44 +48,42 @@
 
 *Find* => `from`
 ```js
-this.redrawMessagesInWorker++,
-this.sendMessage({
-  type: "redraw-3d",
-  workerData: this.getWorkerData(),
-  __payload__
-})
+getWorkerData() {
+  __body__$
+  return {
+    __stuff__
+  }
+}
 ```
 
 *Replace* `from` with
 ```js
-this.redrawMessagesInWorker++;
+getWorkerData() {
+  __body__$
+  const workerData = {
+    __stuff__
+  };
 
-const workerData = this.getWorkerData();
-const quakePro = DSM.quakePro?.settings;
-const {settings} = workerData;
+  const quakePro = DSM.quakePro?.settings;
+  const {settings} = workerData;
 
-/** This stores a value from 0-1 depending how zoomed the user currently is (based on dragging the slider). */
-const zoomPercentage = settings.perspectiveDistortion / (quakePro?.dollyMagnification ?? 1) / 6.25;
+  /** This stores a value from 0-1 depending how zoomed the user currently is (based on dragging the slider). */
+  const zoomPercentage = settings.perspectiveDistortion / (quakePro?.dollyMagnification ?? 1) / 6.25;
 
-const scalarMultiplier = quakePro ? (
-  (quakePro.scalarZoomed - 1) * zoomPercentage + 1
-) : 1;
+  const scalarMultiplier = quakePro ? (
+    (quakePro.scalarZoomed - 1) * zoomPercentage + 1
+  ) : 1;
 
-// Adds the Quake Pro settings
-settings.quakePro = {
-  ...(quakePro ?? {}),
-  zoomPercentage,
-  scalarMultiplier
-};
+  // Adds the Quake Pro settings
+  settings.quakePro = {
+    ...(quakePro ?? {}),
+    zoomPercentage,
+    scalarMultiplier
+  };
 
-this.sendMessage({
-  type: "redraw-3d",
-  workerData,
-  __payload__
-})
+  return workerData
+}
 ```
-
-
 
 ## Multiply everything by scalar
 
