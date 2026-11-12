@@ -18,7 +18,7 @@
 ```js
 {
   let $e = this.graphSettings.perspectiveDistortion;
-  return (__return__) * (DSM.quakePro?.dollyMagnification ?? 1);
+  return (__return__) * (DSM.quakePro?.settings.dollyMagnification ?? 1);
 }
 ```
 
@@ -37,7 +37,7 @@
 *Replace* `from` with
 ```js
 {
-  return this.controller.getPerspectiveDistortion() / (DSM.quakePro?.dollyMagnification ?? 1) - 1
+  return this.controller.getPerspectiveDistortion() / (DSM.quakePro?.settings.dollyMagnification ?? 1) - 1
 }
 ```
 

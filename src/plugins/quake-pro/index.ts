@@ -7,46 +7,32 @@ export default class quakePro extends PluginController<Config> {
   static enabledByDefault = false;
   static config = configList;
 
-  dollyMagnification = 1;
-  scalarZoomed = 1;
-
   vanillaGetWorkerData?: () => WorkerData3d;
 
   afterEnable() {
-    this.dollyMagnification = this.settings.dollyMagnification;
-    this.scalarZoomed = this.settings.scalarZoomed;
     const grapher3d = this.getGrapher3d();
-    if (grapher3d) {
-      this.vanillaGetWorkerData = grapher3d.getWorkerData.bind(grapher3d);
-      grapher3d.getWorkerData = this.getWorkerData;
-    }
-    this.redrawAllLayers();
+    if (!grapher3d) return;
+    this.vanillaGetWorkerData = grapher3d.getWorkerData.bind(grapher3d);
+    grapher3d.getWorkerData = this.getWorkerData;
+    grapher3d.redrawAllLayers();
   }
 
   afterConfigChange() {
-    this.dollyMagnification = this.settings.dollyMagnification;
-    this.scalarZoomed = this.settings.scalarZoomed;
-    this.redrawAllLayers();
+    const grapher3d = this.getGrapher3d();
+    if (!grapher3d) return;
+    grapher3d.redrawAllLayers();
   }
 
   afterDisable() {
-    this.dollyMagnification = 1;
-    this.scalarZoomed = 1;
     const grapher3d = this.getGrapher3d();
-    if (grapher3d) {
-      grapher3d.getWorkerData = this.vanillaGetWorkerDataAssuming3d();
-    }
-    this.redrawAllLayers();
+    if (!grapher3d) return;
+
+    grapher3d.getWorkerData = this.vanillaGetWorkerDataAssuming3d();
+    grapher3d.redrawAllLayers();
   }
 
   getGrapher3d() {
     return this.cc.grapher3d;
-  }
-
-  redrawAllLayers() {
-    const grapher3d = this.getGrapher3d();
-    if (!grapher3d) return;
-    grapher3d.redrawAllLayers();
   }
 
   vanillaGetWorkerDataAssuming3d() {
