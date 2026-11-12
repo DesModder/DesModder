@@ -1,6 +1,10 @@
 .dsm-vc-select-export-type {
   margin-top: 5px;
   margin-bottom: 5px;
+
+  // `flex-wrap: balance;` on the `.dcg-segmented-control-container`
+  // would avoid overflow but makes it too tall. Just scroll.
+  overflow-x: scroll;
 }
 
 .dsm-vc-preview-menu,
