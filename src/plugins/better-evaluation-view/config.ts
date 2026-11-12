@@ -29,12 +29,6 @@ export const configList: ConfigItem[] = [
     default: true,
     shouldShow: (current: Config) => current.lists === "old" && current.colors,
   },
-  {
-    key: "fractions",
-    type: "boolean",
-    default: true,
-    shouldShow: (current: Config) => current.lists === "new",
-  },
 ];
 
 export interface Config {
@@ -42,5 +36,4 @@ export interface Config {
   lists: ListOptions;
   colors: boolean;
   colorLists: boolean;
-  fractions: boolean;
 }
