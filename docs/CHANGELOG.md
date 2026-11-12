@@ -1,5 +1,28 @@
 # DesModder Changelog
 
+## 0.16.0
+
+New features:
+
+- New plugin: Backslash Commands (In the "Utility" section).
+- New plugin: Color Input (In the "Utility" section).
+- (Wolfram To Desmos) Paste a hexcode like "#da70d6" to get its RGB.
+
+Bug fixes:
+
+- (Code Golf) Exclude the handle ("2×2") from matrix symbol counts.
+- (WakaTime) Fix bug where the secret key would be forgotten. (This will require entering your secret key again).
+- (Text Mode) Fix conversion for parentheses.
+- (Find and Replace) After replacement, maintain focus and scroll position, and don't recalculate unchanged expressions.
+- (Wolfram To Desmos) Fix bugs where the extension wouldn't work or would lead to a double-paste.
+- (Quake Pro) Apply Scalar Cancellation to Video Creator screenshots.
+- (Code Golf) Fix bug where the selected expression would visually duplicate when toggling Code Golf.
+- (Pin Expressions) Fix bug where the style tray for a pinned expression would render below the pinned expression.
+
+Translations:
+
+- Updates to Japanese and Spanish translations.
+
 ## 0.15.17
 
 Bug fixes:
