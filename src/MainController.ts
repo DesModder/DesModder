@@ -11,6 +11,15 @@ import {
 import { postMessageUp, mapToRecord, recordToMap } from "#utils/messages.ts";
 import { makeControllerHooks } from "./controller-hooks.ts";
 
+declare module "src/globals/extra-actions" {
+  interface AllActions {
+    "dsm-main-controller": {
+      type: "dsm-main-enable-plugin" | "dsm-main-disable-plugin";
+      id: PluginID;
+    };
+  }
+}
+
 export default class DSM extends TransparentPlugins {
   readonly cc = this.calc.controller;
   /**
@@ -80,6 +89,10 @@ export default class DSM extends TransparentPlugins {
   }
 
   handleDispatchedAction(evt: DispatchedEvent) {
+    {
+      const keepGoing = this._handleDispatchedAction(evt);
+      if (keepGoing === "abort-later-handlers") return;
+    }
     for (const [_id, plugin] of this.enabledPluginsSorted()) {
       const keepGoing = plugin?.handleDispatchedAction?.(evt);
       if (keepGoing === "abort-later-handlers") return;
@@ -87,6 +100,17 @@ export default class DSM extends TransparentPlugins {
     this.vanillaHandleAction(evt);
     for (const [_id, plugin] of this.enabledPluginsSorted()) {
       plugin?.afterHandleDispatchedAction?.(evt);
+    }
+  }
+
+  _handleDispatchedAction(evt: DispatchedEvent) {
+    switch (evt.type) {
+      case "dsm-main-enable-plugin":
+        this.enablePluginImpl(evt.id);
+        return "abort-later-handlers";
+      case "dsm-main-disable-plugin":
+        this.disablePluginImpl(evt.id);
+        return "abort-later-handlers";
     }
   }
 
@@ -198,7 +222,7 @@ export default class DSM extends TransparentPlugins {
     this.afterDestroy?.();
   }
 
-  setPluginEnabled(id: PluginID, isEnabled: boolean) {
+  private _setPluginEnabled(id: PluginID, isEnabled: boolean) {
     if (isEnabled && this.isPluginForceDisabled(id)) return;
     const same = isEnabled === this.pluginsEnabled.get(id);
     this.pluginsEnabled.set(id, isEnabled);
@@ -215,7 +239,8 @@ export default class DSM extends TransparentPlugins {
     }
   }
 
-  disablePlugin(id: PluginID) {
+  /** Inside dispatch */
+  private disablePluginImpl(id: PluginID) {
     const plugin = plugins.get(id);
     if (plugin?.isCore) throw new Error(`Core plugin ${id} cannot be disabled`);
     if (plugin && this.isPluginToggleable(id)) {
@@ -224,33 +249,38 @@ export default class DSM extends TransparentPlugins {
         this.pluginsEnabled.delete(id);
         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete this.enabledPlugins[id];
-        this.setPluginEnabled(id, false);
-        this.pillboxMenus?.updateMenuView();
+        this._setPluginEnabled(id, false);
         plugin?.afterDisable();
-        this.cc.updateViews();
       }
     }
   }
 
-  _enablePlugin(id: PluginID) {
+  disablePlugin(id: PluginID) {
+    this.cc.dispatch({ type: "dsm-main-disable-plugin", id });
+  }
+
+  private _enablePlugin(id: PluginID) {
     const Plugin = plugins.get(id);
     if (Plugin !== undefined) {
       const res = new Plugin(this, this.pluginSettings[id] as any as never);
       const ep = this.enabledPlugins as Record<PluginID, PluginInstance>;
       ep[Plugin.id] = res;
       (res as PluginInstance).settings = this.pluginSettings[id];
-      this.setPluginEnabled(id, true);
+      this._setPluginEnabled(id, true);
       res.afterEnable();
-      this.pillboxMenus?.updateMenuView();
-      this.cc.updateViews();
+    }
+  }
+
+  /** Inside dispatch */
+  private enablePluginImpl(id: PluginID) {
+    if (this.isPluginToggleable(id) && !this.isPluginEnabled(id)) {
+      this._setPluginEnabled(id, true);
+      this._enablePlugin(id);
     }
   }
 
   enablePlugin(id: PluginID) {
-    if (this.isPluginToggleable(id) && !this.isPluginEnabled(id)) {
-      this.setPluginEnabled(id, true);
-      this._enablePlugin(id);
-    }
+    this.cc.dispatch({ type: "dsm-main-enable-plugin", id });
   }
 
   togglePlugin(id: PluginID) {
