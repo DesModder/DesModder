@@ -92,6 +92,7 @@ export interface MathQuillField {
   config: (input: MathQuillConfig) => MathQuillField;
   focus: () => void;
   blur: () => void;
+  write: (latex: string) => void;
   selection: (() => MqSelection) & ((selection: MqSelection) => MathQuillField);
   /** Returns the `dcg-math-field` */
   el: () => HTMLElement;

@@ -1,22 +1,7 @@
+import { MathQuillView } from "../../components/index.ts";
 import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
 import { wolfram2desmos, isLegalASCIIMath } from "./wolfram2desmos";
-
-// https://stackoverflow.com/a/34278578
-function typeInTextArea(
-  newText: string,
-  elm: Element | null = document.activeElement
-) {
-  const el = elm as HTMLTextAreaElement;
-  const start = el.selectionStart;
-  const end = el.selectionEnd;
-  const text = el.value;
-  const before = text.substring(0, start);
-  const after = text.substring(end, text.length);
-  el.value = before + newText + after;
-  el.selectionStart = el.selectionEnd = start + (newText.length ?? 0);
-  el.focus();
-}
 
 // This controller manages the focus events of Expression panel
 
@@ -27,62 +12,37 @@ export default class WolframToDesmos extends PluginController<Config> {
 
   panel: HTMLElement | null = null;
   enabled = true;
-  focusHandler = this._focusHandler.bind(this);
-  pasteHandler = this._pasteHandler.bind(this);
+  vanillaOverridePaste!: (e?: ClipboardEvent) => boolean;
 
   afterEnable() {
-    this.panel = document.querySelector(".dcg-exppanel-outer");
-    this.panel?.addEventListener("focusin", this.focusHandler, false);
-    this.panel?.addEventListener("focusout", this.focusHandler, false);
+    this.vanillaOverridePaste = this.cc.clipboardHandlers.overridePaste;
+    this.cc.clipboardHandlers.overridePaste = this.overridePaste;
   }
 
   afterDisable() {
-    this.panel?.removeEventListener("focusin", this.focusHandler, false);
-    this.panel?.removeEventListener("focusout", this.focusHandler, false);
-    this.enabled = false;
+    this.cc.clipboardHandlers.overridePaste = this.vanillaOverridePaste;
   }
 
-  _focusHandler(e: FocusEvent) {
-    const elem = e.target as HTMLElement;
-    // Observe textarea and input tags
-    const isTarget = ["textarea", "input"].includes(elem.tagName.toLowerCase());
-    if (isTarget && this.enabled) this.onFocus(e);
-  }
-
-  onFocus(e: FocusEvent) {
-    const elem: HTMLElement | null | undefined = (e.target as HTMLElement)
-      ?.parentElement?.parentElement;
-    switch (e.type) {
-      case "focusin":
-        elem?.addEventListener("paste", this.pasteHandler, false);
-        break;
-      case "focusout":
-        elem?.removeEventListener("paste", this.pasteHandler, false);
-        break;
-    }
-  }
-
-  _pasteHandler(e: ClipboardEvent) {
-    const elem = e.target as HTMLElement;
-    if (!e.clipboardData) return;
-
-    // Pasting a folder or expression that was yellow-copied.
-    const textHtml = e.clipboardData.getData("text/html");
-    if (textHtml.includes(`data-dcg-clipboard-format="dcg-copy-expression"`))
-      return;
+  overridePaste = (e?: ClipboardEvent) => {
+    const speciallyHandled = this.vanillaOverridePaste(e);
+    if (speciallyHandled) return true;
+    if (!e?.clipboardData) return false;
 
     const pasteData = e.clipboardData.getData("text/plain");
     if (
-      !(elem?.classList.contains("dcg-label-input") ?? true) &&
-      pasteData !== undefined &&
-      pasteData !== "" &&
-      this.cc.getItemModel(this.calc.selectedExpressionId)?.type ===
-        "expression" &&
-      isLegalASCIIMath(pasteData)
+      pasteData === undefined ||
+      pasteData === "" ||
+      !isLegalASCIIMath(pasteData)
     ) {
-      e.stopPropagation();
-      e.preventDefault();
-      typeInTextArea(wolfram2desmos(pasteData, this.settings));
+      return false;
     }
-  }
+
+    e.stopPropagation();
+    e.preventDefault();
+    const newLatex = wolfram2desmos(pasteData, this.settings);
+    const mq = MathQuillView.getFocusedMathquill();
+    if (!mq) return false;
+    mq.write(newLatex);
+    return true;
+  };
 }

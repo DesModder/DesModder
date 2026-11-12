@@ -414,6 +414,10 @@ interface CalcPrivate {
     };
     destroy: () => void;
     dsmHooks: DesModderHooks;
+    clipboardHandlers: {
+      /** Returns true to suppress the regular paste handler. */
+      overridePaste: (evt?: ClipboardEvent) => boolean;
+    };
   };
   /// / public
 
