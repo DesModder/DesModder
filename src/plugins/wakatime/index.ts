@@ -3,6 +3,7 @@ import { PluginController } from "../PluginController";
 import { Config, configList } from "./config";
 import { listenToMessageDown, postMessageUp } from "#utils/messages.ts";
 
+// Interval on which each tab sends heartbeats.
 const heartbeatInterval = 120 * 1000;
 
 export default class Wakatime extends PluginController<Config> {
