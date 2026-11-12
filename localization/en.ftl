@@ -249,6 +249,11 @@ better-evaluation-view-opt-colors-name = Show colors
 better-evaluation-view-opt-colors-desc = Show colors as rgb values
 better-evaluation-view-opt-colorLists-name = Show lists of colors
 better-evaluation-view-opt-colorLists-desc = Show lists of colors as lists of rgb values
+better-evaluation-view-opt-colorModel-name = Color model
+better-evaluation-view-opt-colorModel-desc = Select which color model to display
+better-evaluation-view-opt-colorModel-rgb = RGB
+better-evaluation-view-opt-colorModel-hsv = HSV
+better-evaluation-view-opt-colorModel-hex = Hex code
 
 ## Pillbox Menus
 pillbox-menus-name = Pillbox Menus (Core)
