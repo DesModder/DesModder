@@ -184,8 +184,17 @@ export const expression: Schema = {
     phi: boundsSchema,
   }),
   cdf: boundsSchema,
-  // TODO vizProps
-  // vizProps
+  vizProps: schemaL({
+    boxplot: schemaL({
+      breadth: "expr",
+      axisOffset: "expr",
+      alignedAxis: enumL(["x", "y"]),
+      showOutliers: "boolean",
+    }),
+    dotplotMode: enumL(["exact", "binned"]),
+    binAlignment: enumL(["left", "center"]),
+    histogramMode: enumL(["count", "relative", "density"]),
+  }),
 };
 
 export const regression: Schema = {

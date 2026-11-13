@@ -203,7 +203,6 @@ function regressionToAug(
     fillOpacity: undefined,
     fractionDisplay: false,
     slider: {},
-    vizProps: {},
   };
 }
 
@@ -266,8 +265,17 @@ function expressionToAug(
       !exprEvalSameDeep(style.cdf as any, { min: -Infinity, max: Infinity })
         ? { min: style.cdf.min, max: style.cdf.max }
         : undefined,
-    // TODO: vizProps
-    vizProps: {},
+    vizProps: style.vizProps && {
+      boxplot: style.vizProps.boxplot && {
+        breadth: style.vizProps.boxplot.breadth,
+        axisOffset: style.vizProps.boxplot.axisOffset,
+        alignedAxis: style.vizProps.boxplot.alignedAxis,
+        showOutliers: style.vizProps.boxplot.showOutliers,
+      },
+      dotplotMode: style.vizProps.dotplotMode,
+      binAlignment: style.vizProps.binAlignment,
+      histogramMode: style.vizProps.histogramMode,
+    },
     clickableInfo: style.onClick
       ? {
           description: style.clickDescription,

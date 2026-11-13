@@ -170,9 +170,9 @@ interface ExpressionStateWithoutColumn extends BaseNonFolderState {
     alignedAxis?: "x" | "y";
     showBoxplotOutliers?: boolean;
     // -- Applies to dotplot only:
-    // the string "binned" is never actually checked,
+    // the string "bin" is never actually checked,
     // just inferred by the absence of "exact"
-    dotplotXMode?: "exact" | "binned";
+    dotplotXMode?: "exact" | "bin";
     // -- applies to dotplot and histogram only:
     binAlignment?: "left" | "center";
     // -- applies to histogram only:

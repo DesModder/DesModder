@@ -85,7 +85,6 @@ const exprDefaults = {
   fillOpacity: undefined,
   fractionDisplay: false,
   slider: {},
-  vizProps: {},
 } as const;
 
 const columnDefaults = {
@@ -839,6 +838,55 @@ describe("Regressions", () => {
       },
     },
   });
+});
+
+describe("vizProps", () => {
+  testStmt(
+    "Histogram",
+    `histogram([1, 2, 3.5, 4]) @{ vizProps: @{ binAlignment: "left", histogramMode: "relative" } }`,
+    {
+      ...exprDefaults,
+      vizProps: {
+        binAlignment: "left",
+        histogramMode: "relative",
+      },
+    }
+  );
+  testStmt(
+    "Dotplot",
+    `dotplot([1, 2, 3.5, 4]) @{ vizProps: @{ dotplotMode: "binned", binAlignment: "center" } }`,
+    {
+      ...exprDefaults,
+      vizProps: {
+        dotplotMode: "binned",
+        binAlignment: "center",
+      },
+    }
+  );
+  testStmt(
+    "Boxplot",
+    `boxplot([1, 2, 3.5, 4, 25, 4]) @{
+      vizProps: @{
+        boxplot: @{
+          breadth: 2 + 1,
+          axisOffset: 4 * 3,
+          alignedAxis: "y",
+          showOutliers: false
+        },
+      },
+    }`,
+    {
+      ...exprDefaults,
+      vizProps: {
+        boxplot: {
+          breadth: binop("Add", number(2), number(1)),
+          axisOffset: binop("Multiply", number(4), number(3)),
+          alignedAxis: "y",
+          showOutliers: false,
+        },
+      },
+    }
+  );
 });
 
 describe("Text", () => {
