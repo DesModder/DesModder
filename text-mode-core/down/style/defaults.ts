@@ -115,8 +115,17 @@ export const expression: Hydrated.Expression = {
     r: defaultBounds,
     phi: defaultBounds,
   },
-  // TODO vizProps
-  // vizProps
+  vizProps: {
+    boxplot: {
+      breadth: constant(1),
+      axisOffset: constant(1),
+      alignedAxis: "x",
+      showOutliers: true,
+    },
+    binAlignment: "center",
+    dotplotMode: "exact",
+    histogramMode: "count",
+  },
 } as const;
 
 export const regression: Hydrated.Regression = {

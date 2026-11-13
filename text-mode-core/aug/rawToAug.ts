@@ -279,21 +279,21 @@ function vizPropsAug(
   const viz = item.vizProps ?? {};
   if (!viz) return {};
   const res: Aug.ExpressionAug["vizProps"] = {
-    dotplotMode: viz.dotplotXMode,
+    dotplotMode: viz.dotplotXMode === "bin" ? "binned" : viz.dotplotXMode,
     binAlignment: viz.binAlignment,
     histogramMode: viz.histogramMode,
   };
   if (
-    viz.breadth ??
-    viz.axisOffset ??
-    viz.alignedAxis ??
-    viz.showBoxplotOutliers
+    viz.breadth !== undefined ||
+    viz.axisOffset !== undefined ||
+    viz.alignedAxis !== undefined ||
+    viz.showBoxplotOutliers !== undefined
   ) {
     res.boxplot = {
       breadth: parseLatex(cfg, viz.breadth ?? "1"),
       axisOffset: parseLatex(cfg, viz.axisOffset ?? "1"),
       alignedAxis: viz.alignedAxis ?? "x",
-      showOutliers: viz.showBoxplotOutliers ?? false,
+      showOutliers: viz.showBoxplotOutliers ?? true,
     };
   }
   return res;
