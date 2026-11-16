@@ -65,8 +65,12 @@ input.dsm-vc-outfile-name {
 
 .dsm-vc-export {
   display: flex;
-  flex-direction: row-reverse;
   justify-content: space-between;
+}
+
+.dsm-vc-export-frames-button:only-child {
+  // Move "Export" button to the right when it's the only button
+  margin-left: auto;
 }
 
 .dsm-vc-export .dsm-vc-fps-settings span.dcg-mq-editable-field.dcg-math-input {

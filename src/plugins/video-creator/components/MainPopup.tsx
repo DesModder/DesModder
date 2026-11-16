@@ -159,6 +159,21 @@ export default class MainPopup extends Component<{
                 spellcheck={() => false}
               />
               <div class="dsm-vc-export">
+                <If predicate={() => this.vc.fileType !== "zip"}>
+                  {() => (
+                    <div class="dsm-vc-fps-settings">
+                      {format("video-creator-fps")}
+                      <ManagedNumberInput
+                        focusID="export-fps"
+                        // TODO-localization
+                        ariaLabel="fps"
+                        hasError={() => !this.vc.isFPSValid()}
+                        vc={this.vc}
+                        data={this.vc.fps}
+                      />
+                    </div>
+                  )}
+                </If>
                 <Button
                   color="blue"
                   class="dsm-vc-export-frames-button"
@@ -178,21 +193,6 @@ export default class MainPopup extends Component<{
                     })
                   }
                 </Button>
-                <If predicate={() => this.vc.fileType !== "zip"}>
-                  {() => (
-                    <div class="dsm-vc-fps-settings">
-                      {format("video-creator-fps")}
-                      <ManagedNumberInput
-                        focusID="export-fps"
-                        // TODO-localization
-                        ariaLabel="fps"
-                        hasError={() => !this.vc.isFPSValid()}
-                        vc={this.vc}
-                        data={this.vc.fps}
-                      />
-                    </div>
-                  )}
-                </If>
               </div>
             </div>
           )}
