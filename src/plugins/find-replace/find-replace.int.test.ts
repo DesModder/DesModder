@@ -82,7 +82,7 @@ describe("Find-replace", () => {
               type: "expression",
               id: "4",
               folderId: "2",
-              color: "#388c46",
+              color: "#c74440",
               latex: "a+2",
             },
             {

@@ -22,7 +22,7 @@ const STATE_FOLDER = {
         type: "expression",
         id: "13",
         folderId: "11",
-        color: "#388c46",
+        color: "#c74440",
         latex: "B",
       },
       {
@@ -69,7 +69,7 @@ const STATE_DUMPED = {
       {
         type: "expression",
         id: "13",
-        color: "#388c46",
+        color: "#c74440",
         latex: "B",
       },
       {
@@ -116,7 +116,7 @@ const STATE_ENCLOSED = {
         type: "expression",
         id: "13",
         folderId: "18",
-        color: "#388c46",
+        color: "#c74440",
         latex: "B",
       },
       {
@@ -166,7 +166,7 @@ const STATE_MERGED = {
         type: "expression",
         id: "13",
         folderId: "11",
-        color: "#388c46",
+        color: "#c74440",
         latex: "B",
       },
       {
