@@ -274,36 +274,6 @@ export default class SelectCapture extends Component<{
           )}
         </If>
         <div class="dsm-vc-capture">
-          {IfElse(
-            () => !this.vc.isCapturing || this.vc.captureMethod === "once",
-            {
-              true: () => (
-                <Button
-                  color="blue"
-                  class="dsm-vc-capture-frame-button"
-                  disabled={() =>
-                    this.vc.isCapturing ||
-                    this.vc.isExporting ||
-                    !this.vc.areCaptureSettingsValid()
-                  }
-                  onTap={() => {
-                    void this.vc.capture();
-                  }}
-                >
-                  {format("video-creator-capture")}
-                </Button>
-              ),
-              false: () => (
-                <Button
-                  color="light-gray"
-                  class="dsm-vc-cancel-capture-button"
-                  onTap={() => this.vc.cancelCapture()}
-                >
-                  {format("video-creator-cancel-capture")}
-                </Button>
-              ),
-            }
-          )}
           <If
             predicate={() =>
               this.vc.captureMethod === "action" ||
@@ -341,6 +311,36 @@ export default class SelectCapture extends Component<{
               </div>
             )}
           </If>
+          {IfElse(
+            () => !this.vc.isCapturing || this.vc.captureMethod === "once",
+            {
+              true: () => (
+                <Button
+                  color="blue"
+                  class="dsm-vc-capture-frame-button"
+                  disabled={() =>
+                    this.vc.isCapturing ||
+                    this.vc.isExporting ||
+                    !this.vc.areCaptureSettingsValid()
+                  }
+                  onTap={() => {
+                    void this.vc.capture();
+                  }}
+                >
+                  {format("video-creator-capture")}
+                </Button>
+              ),
+              false: () => (
+                <Button
+                  color="light-gray"
+                  class="dsm-vc-cancel-capture-button"
+                  onTap={() => this.vc.cancelCapture()}
+                >
+                  {format("video-creator-cancel-capture")}
+                </Button>
+              ),
+            }
+          )}
         </div>
       </div>
     );

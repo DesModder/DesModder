@@ -2,6 +2,7 @@ import { TextAST } from "..";
 import { buildConfig } from "../TextModeConfig";
 import { Aug } from "../aug";
 import {
+  arrayOf,
   assignmentExpr,
   bareSeq,
   binop,
@@ -11,12 +12,14 @@ import {
   id,
   list,
   listAccess,
+  listOf,
   negative,
   number,
   positive,
   substitution,
   updateRule,
   wrappedSeq,
+  wrappedSeqOf,
 } from "../aug/augBuilders";
 import astToAug, { processSettings } from "./astToAug";
 import { error, warning } from "./diagnostics";
@@ -70,7 +73,7 @@ function testPosNesting(node: TextAST.Node, okNoPos = false) {
     .forEach((x) => testPosNesting(x, node.type === "PiecewiseBranch"));
 }
 
-const colors = ["#c74440", "#2d70b3", "#388c46", "#6042a6", "#000000"];
+const colors = ["#c74440", "#2d70b3", "#348543", "#6042a6", "#000000"];
 
 const exprDefaults = {
   type: "expression",
@@ -249,20 +252,20 @@ describe("Basic exprs", () => {
   });
   describe("ListExpression", () => {
     testExpr("empty", "[]", list());
-    testExpr("one element", "[1]", list(number(1)));
+    testExpr("one element", "[1]", listOf(number, 1));
     testExpr("three elements", "[1,2,x]", list(number(1), number(2), id("x")));
     testExpr("simple range", "[1...10]", {
       type: "Range",
-      start: [number(1)],
-      end: [number(10)],
+      start: arrayOf(number, 1),
+      end: arrayOf(number, 10),
     });
     testExpr(
       "range with three start and end elements",
       "[1,2,3,...,10,11,12]",
       {
         type: "Range",
-        start: [number(1), number(2), number(3)],
-        end: [number(10), number(11), number(12)],
+        start: arrayOf(number, 1, 2, 3),
+        end: arrayOf(number, 10, 11, 12),
       }
     );
   });
@@ -281,8 +284,8 @@ describe("Basic exprs", () => {
         assignmentExpr(id("i"), id("L")),
         assignmentExpr(id("j"), {
           type: "Range",
-          start: [number(1)],
-          end: [number(5)],
+          start: arrayOf(number, 1),
+          end: arrayOf(number, 5),
         }),
       ],
       parameters: [],
@@ -301,12 +304,12 @@ describe("Basic exprs", () => {
         parameters: [
           {
             identifier: id("a"),
-            bounds: [number(1), number(3)],
+            bounds: arrayOf(number, 1, 3),
             open: [true, false],
           },
           {
             identifier: id("b"),
-            bounds: [number(2), number(4)],
+            bounds: arrayOf(number, 2, 4),
             open: [false, true],
           },
         ],
@@ -453,7 +456,7 @@ describe("Basic exprs", () => {
   });
   describe("ParenthesizedExpression", () => {
     testExpr("parenthesized number", "(5)", number(5));
-    testExpr("point", "(2,3)", wrappedSeq(number(2), number(3)));
+    testExpr("point", "(2,3)", wrappedSeqOf(number, 2, 3));
     const abc = bareSeq(
       updateRule(id("a"), number(2)),
       updateRule(id("b"), number(3)),
@@ -473,10 +476,11 @@ describe("Basic exprs", () => {
     testExpr(
       "function on points",
       "polygon((1,2),(3,4))",
-      functionCall(id("polygon"), [
-        wrappedSeq(number(1), number(2)),
-        wrappedSeq(number(3), number(4)),
-      ])
+      functionCall(
+        "polygon",
+        wrappedSeqOf(number, 1, 2),
+        wrappedSeqOf(number, 3, 4)
+      )
     );
   });
   describe("MemberExpression", () => {
@@ -493,17 +497,17 @@ describe("Basic exprs", () => {
     testExpr("dot access call", "L.random(5)", {
       type: "DotAccess",
       object: id("L"),
-      property: functionCall(id("random"), [number(5)]),
+      property: functionCall("random", number(5)),
     });
     testExpr("dot access call on a function", "f(x).total()", {
       type: "DotAccess",
-      object: functionCall(id("f"), [id("x")]),
-      property: functionCall(id("total"), []),
+      object: functionCall("f", id("x")),
+      property: functionCall("total"),
     });
     testExpr("dot access call on a list", "[1,2,3,4,5,6].random(3)", {
       type: "DotAccess",
-      object: list(...[1, 2, 3, 4, 5, 6].map(number)),
-      property: functionCall(id("random"), [number(3)]),
+      object: listOf(number, 1, 2, 3, 4, 5, 6),
+      property: functionCall("random", number(3)),
     });
   });
   describe("ListAccessExpression", () => {
@@ -515,12 +519,12 @@ describe("Basic exprs", () => {
     testExpr("multiple numbers index", "L[1,2,3]", {
       type: "ListAccess",
       list: id("L"),
-      index: list(number(1), number(2), number(3)),
+      index: listOf(number, 1, 2, 3),
     });
     testExpr("list index", "L[[1,2,3]]", {
       type: "ListAccess",
       list: id("L"),
-      index: list(number(1), number(2), number(3)),
+      index: listOf(number, 1, 2, 3),
     });
     testExpr("filter", "L[L>5]", {
       type: "ListAccess",
@@ -532,8 +536,8 @@ describe("Basic exprs", () => {
       list: id("L"),
       index: {
         type: "Range",
-        start: [number(1)],
-        end: [number(5)],
+        start: arrayOf(number, 1),
+        end: arrayOf(number, 5),
       },
     });
     testExpr("range in brackets", "L[[1...5]]", {
@@ -541,8 +545,8 @@ describe("Basic exprs", () => {
       list: id("L"),
       index: {
         type: "Range",
-        start: [number(1)],
-        end: [number(5)],
+        start: arrayOf(number, 1),
+        end: arrayOf(number, 5),
       },
     });
     testExpr("list comprehension", "L[i+1 for i=M]", {
@@ -569,18 +573,18 @@ describe("Basic exprs", () => {
     testExpr("factorial", "factorial(x)", factorial(id("x")));
   });
   describe("CallExpression", () => {
-    testExpr("single arg", "f(x)", functionCall(id("f"), [id("x")]));
-    testExpr("two args", "g(x,y)", functionCall(id("g"), [id("x"), id("y")]));
+    testExpr("single arg", "f(x)", functionCall("f", id("x")));
+    testExpr("two args", "g(x,y)", functionCall("g", id("x"), id("y")));
   });
   describe("Derivatives", () => {
     testExpr("Derivative", "(d/d x) f(x)", {
       type: "Derivative",
-      arg: functionCall(id("f"), [id("x")]),
+      arg: functionCall("f", id("x")),
       variable: id("x"),
     });
     testExpr("Prime", "f'''(x)", {
       type: "Prime",
-      arg: functionCall(id("f"), [id("x")]),
+      arg: functionCall("f", id("x")),
       order: 3,
     });
   });
@@ -594,7 +598,7 @@ describe("Statement metadata", () => {
     });
     testStmt("RGB color", `1 @{color: rgb(a,b,c)}`, {
       ...exprDefaults,
-      color: functionCall(id("rgb"), [id("a"), id("b"), id("c")]),
+      color: functionCall("rgb", id("a"), id("b"), id("c")),
     });
     testStmt("Identifier color from color set", `1 @{color:BLUE}`, {
       ...exprDefaults,
@@ -773,7 +777,7 @@ describe("Tables", () => {
           type: "BinaryOperator",
           name: "Add",
           left: number(0),
-          right: list(number(1), number(2), number(3)),
+          right: listOf(number, 1, 2, 3),
         },
       },
     ],
@@ -793,7 +797,7 @@ describe("Tables", () => {
       {
         ...columnDefaults,
         latex: id("a"),
-        values: [number(1), number(2), number(3)],
+        values: arrayOf(number, 1, 2, 3),
         hidden: false,
       },
     ],
@@ -997,7 +1001,7 @@ describe("Semicolons", () => {
   });
   testStmt("Newline gets ignored, even in CallExpression", `y=x\n(x)`, {
     ...exprDefaults,
-    latex: comparator("=", id("y"), functionCall(id("x"), [id("x")])),
+    latex: comparator("=", id("y"), functionCall("x", id("x"))),
   });
   testStmt("Newline gets ignored, even in ListExpression", `[x,2]\n[x,1]`, {
     ...exprDefaults,
@@ -1019,7 +1023,7 @@ describe("Image", () => {
     image_url: "data:image/png,stub",
     width: number(10),
     height: number(10),
-    center: wrappedSeq(number(0), number(0)),
+    center: wrappedSeqOf(number, 0, 0),
     angle: number(0),
     opacity: number(1),
     foreground: false,
@@ -1219,7 +1223,7 @@ describe("Automatic IDs", () => {
           id: "_col-1",
           color: "#2d70b3",
           latex: id("x_1"),
-          values: [number(1), number(2), number(3)],
+          values: arrayOf(number, 1, 2, 3),
         },
       ],
     });

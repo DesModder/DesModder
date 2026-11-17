@@ -30,8 +30,14 @@
 
 .dsm-vc-capture {
   display: flex;
-  flex-direction: row-reverse;
   justify-content: space-between;
+}
+
+.dsm-vc-capture-frame-button:only-child,
+.dsm-vc-cancel-frame-button:only-child {
+  /** Move "Capture"/"Cancel" button to the right when it's the only button
+   * (everything but action/ticks/ntimes captures). */
+  margin-left: auto;
 }
 
 .dsm-vc-capture

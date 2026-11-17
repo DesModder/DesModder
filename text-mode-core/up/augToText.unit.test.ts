@@ -1,5 +1,6 @@
 import { Aug } from "../aug";
 import {
+  arrayOf,
   assignmentExpr,
   bareSeq,
   binop,
@@ -8,13 +9,15 @@ import {
   id,
   list,
   listAccess,
+  listOf,
   negative,
   number,
   positive,
   range,
+  rangeOf,
   substitution,
   updateRule,
-  wrappedSeq,
+  wrappedSeqOf,
 } from "../aug/augBuilders";
 import { itemToText } from "./augToText";
 
@@ -57,7 +60,7 @@ const imageDefaults = {
   image_url: "data:example",
   width: number(10),
   height: number(10),
-  center: wrappedSeq(number(0), number(0)),
+  center: wrappedSeqOf(number, 0, 0),
   angle: number(0),
   opacity: number(1),
   foreground: false,
@@ -127,20 +130,17 @@ describe("Basic exprs", () => {
   });
   describe("ListExpression", () => {
     testExpr("empty", "[]", list());
-    testExpr("one element", "[1]", list(number(1)));
+    testExpr("one element", "[1]", listOf(number, 1));
     testExpr(
       "three elements",
       "[1, 2, x]",
       list(number(1), number(2), id("x"))
     );
-    testExpr("simple range", "[1 ... 10]", range([number(1)], [number(10)]));
+    testExpr("simple range", "[1 ... 10]", rangeOf([1], [10]));
     testExpr(
       "range with three start and end elements",
       "[1, 2, 3 ... 10, 11, 12]",
-      range(
-        [number(1), number(2), number(3)],
-        [number(10), number(11), number(12)]
-      )
+      rangeOf([1, 2, 3], [10, 11, 12])
     );
   });
   describe("ListComprehension", () => {
@@ -156,7 +156,7 @@ describe("Basic exprs", () => {
       expr: binop("Add", id("i"), id("j")),
       assignments: [
         assignmentExpr(id("i"), id("L")),
-        assignmentExpr(id("j"), range([number(1)], [number(5)])),
+        assignmentExpr(id("j"), rangeOf([1], [5])),
       ],
       parameters: [],
       bracketWrapped: true,
@@ -174,12 +174,12 @@ describe("Basic exprs", () => {
         parameters: [
           {
             identifier: id("a"),
-            bounds: [number(1), number(3)],
+            bounds: arrayOf(number, 1, 3),
             open: [true, false],
           },
           {
             identifier: id("b"),
-            bounds: [number(2), number(4)],
+            bounds: arrayOf(number, 2, 4),
             open: [false, true],
           },
         ],
@@ -299,18 +299,18 @@ describe("Basic exprs", () => {
     testExpr("positive identifier", "+x", positive(id("x")));
   });
   describe("PostfixExpression", () => {
-    testExpr("factorial", "x!", functionCall(id("factorial"), [id("x")]));
+    testExpr("factorial", "x!", functionCall("factorial", id("x")));
     testExpr(
       "negative factorial",
       "-(x!)",
-      negative(functionCall(id("factorial"), [id("x")]))
+      negative(functionCall("factorial", id("x")))
     );
   });
   describe("ParenthesizedExpression", () => {
     testExpr("point", "(2, 3)", {
       type: "Seq",
       parenWrapped: true,
-      args: [number(2), number(3)],
+      args: arrayOf(number, 2, 3),
     });
     testExpr("unwrapped action sequence", "a -> 2, b -> 3, c -> 4", {
       type: "Seq",
@@ -374,7 +374,7 @@ describe("Basic exprs", () => {
     testExpr("dot access call", "L.random(5)", {
       type: "DotAccess",
       object: id("L"),
-      property: functionCall(id("random"), [number(5)]),
+      property: functionCall("random", number(5)),
     });
   });
   describe("ListAccessExpression", () => {
@@ -384,11 +384,7 @@ describe("Basic exprs", () => {
       "L[L > 5]",
       listAccess(id("L"), comparator(">", id("L"), number(5)))
     );
-    testExpr(
-      "range",
-      "L[1 ... 5]",
-      listAccess(id("L"), range([number(1)], [number(5)]))
-    );
+    testExpr("range", "L[1 ... 5]", listAccess(id("L"), rangeOf([1], [5])));
   });
   describe("BinaryExpression", () => {
     testExpr("addition", "2 + 3", binop("Add", number(2), number(3)));
@@ -407,21 +403,21 @@ describe("Basic exprs", () => {
     testExpr("exponents", "2 ^ 3", binop("Exponent", number(2), number(3)));
   });
   describe("PostfixExpression", () => {
-    testExpr("factorial", "x!", functionCall(id("factorial"), [id("x")]));
+    testExpr("factorial", "x!", functionCall("factorial", id("x")));
   });
   describe("CallExpression", () => {
-    testExpr("single arg", "f(x)", functionCall(id("f"), [id("x")]));
-    testExpr("two args", "g(x, y)", functionCall(id("g"), [id("x"), id("y")]));
+    testExpr("single arg", "f(x)", functionCall("f", id("x")));
+    testExpr("two args", "g(x, y)", functionCall("g", id("x"), id("y")));
   });
   // TODO: don't need parens here
   testExpr("Derivative", "((d/d x) f(x))", {
     type: "Derivative",
-    arg: functionCall(id("f"), [id("x")]),
+    arg: functionCall("f", id("x")),
     variable: id("x"),
   });
   testExpr("Prime", "f'''(x)", {
     type: "Prime",
-    arg: functionCall(id("f"), [id("x")]),
+    arg: functionCall("f", id("x")),
     order: 3,
   });
 });
@@ -520,9 +516,10 @@ describe("Parens", () => {
   testExpr(
     "call(substitution,arg)",
     "f((c with c = 4), 6)",
-    functionCall(id("f"), [
+    functionCall(
+      "f",
       substitution(id("c"), assignmentExpr(id("c"), number(4))),
-      number(6),
-    ])
+      number(6)
+    )
   );
 });
