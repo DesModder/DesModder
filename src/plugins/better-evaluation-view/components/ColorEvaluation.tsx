@@ -80,7 +80,10 @@ export function ColorEvaluation(
 ) {
   return (
     <span
-      class={`dsm-color-container ${colorModel === "hex" ? "dsm-color-hex" : ""}`}
+      class={() => ({
+        "dsm-color-container": true,
+        "dsm-color-hex": colorModel === "hex",
+      })}
     >
       {_ColorEvaluation(val, colorModel)}
       {swatch}
