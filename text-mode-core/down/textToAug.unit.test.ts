@@ -110,6 +110,12 @@ const folderDefaults = {
   secret: false,
 } as const;
 
+const vizPropsDefaults = {
+  dotplotMode: "exact",
+  binAlignment: "center",
+  histogramMode: "count",
+} as const;
+
 const emptySettings: Aug.GraphSettings = {
   viewport: {},
 };
@@ -843,24 +849,40 @@ describe("Regressions", () => {
 describe("vizProps", () => {
   testStmt(
     "Histogram",
-    `histogram([1, 2, 3.5, 4]) @{ vizProps: @{ binAlignment: "left", histogramMode: "relative" } }`,
+    `histogram([1, 2, 3.5, 4]) @{
+      vizProps: @{
+        binAlignment: "left",
+        histogramMode: "relative"
+      }
+    }`,
     {
       ...exprDefaults,
       vizProps: {
+        ...vizPropsDefaults,
         binAlignment: "left",
         histogramMode: "relative",
       },
+      latex: functionCall(id("histogram"), [
+        list(...[1, 2, 3.5, 4].map(number)),
+      ]),
     }
   );
   testStmt(
     "Dotplot",
-    `dotplot([1, 2, 3.5, 4]) @{ vizProps: @{ dotplotMode: "binned", binAlignment: "center" } }`,
+    `dotplot([1, 2, 3.5, 4]) @{
+      vizProps: @{
+        dotplotMode: "binned",
+        binAlignment: "center"
+      }
+    }`,
     {
       ...exprDefaults,
       vizProps: {
+        ...vizPropsDefaults,
         dotplotMode: "binned",
         binAlignment: "center",
       },
+      latex: functionCall(id("dotplot"), [list(...[1, 2, 3.5, 4].map(number))]),
     }
   );
   testStmt(
@@ -878,6 +900,7 @@ describe("vizProps", () => {
     {
       ...exprDefaults,
       vizProps: {
+        ...vizPropsDefaults,
         boxplot: {
           breadth: binop("Add", number(2), number(1)),
           axisOffset: binop("Multiply", number(4), number(3)),
@@ -885,6 +908,25 @@ describe("vizProps", () => {
           showOutliers: false,
         },
       },
+      latex: functionCall(id("boxplot"), [
+        list(...[1, 2, 3.5, 4, 25, 4].map(number)),
+      ]),
+    }
+  );
+  testStmt(
+    "Default vizProps",
+    `histogram([1, 2, 3.5, 4]) @{
+      vizProps: @{
+      },
+    }`,
+    {
+      ...exprDefaults,
+      vizProps: {
+        ...vizPropsDefaults,
+      },
+      latex: functionCall(id("histogram"), [
+        list(...[1, 2, 3.5, 4].map(number)),
+      ]),
     }
   );
 });
