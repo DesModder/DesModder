@@ -49,6 +49,20 @@ export function list(...children: Aug.Latex.AnyChild[]): Aug.Latex.List {
   };
 }
 
+export function listOf<T>(
+  mapper: (value: T) => Aug.Latex.AnyChild,
+  ...children: T[]
+): Aug.Latex.List {
+  return list(...children.map(mapper));
+}
+
+export function arrayOf<T, const U extends T[]>(
+  mapper: (value: T) => Aug.Latex.AnyChild,
+  ...children: U
+): { [K in keyof U]: Aug.Latex.AnyChild } {
+  return children.map(mapper) as { [K in keyof U]: Aug.Latex.AnyChild };
+}
+
 export function assignmentExpr(
   variable: Aug.Latex.Identifier,
   expression: Aug.Latex.AnyChild
@@ -79,12 +93,12 @@ export function updateRule(
 }
 
 export function functionCall(
-  callee: Aug.Latex.Identifier,
-  args: Aug.Latex.AnyChild[]
+  callee: Aug.Latex.Identifier | string,
+  ...args: Aug.Latex.AnyChild[]
 ): Aug.Latex.FunctionCall {
   return {
     type: "FunctionCall",
-    callee,
+    callee: typeof callee === "string" ? id(callee) : callee,
     args,
   };
 }
@@ -132,6 +146,10 @@ export function range(
   };
 }
 
+export function rangeOf(start: number[], end: number[]): Aug.Latex.Range {
+  return range(start.map(number), end.map(number));
+}
+
 export function bareSeq(...args: Aug.Latex.AnyChild[]): Aug.Latex.Seq {
   return {
     type: "Seq",
@@ -140,10 +158,24 @@ export function bareSeq(...args: Aug.Latex.AnyChild[]): Aug.Latex.Seq {
   };
 }
 
+export function bareSeqOf<T>(
+  mapper: (value: T) => Aug.Latex.AnyChild,
+  ...args: T[]
+): Aug.Latex.Seq {
+  return bareSeq(...args.map(mapper));
+}
+
 export function wrappedSeq(...args: Aug.Latex.AnyChild[]): Aug.Latex.Seq {
   return {
     type: "Seq",
     parenWrapped: true,
     args,
   };
+}
+
+export function wrappedSeqOf<T>(
+  mapper: (value: T) => Aug.Latex.AnyChild,
+  ...args: T[]
+): Aug.Latex.Seq {
+  return wrappedSeq(...args.map(mapper));
 }
