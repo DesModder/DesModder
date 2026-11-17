@@ -1,5 +1,6 @@
 import { Aug } from "../aug";
 import {
+  arrayOf,
   assignmentExpr,
   bareSeq,
   binop,
@@ -8,6 +9,7 @@ import {
   id,
   list,
   listAccess,
+  listOf,
   negative,
   number,
   positive,
@@ -128,20 +130,21 @@ describe("Basic exprs", () => {
   });
   describe("ListExpression", () => {
     testExpr("empty", "[]", list());
-    testExpr("one element", "[1]", list(number(1)));
+    testExpr("one element", "[1]", listOf(number, 1));
     testExpr(
       "three elements",
       "[1, 2, x]",
       list(number(1), number(2), id("x"))
     );
-    testExpr("simple range", "[1 ... 10]", range([number(1)], [number(10)]));
+    testExpr(
+      "simple range",
+      "[1 ... 10]",
+      range(arrayOf(number, 1), arrayOf(number, 10))
+    );
     testExpr(
       "range with three start and end elements",
       "[1, 2, 3 ... 10, 11, 12]",
-      range(
-        [number(1), number(2), number(3)],
-        [number(10), number(11), number(12)]
-      )
+      range(arrayOf(number, 1, 2, 3), arrayOf(number, 10, 11, 12))
     );
   });
   describe("ListComprehension", () => {
@@ -157,7 +160,7 @@ describe("Basic exprs", () => {
       expr: binop("Add", id("i"), id("j")),
       assignments: [
         assignmentExpr(id("i"), id("L")),
-        assignmentExpr(id("j"), range([number(1)], [number(5)])),
+        assignmentExpr(id("j"), range(arrayOf(number, 1), arrayOf(number, 5))),
       ],
       parameters: [],
       bracketWrapped: true,
@@ -175,12 +178,12 @@ describe("Basic exprs", () => {
         parameters: [
           {
             identifier: id("a"),
-            bounds: [number(1), number(3)],
+            bounds: arrayOf(number, 1, 3),
             open: [true, false],
           },
           {
             identifier: id("b"),
-            bounds: [number(2), number(4)],
+            bounds: arrayOf(number, 2, 4),
             open: [false, true],
           },
         ],
@@ -311,7 +314,7 @@ describe("Basic exprs", () => {
     testExpr("point", "(2, 3)", {
       type: "Seq",
       parenWrapped: true,
-      args: [number(2), number(3)],
+      args: arrayOf(number, 2, 3),
     });
     testExpr("unwrapped action sequence", "a -> 2, b -> 3, c -> 4", {
       type: "Seq",
@@ -388,7 +391,7 @@ describe("Basic exprs", () => {
     testExpr(
       "range",
       "L[1 ... 5]",
-      listAccess(id("L"), range([number(1)], [number(5)]))
+      listAccess(id("L"), range(arrayOf(number, 1), arrayOf(number, 5)))
     );
   });
   describe("BinaryExpression", () => {

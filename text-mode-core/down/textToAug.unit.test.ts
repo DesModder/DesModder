@@ -2,6 +2,7 @@ import { TextAST } from "..";
 import { buildConfig } from "../TextModeConfig";
 import { Aug } from "../aug";
 import {
+  arrayOf,
   assignmentExpr,
   bareSeq,
   binop,
@@ -11,6 +12,7 @@ import {
   id,
   list,
   listAccess,
+  listOf,
   negative,
   number,
   positive,
@@ -244,20 +246,20 @@ describe("Basic exprs", () => {
   });
   describe("ListExpression", () => {
     testExpr("empty", "[]", list());
-    testExpr("one element", "[1]", list(number(1)));
+    testExpr("one element", "[1]", listOf(number, 1));
     testExpr("three elements", "[1,2,x]", list(number(1), number(2), id("x")));
     testExpr("simple range", "[1...10]", {
       type: "Range",
-      start: [number(1)],
-      end: [number(10)],
+      start: arrayOf(number, 1),
+      end: arrayOf(number, 10),
     });
     testExpr(
       "range with three start and end elements",
       "[1,2,3,...,10,11,12]",
       {
         type: "Range",
-        start: [number(1), number(2), number(3)],
-        end: [number(10), number(11), number(12)],
+        start: arrayOf(number, 1, 2, 3),
+        end: arrayOf(number, 10, 11, 12),
       }
     );
   });
@@ -276,8 +278,8 @@ describe("Basic exprs", () => {
         assignmentExpr(id("i"), id("L")),
         assignmentExpr(id("j"), {
           type: "Range",
-          start: [number(1)],
-          end: [number(5)],
+          start: arrayOf(number, 1),
+          end: arrayOf(number, 5),
         }),
       ],
       parameters: [],
@@ -296,12 +298,12 @@ describe("Basic exprs", () => {
         parameters: [
           {
             identifier: id("a"),
-            bounds: [number(1), number(3)],
+            bounds: arrayOf(number, 1, 3),
             open: [true, false],
           },
           {
             identifier: id("b"),
-            bounds: [number(2), number(4)],
+            bounds: arrayOf(number, 2, 4),
             open: [false, true],
           },
         ],
@@ -498,7 +500,7 @@ describe("Basic exprs", () => {
     });
     testExpr("dot access call on a list", "[1,2,3,4,5,6].random(3)", {
       type: "DotAccess",
-      object: list(...[1, 2, 3, 4, 5, 6].map(number)),
+      object: listOf(number, 1, 2, 3, 4, 5, 6),
       property: functionCall("random", number(3)),
     });
   });
@@ -511,12 +513,12 @@ describe("Basic exprs", () => {
     testExpr("multiple numbers index", "L[1,2,3]", {
       type: "ListAccess",
       list: id("L"),
-      index: list(number(1), number(2), number(3)),
+      index: listOf(number, 1, 2, 3),
     });
     testExpr("list index", "L[[1,2,3]]", {
       type: "ListAccess",
       list: id("L"),
-      index: list(number(1), number(2), number(3)),
+      index: listOf(number, 1, 2, 3),
     });
     testExpr("filter", "L[L>5]", {
       type: "ListAccess",
@@ -528,8 +530,8 @@ describe("Basic exprs", () => {
       list: id("L"),
       index: {
         type: "Range",
-        start: [number(1)],
-        end: [number(5)],
+        start: arrayOf(number, 1),
+        end: arrayOf(number, 5),
       },
     });
     testExpr("range in brackets", "L[[1...5]]", {
@@ -537,8 +539,8 @@ describe("Basic exprs", () => {
       list: id("L"),
       index: {
         type: "Range",
-        start: [number(1)],
-        end: [number(5)],
+        start: arrayOf(number, 1),
+        end: arrayOf(number, 5),
       },
     });
     testExpr("list comprehension", "L[i+1 for i=M]", {
@@ -769,7 +771,7 @@ describe("Tables", () => {
           type: "BinaryOperator",
           name: "Add",
           left: number(0),
-          right: list(number(1), number(2), number(3)),
+          right: listOf(number, 1, 2, 3),
         },
       },
     ],
@@ -789,7 +791,7 @@ describe("Tables", () => {
       {
         ...columnDefaults,
         latex: id("a"),
-        values: [number(1), number(2), number(3)],
+        values: arrayOf(number, 1, 2, 3),
         hidden: false,
       },
     ],
@@ -1130,7 +1132,7 @@ describe("Automatic IDs", () => {
           id: "_col-1",
           color: "#2d70b3",
           latex: id("x_1"),
-          values: [number(1), number(2), number(3)],
+          values: arrayOf(number, 1, 2, 3),
         },
       ],
     });

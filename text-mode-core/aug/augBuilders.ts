@@ -49,6 +49,20 @@ export function list(...children: Aug.Latex.AnyChild[]): Aug.Latex.List {
   };
 }
 
+export function listOf<T>(
+  mapper: (value: T) => Aug.Latex.AnyChild,
+  ...children: T[]
+): Aug.Latex.List {
+  return list(...children.map(mapper));
+}
+
+export function arrayOf<T, const U extends T[]>(
+  mapper: (value: T) => Aug.Latex.AnyChild,
+  ...children: U
+): { [K in keyof U]: Aug.Latex.AnyChild } {
+  return children.map(mapper) as { [K in keyof U]: Aug.Latex.AnyChild };
+}
+
 export function assignmentExpr(
   variable: Aug.Latex.Identifier,
   expression: Aug.Latex.AnyChild
