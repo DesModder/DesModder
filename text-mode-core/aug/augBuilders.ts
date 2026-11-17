@@ -79,12 +79,12 @@ export function updateRule(
 }
 
 export function functionCall(
-  callee: Aug.Latex.Identifier,
-  args: Aug.Latex.AnyChild[]
+  callee: Aug.Latex.Identifier | string,
+  ...args: Aug.Latex.AnyChild[]
 ): Aug.Latex.FunctionCall {
   return {
     type: "FunctionCall",
-    callee,
+    callee: typeof callee === "string" ? id(callee) : callee,
     args,
   };
 }

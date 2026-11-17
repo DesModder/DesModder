@@ -468,10 +468,11 @@ describe("Basic exprs", () => {
     testExpr(
       "function on points",
       "polygon((1,2),(3,4))",
-      functionCall(id("polygon"), [
+      functionCall(
+        "polygon",
         wrappedSeq(number(1), number(2)),
-        wrappedSeq(number(3), number(4)),
-      ])
+        wrappedSeq(number(3), number(4))
+      )
     );
   });
   describe("MemberExpression", () => {
@@ -488,17 +489,17 @@ describe("Basic exprs", () => {
     testExpr("dot access call", "L.random(5)", {
       type: "DotAccess",
       object: id("L"),
-      property: functionCall(id("random"), [number(5)]),
+      property: functionCall("random", number(5)),
     });
     testExpr("dot access call on a function", "f(x).total()", {
       type: "DotAccess",
-      object: functionCall(id("f"), [id("x")]),
-      property: functionCall(id("total"), []),
+      object: functionCall("f", id("x")),
+      property: functionCall("total"),
     });
     testExpr("dot access call on a list", "[1,2,3,4,5,6].random(3)", {
       type: "DotAccess",
       object: list(...[1, 2, 3, 4, 5, 6].map(number)),
-      property: functionCall(id("random"), [number(3)]),
+      property: functionCall("random", number(3)),
     });
   });
   describe("ListAccessExpression", () => {
@@ -564,18 +565,18 @@ describe("Basic exprs", () => {
     testExpr("factorial", "factorial(x)", factorial(id("x")));
   });
   describe("CallExpression", () => {
-    testExpr("single arg", "f(x)", functionCall(id("f"), [id("x")]));
-    testExpr("two args", "g(x,y)", functionCall(id("g"), [id("x"), id("y")]));
+    testExpr("single arg", "f(x)", functionCall("f", id("x")));
+    testExpr("two args", "g(x,y)", functionCall("g", id("x"), id("y")));
   });
   describe("Derivatives", () => {
     testExpr("Derivative", "(d/d x) f(x)", {
       type: "Derivative",
-      arg: functionCall(id("f"), [id("x")]),
+      arg: functionCall("f", id("x")),
       variable: id("x"),
     });
     testExpr("Prime", "f'''(x)", {
       type: "Prime",
-      arg: functionCall(id("f"), [id("x")]),
+      arg: functionCall("f", id("x")),
       order: 3,
     });
   });
@@ -589,7 +590,7 @@ describe("Statement metadata", () => {
     });
     testStmt("RGB color", `1 @{color: rgb(a,b,c)}`, {
       ...exprDefaults,
-      color: functionCall(id("rgb"), [id("a"), id("b"), id("c")]),
+      color: functionCall("rgb", id("a"), id("b"), id("c")),
     });
     testStmt("Identifier color from color set", `1 @{color:BLUE}`, {
       ...exprDefaults,
@@ -907,7 +908,7 @@ describe("Semicolons", () => {
   });
   testStmt("Newline gets ignored, even in CallExpression", `y=x\n(x)`, {
     ...exprDefaults,
-    latex: comparator("=", id("y"), functionCall(id("x"), [id("x")])),
+    latex: comparator("=", id("y"), functionCall("x", id("x"))),
   });
   testStmt("Newline gets ignored, even in ListExpression", `[x,2]\n[x,1]`, {
     ...exprDefaults,

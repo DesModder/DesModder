@@ -300,11 +300,11 @@ describe("Basic exprs", () => {
     testExpr("positive identifier", "+x", positive(id("x")));
   });
   describe("PostfixExpression", () => {
-    testExpr("factorial", "x!", functionCall(id("factorial"), [id("x")]));
+    testExpr("factorial", "x!", functionCall("factorial", id("x")));
     testExpr(
       "negative factorial",
       "-(x!)",
-      negative(functionCall(id("factorial"), [id("x")]))
+      negative(functionCall("factorial", id("x")))
     );
   });
   describe("ParenthesizedExpression", () => {
@@ -375,7 +375,7 @@ describe("Basic exprs", () => {
     testExpr("dot access call", "L.random(5)", {
       type: "DotAccess",
       object: id("L"),
-      property: functionCall(id("random"), [number(5)]),
+      property: functionCall("random", number(5)),
     });
   });
   describe("ListAccessExpression", () => {
@@ -408,21 +408,21 @@ describe("Basic exprs", () => {
     testExpr("exponents", "2 ^ 3", binop("Exponent", number(2), number(3)));
   });
   describe("PostfixExpression", () => {
-    testExpr("factorial", "x!", functionCall(id("factorial"), [id("x")]));
+    testExpr("factorial", "x!", functionCall("factorial", id("x")));
   });
   describe("CallExpression", () => {
-    testExpr("single arg", "f(x)", functionCall(id("f"), [id("x")]));
-    testExpr("two args", "g(x, y)", functionCall(id("g"), [id("x"), id("y")]));
+    testExpr("single arg", "f(x)", functionCall("f", id("x")));
+    testExpr("two args", "g(x, y)", functionCall("g", id("x"), id("y")));
   });
   // TODO: don't need parens here
   testExpr("Derivative", "((d/d x) f(x))", {
     type: "Derivative",
-    arg: functionCall(id("f"), [id("x")]),
+    arg: functionCall("f", id("x")),
     variable: id("x"),
   });
   testExpr("Prime", "f'''(x)", {
     type: "Prime",
-    arg: functionCall(id("f"), [id("x")]),
+    arg: functionCall("f", id("x")),
     order: 3,
   });
 });
@@ -521,9 +521,10 @@ describe("Parens", () => {
   testExpr(
     "call(substitution,arg)",
     "f((c with c = 4), 6)",
-    functionCall(id("f"), [
+    functionCall(
+      "f",
       substitution(id("c"), assignmentExpr(id("c"), number(4))),
-      number(6),
-    ])
+      number(6)
+    )
   );
 });
