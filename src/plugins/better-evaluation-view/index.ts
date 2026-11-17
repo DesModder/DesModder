@@ -60,7 +60,7 @@ export default class BetterEvaluationView extends PluginController<Config> {
     if (value.valueType === ValueType.RGBColor) {
       // A non-list color
       return settings.colors
-        ? (swatch) => ColorEvaluation(value, swatch)
+        ? (swatch) => ColorEvaluation(value, settings.colorModel, swatch)
         : undefined;
     }
 
@@ -94,7 +94,7 @@ export default class BetterEvaluationView extends PluginController<Config> {
         return settings.colors &&
           settings.lists === "old" &&
           settings.colorLists
-          ? (swatch) => ColorEvaluation(value, swatch)
+          ? (swatch) => ColorEvaluation(value, settings.colorModel, swatch)
           : undefined;
       default:
         value.valueType satisfies Exclude<
