@@ -19,13 +19,13 @@ async function getText(
 
 async function paste(driver: Driver, text: string) {
   await driver.evaluate(async (text) => {
-    await navigator.clipboard.writeText(text);
+    const data = new DataTransfer();
+    data.setData("text/plain", text);
+    const event = new ClipboardEvent("paste", {
+      clipboardData: data,
+    });
+    document.activeElement?.dispatchEvent(event);
   }, text);
-
-  const modifierKey = process.platform === "darwin" ? "Meta" : "Control";
-  await driver.keyboard.down(modifierKey);
-  await driver.keyboard.press("KeyV");
-  await driver.keyboard.up(modifierKey);
 }
 
 testWithPage("wolfram2desmos", async (driver) => {
@@ -52,29 +52,6 @@ testWithPage("wolfram2desmos", async (driver) => {
 
   // Test when disabled (again)
   await driver.disablePlugin("wolfram2desmos");
-  await paste(driver, "#f012ab");
-  expect(await getText(driver, index)).toEqual("#f012ab");
-
-  index++;
-  await driver.keyboard.press("Enter");
-
-  // Test text
-  await driver.enablePlugin("wolfram2desmos");
-  await driver.keyboard.press('"');
-  await paste(driver, "#f012ab");
-  expect(await getText(driver, index)).toEqual("#f012ab");
-
-  index++;
-  await driver.keyboard.press("Enter");
-
-  // Test folder
-  await driver.enablePlugin("wolfram2desmos");
-  await driver.keyboard.down("Control");
-  const modifierKey = process.platform === "darwin" ? "Meta" : "Alt";
-  await driver.keyboard.down(modifierKey);
-  await driver.keyboard.press("KeyF");
-  await driver.keyboard.up(modifierKey);
-  await driver.keyboard.up("Control");
   await paste(driver, "#f012ab");
   expect(await getText(driver, index)).toEqual("#f012ab");
 

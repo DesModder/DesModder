@@ -90,13 +90,6 @@ export class Driver {
   async init() {
     this.enabledPluginsStart = await this.getEnabledPlugins();
     this.pluginSettingsStart = await this.getPluginSettings();
-    // Give clipbaord permissions, so wolfram2desmos test can consistently
-    // run `navigator.clipboard.writeText(text);`
-    const context = this.page.browserContext();
-    await context.overridePermissions("https://example.com", [
-      "clipboard-write",
-      "clipboard-read",
-    ]);
   }
 
   /** Passthrough */
