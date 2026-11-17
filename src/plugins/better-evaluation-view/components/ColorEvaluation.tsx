@@ -23,12 +23,11 @@ function formatColor(
       break;
     case "hex":
       return (
-        "#\\mathrm{" +
+        "#" +
         color
           .map((c) => c.toString(16).padStart(2, "0"))
           .join("")
-          .toUpperCase() +
-        "}"
+          .toUpperCase()
       );
   }
   return val.map(truncatedLatexLabel).join(",");
@@ -77,7 +76,9 @@ export function ColorEvaluation(
   swatch: any
 ) {
   return (
-    <span class="dsm-color-container">
+    <span
+      class={`dsm-color-container ${colorModel === "hex" ? "dsm-color-hex" : ""}`}
+    >
       {_ColorEvaluation(val, colorModel)}
       {swatch}
     </span>
