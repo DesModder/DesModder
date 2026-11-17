@@ -154,10 +154,24 @@ export function bareSeq(...args: Aug.Latex.AnyChild[]): Aug.Latex.Seq {
   };
 }
 
+export function bareSeqOf<T>(
+  mapper: (value: T) => Aug.Latex.AnyChild,
+  ...args: T[]
+): Aug.Latex.Seq {
+  return bareSeq(...args.map(mapper));
+}
+
 export function wrappedSeq(...args: Aug.Latex.AnyChild[]): Aug.Latex.Seq {
   return {
     type: "Seq",
     parenWrapped: true,
     args,
   };
+}
+
+export function wrappedSeqOf<T>(
+  mapper: (value: T) => Aug.Latex.AnyChild,
+  ...args: T[]
+): Aug.Latex.Seq {
+  return wrappedSeq(...args.map(mapper));
 }

@@ -19,6 +19,7 @@ import {
   substitution,
   updateRule,
   wrappedSeq,
+  wrappedSeqOf,
 } from "../aug/augBuilders";
 import astToAug, { processSettings } from "./astToAug";
 import { error, warning } from "./diagnostics";
@@ -450,7 +451,7 @@ describe("Basic exprs", () => {
   });
   describe("ParenthesizedExpression", () => {
     testExpr("parenthesized number", "(5)", number(5));
-    testExpr("point", "(2,3)", wrappedSeq(number(2), number(3)));
+    testExpr("point", "(2,3)", wrappedSeqOf(number, 2, 3));
     const abc = bareSeq(
       updateRule(id("a"), number(2)),
       updateRule(id("b"), number(3)),
@@ -472,8 +473,8 @@ describe("Basic exprs", () => {
       "polygon((1,2),(3,4))",
       functionCall(
         "polygon",
-        wrappedSeq(number(1), number(2)),
-        wrappedSeq(number(3), number(4))
+        wrappedSeqOf(number, 1, 2),
+        wrappedSeqOf(number, 3, 4)
       )
     );
   });
@@ -932,7 +933,7 @@ describe("Image", () => {
     image_url: "data:image/png,stub",
     width: number(10),
     height: number(10),
-    center: wrappedSeq(number(0), number(0)),
+    center: wrappedSeqOf(number, 0, 0),
     angle: number(0),
     opacity: number(1),
     foreground: false,

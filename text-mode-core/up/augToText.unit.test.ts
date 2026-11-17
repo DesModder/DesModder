@@ -16,7 +16,7 @@ import {
   range,
   substitution,
   updateRule,
-  wrappedSeq,
+  wrappedSeqOf,
 } from "../aug/augBuilders";
 import { itemToText } from "./augToText";
 
@@ -60,7 +60,7 @@ const imageDefaults = {
   image_url: "data:example",
   width: number(10),
   height: number(10),
-  center: wrappedSeq(number(0), number(0)),
+  center: wrappedSeqOf(number, 0, 0),
   angle: number(0),
   opacity: number(1),
   foreground: false,
