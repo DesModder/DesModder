@@ -23,11 +23,12 @@ function formatColor(
       break;
     case "hex":
       return (
-        "#" +
+        "#\\mathrm{" +
         color
           .map((c) => c.toString(16).padStart(2, "0"))
           .join("")
-          .toUpperCase()
+          .toUpperCase() +
+        "}"
       );
   }
   return val.map(truncatedLatexLabel).join(",");

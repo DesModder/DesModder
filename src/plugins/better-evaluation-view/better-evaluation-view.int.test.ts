@@ -276,7 +276,7 @@ testWithPage("Color models", async (driver) => {
   // hex
   await driver.setPluginSetting("better-evaluation-view", "colorModel", "hex");
   await driver.setLatexAndSync("C=\\operatorname{rgb}\\left(109,43,73\\right)");
-  await driver.expectEval("#6D2B49");
+  await driver.expectEval("#\\mathrm{6D2B49}");
 
   // Clean up
   await driver.clean();
@@ -314,7 +314,7 @@ testWithPage("Color models with lists", async (driver) => {
   await driver.setLatexAndSync(
     "C=\\left[\\operatorname{rgb}\\left(109,43,73\\right),\\operatorname{rgb}\\left(255,14,76\\right)\\right]"
   );
-  await driver.expectEval("\\left[#6D2B49,#FF0E4C\\right]");
+  await driver.expectEval("\\left[#\\mathrm{6D2B49},#\\mathrm{FF0E4C}\\right]");
 
   // Clean up
   await driver.clean();
