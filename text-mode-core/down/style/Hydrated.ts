@@ -150,8 +150,17 @@ export interface Expression
     phi?: HydratedBounds;
   };
   cdf?: HydratedBounds;
-  // TODO vizProps
-  // vizProps:
+  vizProps?: {
+    boxplot?: {
+      breadth: Expr;
+      axisOffset: Expr;
+      alignedAxis: "x" | "y";
+      showOutliers: boolean;
+    };
+    dotplotMode?: "exact" | "binned";
+    binAlignment?: "left" | "center";
+    histogramMode?: "count" | "relative" | "density";
+  };
 }
 
 export interface Regression extends NonFolderBase {

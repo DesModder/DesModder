@@ -51,7 +51,6 @@ const exprDefaults = {
   fillOpacity: number(0),
   fractionDisplay: false,
   slider: {},
-  vizProps: {},
 } as const;
 
 const imageDefaults = {

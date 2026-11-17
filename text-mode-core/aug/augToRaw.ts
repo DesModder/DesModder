@@ -200,7 +200,7 @@ function augNonFolderToRaw(
           min: latexTreeToStringMaybe(cfg, item.cdf.min),
           max: latexTreeToStringMaybe(cfg, item.cdf.max),
         },
-        vizProps: {
+        vizProps: item.vizProps && {
           breadth: latexTreeToStringMaybe(cfg, item.vizProps.boxplot?.breadth),
           axisOffset: latexTreeToStringMaybe(
             cfg,
@@ -208,7 +208,10 @@ function augNonFolderToRaw(
           ),
           alignedAxis: item.vizProps.boxplot?.alignedAxis,
           showBoxplotOutliers: item.vizProps.boxplot?.showOutliers,
-          dotplotXMode: item.vizProps.dotplotMode,
+          dotplotXMode:
+            item.vizProps.dotplotMode === "binned"
+              ? "bin"
+              : item.vizProps.dotplotMode,
           binAlignment: item.vizProps.binAlignment,
           histogramMode: item.vizProps.histogramMode,
         },

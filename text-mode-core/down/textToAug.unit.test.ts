@@ -88,7 +88,6 @@ const exprDefaults = {
   fillOpacity: undefined,
   fractionDisplay: false,
   slider: {},
-  vizProps: {},
 } as const;
 
 const columnDefaults = {
@@ -112,6 +111,12 @@ const folderDefaults = {
   collapsed: false,
   hidden: false,
   secret: false,
+} as const;
+
+const vizPropsDefaults = {
+  dotplotMode: "exact",
+  binAlignment: "center",
+  histogramMode: "count",
 } as const;
 
 const emptySettings: Aug.GraphSettings = {
@@ -843,6 +848,85 @@ describe("Regressions", () => {
       },
     },
   });
+});
+
+describe("vizProps", () => {
+  testStmt(
+    "Histogram",
+    `histogram([1, 2, 3.5, 4]) @{
+      vizProps: @{
+        binAlignment: "left",
+        histogramMode: "relative"
+      }
+    }`,
+    {
+      ...exprDefaults,
+      vizProps: {
+        ...vizPropsDefaults,
+        binAlignment: "left",
+        histogramMode: "relative",
+      },
+      latex: functionCall("histogram", listOf(number, 1, 2, 3.5, 4)),
+    }
+  );
+  testStmt(
+    "Dotplot",
+    `dotplot([1, 2, 3.5, 4]) @{
+      vizProps: @{
+        dotplotMode: "binned",
+        binAlignment: "center"
+      }
+    }`,
+    {
+      ...exprDefaults,
+      vizProps: {
+        ...vizPropsDefaults,
+        dotplotMode: "binned",
+        binAlignment: "center",
+      },
+      latex: functionCall("dotplot", listOf(number, 1, 2, 3.5, 4)),
+    }
+  );
+  testStmt(
+    "Boxplot",
+    `boxplot([1, 2, 3.5, 4, 25, 4]) @{
+      vizProps: @{
+        boxplot: @{
+          breadth: 2 + 1,
+          axisOffset: 4 * 3,
+          alignedAxis: "y",
+          showOutliers: false
+        },
+      },
+    }`,
+    {
+      ...exprDefaults,
+      vizProps: {
+        ...vizPropsDefaults,
+        boxplot: {
+          breadth: binop("Add", number(2), number(1)),
+          axisOffset: binop("Multiply", number(4), number(3)),
+          alignedAxis: "y",
+          showOutliers: false,
+        },
+      },
+      latex: functionCall("boxplot", listOf(number, 1, 2, 3.5, 4, 25, 4)),
+    }
+  );
+  testStmt(
+    "Default vizProps",
+    `histogram([1, 2, 3.5, 4]) @{
+      vizProps: @{
+      },
+    }`,
+    {
+      ...exprDefaults,
+      vizProps: {
+        ...vizPropsDefaults,
+      },
+      latex: functionCall("histogram", listOf(number, 1, 2, 3.5, 4)),
+    }
+  );
 });
 
 describe("Text", () => {

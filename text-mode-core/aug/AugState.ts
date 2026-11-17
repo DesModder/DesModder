@@ -141,7 +141,7 @@ export interface ExpressionAug extends BaseNonFolderAug {
     min?: Latex.AnyChild;
     max?: Latex.AnyChild;
   };
-  vizProps: {
+  vizProps?: {
     boxplot?: {
       breadth: Latex.AnyChild;
       axisOffset: Latex.AnyChild;
