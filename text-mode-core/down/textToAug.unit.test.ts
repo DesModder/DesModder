@@ -866,9 +866,7 @@ describe("vizProps", () => {
         binAlignment: "left",
         histogramMode: "relative",
       },
-      latex: functionCall(id("histogram"), [
-        list(...[1, 2, 3.5, 4].map(number)),
-      ]),
+      latex: functionCall("histogram", listOf(number, 1, 2, 3.5, 4)),
     }
   );
   testStmt(
@@ -886,7 +884,7 @@ describe("vizProps", () => {
         dotplotMode: "binned",
         binAlignment: "center",
       },
-      latex: functionCall(id("dotplot"), [list(...[1, 2, 3.5, 4].map(number))]),
+      latex: functionCall("dotplot", listOf(number, 1, 2, 3.5, 4)),
     }
   );
   testStmt(
@@ -912,9 +910,7 @@ describe("vizProps", () => {
           showOutliers: false,
         },
       },
-      latex: functionCall(id("boxplot"), [
-        list(...[1, 2, 3.5, 4, 25, 4].map(number)),
-      ]),
+      latex: functionCall("boxplot", listOf(number, 1, 2, 3.5, 4, 25, 4)),
     }
   );
   testStmt(
@@ -928,9 +924,7 @@ describe("vizProps", () => {
       vizProps: {
         ...vizPropsDefaults,
       },
-      latex: functionCall(id("histogram"), [
-        list(...[1, 2, 3.5, 4].map(number)),
-      ]),
+      latex: functionCall("histogram", listOf(number, 1, 2, 3.5, 4)),
     }
   );
 });
