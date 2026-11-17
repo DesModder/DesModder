@@ -27,6 +27,8 @@ export default class WolframToDesmos extends PluginController<Config> {
     const speciallyHandled = this.vanillaOverridePaste(e);
     if (speciallyHandled) return true;
     if (!e?.clipboardData) return false;
+    if (document.activeElement?.parentElement?.matches(".dcg-text-selectable"))
+      return false;
 
     const pasteData = e.clipboardData.getData("text/plain");
     if (
