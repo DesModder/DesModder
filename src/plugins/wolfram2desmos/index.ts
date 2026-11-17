@@ -27,6 +27,11 @@ export default class WolframToDesmos extends PluginController<Config> {
     const speciallyHandled = this.vanillaOverridePaste(e);
     if (speciallyHandled) return true;
     if (!e?.clipboardData) return false;
+    if (
+      !(e.target instanceof HTMLElement && e.target.closest(".dcg-mq-textarea"))
+    ) {
+      return false;
+    }
 
     const pasteData = e.clipboardData.getData("text/plain");
     if (
