@@ -146,6 +146,10 @@ export function range(
   };
 }
 
+export function rangeOf(start: number[], end: number[]): Aug.Latex.Range {
+  return range(start.map(number), end.map(number));
+}
+
 export function bareSeq(...args: Aug.Latex.AnyChild[]): Aug.Latex.Seq {
   return {
     type: "Seq",

@@ -14,6 +14,7 @@ import {
   number,
   positive,
   range,
+  rangeOf,
   substitution,
   updateRule,
   wrappedSeqOf,
@@ -136,15 +137,11 @@ describe("Basic exprs", () => {
       "[1, 2, x]",
       list(number(1), number(2), id("x"))
     );
-    testExpr(
-      "simple range",
-      "[1 ... 10]",
-      range(arrayOf(number, 1), arrayOf(number, 10))
-    );
+    testExpr("simple range", "[1 ... 10]", rangeOf([1], [10]));
     testExpr(
       "range with three start and end elements",
       "[1, 2, 3 ... 10, 11, 12]",
-      range(arrayOf(number, 1, 2, 3), arrayOf(number, 10, 11, 12))
+      rangeOf([1, 2, 3], [10, 11, 12])
     );
   });
   describe("ListComprehension", () => {
@@ -160,7 +157,7 @@ describe("Basic exprs", () => {
       expr: binop("Add", id("i"), id("j")),
       assignments: [
         assignmentExpr(id("i"), id("L")),
-        assignmentExpr(id("j"), range(arrayOf(number, 1), arrayOf(number, 5))),
+        assignmentExpr(id("j"), rangeOf([1], [5])),
       ],
       parameters: [],
       bracketWrapped: true,
@@ -388,11 +385,7 @@ describe("Basic exprs", () => {
       "L[L > 5]",
       listAccess(id("L"), comparator(">", id("L"), number(5)))
     );
-    testExpr(
-      "range",
-      "L[1 ... 5]",
-      listAccess(id("L"), range(arrayOf(number, 1), arrayOf(number, 5)))
-    );
+    testExpr("range", "L[1 ... 5]", listAccess(id("L"), rangeOf([1], [5])));
   });
   describe("BinaryExpression", () => {
     testExpr("addition", "2 + 3", binop("Add", number(2), number(3)));
