@@ -19,7 +19,10 @@ function formatColor(
       break;
     case "hsv":
       val = getHSVfromRGB(...color);
-      val[2] /= 255;
+      if (val[0] < 0) val[0] += 360;
+      val[0] = Math.round(val[0] * 10) / 10;
+      val[1] = Math.round(val[1] * 1000) / 1000;
+      val[2] = Math.round((val[2] / 255) * 1000) / 1000;
       break;
     case "hex":
       return (
