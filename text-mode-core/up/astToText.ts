@@ -21,6 +21,7 @@ class EmitContext {
   softline: Doc;
   optionalSpace: Doc;
   comma: Doc;
+  semicolon: Doc;
 
   constructor(optsConfig: TextEmitOptions = {}) {
     const noOptionalSpaces = optsConfig.noOptionalSpaces ?? false;
@@ -43,6 +44,7 @@ class EmitContext {
     this.softline = noNewlines ? [] : builders.softline;
     this.optionalSpace = noOptionalSpaces ? [] : " ";
     this.comma = [",", this.optionalSpace];
+    this.semicolon = [";", this.optionalSpace];
   }
 
   docToString(doc: Doc) {
@@ -104,6 +106,7 @@ function astToTextDoc(ctx: EmitContext, path: TextAST.NodePath) {
     case "RangeExpression":
     case "ListExpression":
     case "ListComprehension":
+    case "MatrixExpression":
     case "Substitution":
     case "PiecewiseExpression":
     case "Restriction":
@@ -443,6 +446,11 @@ function exprToTextNoParen(
         ),
       ];
     }
+    case "MatrixExpression":
+      return matrixToText(
+        ctx,
+        path as TextAST.NodePath<TextAST.MatrixExpression>
+      );
     case "MemberExpression":
       return group([
         exprToText(ctx, path.withChild(e.object, "object")),
@@ -689,6 +697,25 @@ function isUnsignedNumericLikeLiteral(node: TextAST.Expression) {
     (node.type === "Identifier" &&
       (node.name === "infty" || node.name === "NaN"))
   );
+}
+
+function matrixToText(
+  ctx: EmitContext,
+  path: NodePath<TextAST.MatrixExpression>
+) {
+  const { values } = path.node;
+  const inner = values.map((row, i) =>
+    join(
+      ctx.comma,
+      row.map((v, j) =>
+        exprToText(
+          ctx,
+          path.withChild(v, "values." + i.toString() + "." + j.toString())
+        )
+      )
+    )
+  );
+  return ["#[", join(ctx.semicolon, inner), "]"];
 }
 
 /** dir: 0 = starts with word. -1 = ends with word.

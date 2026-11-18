@@ -114,6 +114,7 @@ export type Expression<C extends S = Concrete> =
   | RangeExpression<C>
   | ListExpression<C>
   | ListComprehension<C>
+  | MatrixExpression<C>
   | Substitution<C>
   | AssignmentExpression<C>
   | PiecewiseExpression<C>
@@ -173,6 +174,11 @@ export type ListComprehension<C extends S = Concrete> = Positioned<C> & {
   assignments: AssignmentExpression<C>[];
   parameters: IntervalParameter<C>[];
   bracketWrapped: boolean;
+};
+
+export type MatrixExpression<C extends S = Concrete> = Positioned<C> & {
+  type: "MatrixExpression";
+  values: Expression<C>[][];
 };
 
 export interface IntervalParameter<C extends S = Concrete> {

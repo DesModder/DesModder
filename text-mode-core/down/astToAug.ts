@@ -619,6 +619,11 @@ export function childExprToAug(
         ),
         bracketWrapped: expr.bracketWrapped,
       };
+    case "MatrixExpression":
+      return {
+        type: "Matrix",
+        args: expr.values.map((row) => row.map(childExprToAug)),
+      };
     case "Substitution":
       return {
         type: "Substitution",
