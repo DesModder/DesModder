@@ -19,7 +19,7 @@ const punct = [
   "<", "<=", "=", ">=", ">", "~",
   "->", ",", ":", "...", ".", "'", "|",
   "+", "-", "*", "/", "^", "!", "d/d", // '% of' TODO
-  "@{", "#{", "(",  ")", "[", "]", "{", "}",
+  "@{", "#{", "(",  ")", "#[", "[", "]", "{", "}",
 ] as const
 
 type Punct = (typeof punct)[number];
@@ -406,6 +406,7 @@ const initialParselets: TokenMap<InitialParselet> = {
       };
     },
     "[": parseList,
+    "#[": parseMatrix,
     "{": (ps, token): Node => {
       const branches: TextAST.PiecewiseBranch[] = [];
       const next = ps.peek();
@@ -780,6 +781,7 @@ const consequentParselets: Record<
       pos: pos(left, right),
     };
   }),
+  "#[": undefined,
   "<": compareOpParselet("<"),
   "<=": compareOpParselet("<="),
   "=": compareOpParselet("="),
@@ -1021,6 +1023,21 @@ function parseList(ps: ParseState, token: Token): ListOrRange {
   }
 }
 
+/** Assumes last token read is token "#[" */
+function parseMatrix(ps: ParseState, token: Token): TextAST.MatrixExpression {
+  const startValues = parseMatrixSeq(ps, "#[1,2,3;4,5,6]");
+  const next = ps.consume();
+  if (next.value === "]") {
+    return {
+      type: "MatrixExpression",
+      values: startValues,
+      pos: pos(token, next),
+    };
+  } else {
+    throw ps.pushFatalError("Expected ']'", pos(next));
+  }
+}
+
 function getIDOverride(
   ps: ParseState,
   style: TextAST.StyleMapping
@@ -1147,6 +1164,19 @@ function parseBareSeq(ps: ParseState, example: string): TextAST.Expression[] {
     out.push(item);
     const next = ps.peek();
     if (next.value !== ",") break;
+    ps.consume();
+  }
+  return out;
+}
+
+function parseMatrixSeq(
+  ps: ParseState,
+  example: string
+): TextAST.Expression[][] {
+  const out = [];
+  while (true) {
+    out.push(parseBareSeq(ps, example));
+    if (ps.peek().value === "]") break;
     ps.consume();
   }
   return out;

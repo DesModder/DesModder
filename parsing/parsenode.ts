@@ -640,6 +640,23 @@ export interface Paren extends Base {
   args: [ChildExprNode];
 }
 
+/* Matrix */
+
+export interface Matrix extends Expression {
+  // "#[1,2,3;4,5,6]"
+  type: "Matrix";
+  args: MatrixRow[];
+}
+
+export interface MatrixRow extends Expression {
+  type: "MatrixRow";
+  args: (ChildExprNode | EmptyCell)[];
+}
+
+export interface EmptyCell extends Expression {
+  type: "EmptyCell";
+}
+
 export type RootOnlyExprNode =
   | Equation
   | Assignment
@@ -696,7 +713,8 @@ export type ChildExprNode =
   // Seed + ExtendSeed only used in SeededFunctionCalls?
   | Seed
   | ExtendSeed
-  | Paren;
+  | Paren
+  | Matrix;
 
 // These can only occur after further transformation or something
 type IrrelevantExprNode =
@@ -711,7 +729,9 @@ type IrrelevantExprNode =
   | IRExpression
   | TableColumn
   | Table
-  | Ticker;
+  | Ticker
+  | MatrixRow
+  | EmptyCell;
 
 type Node = RootOnlyExprNode | ChildExprNode;
 export default Node;

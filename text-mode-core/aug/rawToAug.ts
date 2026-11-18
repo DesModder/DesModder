@@ -543,6 +543,18 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
         index: node.symbol,
       };
     }
+    case "Matrix": {
+      return {
+        type: "Matrix",
+        args: node.args.map((row) => row.args.map(childNodeToTree)),
+      };
+    }
+    case "EmptyCell": {
+      return {
+        type: "Constant",
+        value: 0,
+      };
+    }
     case "BareSeq":
     case "ParenSeq":
       return {
@@ -703,6 +715,7 @@ function childNodeToTree(node: AnyNode): Aug.Latex.AnyChild {
     case "IRExpression":
     case "Table":
     case "TableColumn":
+    case "MatrixRow":
       throw new Error(
         `Programming Error: Expected parsenode ${node.type} to not be created`
       );

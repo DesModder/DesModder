@@ -23,6 +23,7 @@ export type RepeatedExpression = TextAST.RepeatedExpression<Synthetic>;
 export type RangeExpression = TextAST.RangeExpression<Synthetic>;
 export type ListExpression = TextAST.ListExpression<Synthetic>;
 export type ListComprehension = TextAST.ListComprehension<Synthetic>;
+export type MatrixExpression = TextAST.MatrixExpression<Synthetic>;
 export type IntervalParameter = TextAST.IntervalParameter<Synthetic>;
 export type Substitution = TextAST.Substitution<Synthetic>;
 export type AssignmentExpression = TextAST.AssignmentExpression<Synthetic>;

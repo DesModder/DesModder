@@ -496,6 +496,11 @@ export function childLatexToAST(e: Aug.Latex.AnyChild): TextAST.Expression {
         object: childLatexToAST(e.point),
         property: identifierToAST({ symbol: e.index }),
       };
+    case "Matrix":
+      return {
+        type: "MatrixExpression",
+        values: e.args.map((row) => row.map(childLatexToAST)),
+      };
     case "Seq":
       if (e.args.length <= 1)
         throw Error("Programming Error: Expected at least 2 elements in Seq");

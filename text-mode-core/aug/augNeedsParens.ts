@@ -56,6 +56,7 @@ export default function augNeedsParens(
     case "Or": // Note "Or" can only show up as a direct child of restriction or Or.
     case "Range":
     case "Norm":
+    case "Matrix":
       return false;
     // Top-level cases
     case "Equation":
@@ -156,6 +157,7 @@ function power(node: Aug.Latex.AnyChild): number {
     case "Range":
     case "Piecewise":
     case "Restriction":
+    case "Matrix":
       return POWERS.atom;
     case "ListComprehension":
       return node.bracketWrapped ? POWERS.atom : POWERS.with;

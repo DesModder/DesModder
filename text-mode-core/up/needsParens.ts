@@ -80,6 +80,7 @@ export default function needsParens(path: NodePath): boolean {
     case "ListExpression":
     case "PiecewiseExpression":
     case "Restriction":
+    case "MatrixExpression":
       // They come with their own grouping ([] or {}), no need to add parens
       return false;
     case "Number":

@@ -252,6 +252,12 @@ function childNodeToStringNoParen(
         "=" +
         childNodeToString(cfg, e.expression, e)
       );
+    case "Matrix":
+      return (
+        "\\begin{bmatrix}" +
+        e.args.map((row) => bareSeq(cfg, row, e, undefined, "&")).join("\\\\") +
+        "\\end{bmatrix}"
+      );
     default:
       e satisfies never;
       throw new Error(
@@ -272,7 +278,8 @@ function bareSeq(
   cfg: Config,
   e: Aug.Latex.AnyChild[],
   parent: Aug.Latex.AnyRootOrChild,
-  { alwaysBeforeComma } = { alwaysBeforeComma: false }
+  { alwaysBeforeComma } = { alwaysBeforeComma: false },
+  separator: string = ","
 ): string {
   return e
     .map((f, i) =>
@@ -283,7 +290,7 @@ function bareSeq(
         beforeComma(alwaysBeforeComma || i < e.length - 1)
       )
     )
-    .join(",");
+    .join(separator);
 }
 
 function beforeComma(beforeComma: boolean) {

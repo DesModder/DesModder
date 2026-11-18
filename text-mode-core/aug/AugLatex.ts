@@ -32,6 +32,7 @@ export type AnyChild =
   | ListAccess
   | DotAccess
   | OrderedPairAccess
+  | Matrix
   | Seq
   | UpdateRule
   | ListComprehension
@@ -179,6 +180,12 @@ export interface OrderedPairAccess {
   type: "OrderedPairAccess";
   point: AnyChild;
   index: "x" | "y";
+}
+
+export interface Matrix {
+  // "#[1,2,3;4,5,6]"
+  type: "Matrix";
+  args: AnyChild[][];
 }
 
 export interface Seq {
